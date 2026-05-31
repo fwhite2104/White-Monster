@@ -19,7 +19,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { useGeolocation } from '@/hooks/use-geolocation'
-import { RETAILERS } from '@/lib/constants'
+import { RETAILERS, CORK_CENTER } from '@/lib/constants'
 
 export function StoreUploadForm({ onSuccess }: { onSuccess?: () => void }) {
   const [open, setOpen] = useState(false)
@@ -44,10 +44,8 @@ export function StoreUploadForm({ onSuccess }: { onSuccess?: () => void }) {
       return
     }
 
-    if (!location) {
-      setSubmitError('Location is required. Please enable location access.')
-      return
-    }
+    const lat = location?.lat ?? CORK_CENTER.lat
+    const lng = location?.lng ?? CORK_CENTER.lng
 
     setSubmitting(true)
     try {
@@ -60,8 +58,8 @@ export function StoreUploadForm({ onSuccess }: { onSuccess?: () => void }) {
           price: priceVal,
           productName: formData.productName,
           notes: formData.notes,
-          lat: location.lat,
-          lng: location.lng,
+          lat,
+          lng,
         }),
       })
 
@@ -145,24 +143,22 @@ export function StoreUploadForm({ onSuccess }: { onSuccess?: () => void }) {
             />
           </div>
 
-          {!location && (
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={requestLocation}
-              className="w-full"
-            >
-              Enable Location
-            </Button>
-          )}
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={requestLocation}
+            className="w-full"
+          >
+            {location ? 'Update Location' : 'Use My Location'}
+          </Button>
           {geoError && (
             <p className="text-xs text-destructive">{geoError}</p>
           )}
-          {location && (
-            <p className="text-xs text-muted-foreground">
-              Location: {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
-            </p>
-          )}
+          <p className="text-xs text-muted-foreground">
+            {location
+              ? `Location: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`
+              : `Default: Cork City (${CORK_CENTER.lat}, ${CORK_CENTER.lng})`}
+          </p>
 
           {submitError && (
             <p className="text-sm text-destructive">{submitError}</p>

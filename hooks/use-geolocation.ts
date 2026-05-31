@@ -54,10 +54,6 @@ export function useGeolocation() {
     )
   }, [])
 
-  useEffect(() => {
-    requestLocation()
-  }, [requestLocation])
-
   return {
     location: state.location,
     loading: state.loading,
