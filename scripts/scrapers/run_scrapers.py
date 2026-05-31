@@ -2,6 +2,7 @@
 import os
 import sys
 from datetime import datetime, timezone
+from typing import List, Dict
 
 from supabase import create_client, Client
 from lidl_ie import LidlIEScraper
