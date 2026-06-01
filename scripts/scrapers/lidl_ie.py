@@ -1,3 +1,7 @@
+"""
+DISABLED: Lidl IE API DNS resolution error (search.api.lidl.ie no longer resolves).
+Do not remove this scraper — it may be re-enabled if an alternative API is found.
+"""
 import requests
 from typing import List, Dict
 from base import BaseScraper

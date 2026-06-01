@@ -1,3 +1,7 @@
+"""
+DISABLED: Aldi IE API returns 403 Forbidden (Akamai blocked).
+Do not remove this scraper — it may be re-enabled if an alternative API is found.
+"""
 import requests
 from typing import List, Dict
 from base import BaseScraper

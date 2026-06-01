@@ -5,8 +5,9 @@ from datetime import datetime, timezone
 from typing import List, Dict
 
 from supabase import create_client, Client
-from lidl_ie import LidlIEScraper
-from aldi_ie import AldiIEScraper
+from base import BaseScraper
+# DISABLED: from lidl_ie import LidlIEScraper
+# DISABLED: from aldi_ie import AldiIEScraper
 from tesco_ie import TescoIEScraper
 from supervalu_ie import SuperValuIEScraper
 from supervalu_softdrinks_ie import SuperValuSoftDrinksScraper
@@ -14,6 +15,38 @@ from dunnes_ie import DunnesIEScraper
 
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_SERVICE_KEY = os.environ["SUPABASE_SERVICE_KEY"]
+
+
+def _extract_variant(product_name: str) -> str:
+    """Extract the Monster variant keyword from a scraped product name.
+
+    Args:
+        product_name: The scraped product name (e.g., 'Monster Ultra White')
+
+    Returns:
+        One of: 'zero_sugar', 'ultra_white', 'ultra_rosa', 'ultra_paradise'
+        Falls back to 'zero_sugar' (most common variant).
+    """
+    lowered = product_name.lower()
+
+    # "zero sugar" or "white zero" -> zero_sugar
+    if "zero sugar" in lowered or "white zero" in lowered:
+        return "zero_sugar"
+
+    # "ultra white" -> ultra_white (but NOT if "ultra rosa" or "ultra paradise" present)
+    if "ultra white" in lowered and "ultra rosa" not in lowered and "ultra paradise" not in lowered:
+        return "ultra_white"
+
+    # "ultra rosa" or just "rosa" -> ultra_rosa
+    if "ultra rosa" in lowered or "rosa" in lowered:
+        return "ultra_rosa"
+
+    # "ultra paradise" or just "paradise" -> ultra_paradise
+    if "ultra paradise" in lowered or "paradise" in lowered:
+        return "ultra_paradise"
+
+    # Fallback: most common variant
+    return "zero_sugar"
 
 
 def get_or_create_store(
@@ -47,16 +80,26 @@ def push_prices(
     supabase: Client, prices: List[Dict], retailer: str, store_id: str
 ):
     for p in prices:
+        variant = _extract_variant(p["product_name"])
+        pack_size = BaseScraper._detect_pack_size(p["product_name"])
+
+        if pack_size == "unknown":
+            pack_size = "single"
+
         product_result = (
             supabase.table("products")
             .select("id")
-            .ilike("name", f"%{p['product_name'].split()[0]}%")
+            .eq("variant", variant)
+            .eq("pack_size", pack_size)
             .execute()
         )
+
         if not product_result.data:
-            print(f"  Product not found: {p['product_name']}")
+            print(f"  [WARN] No product matched for '{p['product_name']}' (variant={variant}, pack_size={pack_size})")
             continue
+
         product_id = product_result.data[0]["id"]
+        print(f"  Matched '{p['product_name']}' -> product_id={product_id}")
 
         existing = (
             supabase.table("prices")
@@ -94,19 +137,9 @@ def main():
     supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
     print(f"=== Monster Cork Scraper === {datetime.now(timezone.utc).isoformat()}")
 
-    print("\n--- Lidl Ireland ---")
-    lidl_prices = LidlIEScraper().scrape()
-    lidl_store = get_or_create_store(
-        supabase, "lidl", "Lidl Ireland (National)", 51.8985, -8.4756, "Cork City"
-    )
-    push_prices(supabase, lidl_prices, "lidl", lidl_store)
+    print("\n--- Lidl Ireland --- SKIPPED (API DNS resolution error - domain no longer resolves)")
 
-    print("\n--- Aldi Ireland ---")
-    aldi_prices = AldiIEScraper().scrape()
-    aldi_store = get_or_create_store(
-        supabase, "aldi", "Aldi Ireland (National)", 51.8979, -8.4701, "Cork City"
-    )
-    push_prices(supabase, aldi_prices, "aldi", aldi_store)
+    print("\n--- Aldi Ireland --- SKIPPED (API 403 Forbidden - Akamai blocked)")
 
     print("\n--- Tesco Ireland ---")
     tesco_prices = TescoIEScraper().scrape()
@@ -136,7 +169,7 @@ def main():
     )
     push_prices(supabase, dunnes_prices, "dunnes", dunnes_store)
 
-    total = len(lidl_prices) + len(aldi_prices) + len(tesco_prices) + len(supervalu_prices) + len(supervalu_sd_prices) + len(dunnes_prices)
+    total = len(tesco_prices) + len(supervalu_prices) + len(supervalu_sd_prices) + len(dunnes_prices)
     print(f"\nDone. Total: {total} prices")
 
 
