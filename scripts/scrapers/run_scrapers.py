@@ -12,6 +12,7 @@ from tesco_ie import TescoIEScraper
 from supervalu_ie import SuperValuIEScraper
 from supervalu_softdrinks_ie import SuperValuSoftDrinksScraper
 from dunnes_ie import DunnesIEScraper
+from centra_ie import CentraIEScraper
 
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_SERVICE_KEY = os.environ["SUPABASE_SERVICE_KEY"]
@@ -230,6 +231,17 @@ def main():
         _log(f"  [WARN] Dunnes scraper failed: {e}")
         dunnes_prices = []
 
+    _log("--- Centra Ireland ---")
+    try:
+        centra_prices = CentraIEScraper().scrape()
+        centra_store = get_or_create_store(
+            supabase, "centra", "Centra Ireland (National)", 51.8985, -8.4756, "Cork City"
+        )
+        push_prices(supabase, centra_prices, "centra", centra_store)
+    except Exception as e:
+        _log(f"  [WARN] Centra scraper failed: {e}")
+        centra_prices = []
+
     results = {}
     for name, prices in [
         ("Lidl", lidl_prices),
@@ -238,6 +250,7 @@ def main():
         ("SuperValu", supervalu_prices),
         ("SuperValu Soft Drinks", supervalu_sd_prices),
         ("Dunnes", dunnes_prices),
+        ("Centra", centra_prices),
     ]:
         results[name] = len(prices) if prices else "FAILED"
 
