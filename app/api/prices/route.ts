@@ -103,16 +103,81 @@ export async function GET(request: NextRequest) {
     const typed = (prices ?? []) as unknown as PriceWithJoins[]
 
     const radiusMeters = radiusKm * 1000
-    const filtered = typed
-      .map((p) => ({
-        ...p,
-        distance: calculateDistance(lat, lng, p.stores.lat, p.stores.lng),
-      }))
-      .filter((p) => p.distance <= radiusMeters)
+
+    const nationalPrices = typed.filter((p) => p.stores.name.includes('(National)'))
+    const physicalPrices = typed.filter((p) => !p.stores.name.includes('(National)'))
+
+    const nationalByRetailer = new Map<string, PriceWithJoins[]>()
+    for (const p of nationalPrices) {
+      const key = p.stores.retailer
+      const existing = nationalByRetailer.get(key) ?? []
+      existing.push(p)
+      nationalByRetailer.set(key, existing)
+    }
+
+    const physicalWithinRadius = physicalPrices.filter((p) => {
+      const dist = calculateDistance(lat, lng, p.stores.lat, p.stores.lng)
+      return dist <= radiusMeters
+    })
+
+    const physicalByStoreProduct = new Set<string>()
+    for (const p of physicalWithinRadius) {
+      physicalByStoreProduct.add(`${p.stores.id}|${p.product_id}`)
+    }
+
+    const physicalStoreIds = new Set(physicalPrices.map((p) => p.stores.id))
+
+    const expanded: (PriceWithJoins & { distance: number })[] = []
+
+    for (const p of physicalWithinRadius) {
+      const dist = calculateDistance(lat, lng, p.stores.lat, p.stores.lng)
+      expanded.push({ ...p, distance: dist })
+    }
+
+    if (nationalByRetailer.size > 0) {
+      const { data: allStores, error: storesError } = await supabase
+        .from('stores')
+        .select('id, name, retailer, address, suburb, lat, lng')
+        .eq('is_active', true)
+
+      if (!storesError && allStores) {
+        const storesInRadius = allStores
+          .filter((s) => !s.name.includes('(National)'))
+          .filter((s) => calculateDistance(lat, lng, s.lat, s.lng) <= radiusMeters)
+
+        for (const store of storesInRadius) {
+          if (physicalStoreIds.has(store.id)) continue
+          const retailerNational = nationalByRetailer.get(store.retailer)
+          if (!retailerNational) continue
+
+          for (const np of retailerNational) {
+            const key = `${store.id}|${np.product_id}`
+            if (physicalByStoreProduct.has(key)) continue
+
+            const dist = calculateDistance(lat, lng, store.lat, store.lng)
+            expanded.push({
+              ...np,
+              store_id: store.id,
+              stores: {
+                id: store.id,
+                name: store.name,
+                retailer: store.retailer,
+                address: store.address ?? '',
+                suburb: store.suburb ?? '',
+                lat: store.lat,
+                lng: store.lng,
+              },
+              distance: dist,
+            })
+            physicalByStoreProduct.add(key)
+          }
+        }
+      }
+    }
 
     const packFiltered = packSize === 'all'
-      ? filtered
-      : filtered.filter((p) => {
+      ? expanded
+      : expanded.filter((p) => {
           const productPackSize = p.products?.pack_size ?? 'single'
           if (packSize === '4_pack') return productPackSize === '4_pack'
           if (packSize === 'single') return productPackSize === 'single'

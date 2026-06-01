@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
     const radiusMeters = radiusKm * 1000
     const typedStores = (stores ?? []) as Store[]
     const withDistance = typedStores
+      .filter((s) => !s.name.includes('(National)'))
       .map((s) => ({
         ...s,
         distance: calculateDistance(lat, lng, s.lat, s.lng),
