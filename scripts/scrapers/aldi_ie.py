@@ -14,8 +14,8 @@ class AldiIEScraper(BaseScraper):
         self.api_url = "https://groceries.aldi.ie/api/product/calculatePrices"
         self.website_id = "a763fb4a-0224-4ca8-bdaa-a33a4b47a026"
 
-    def scrape(self, query: str = "monster white") -> List[Dict]:
-        self._log("Fetching Monster prices")
+    def scrape(self, query: str = "monster white", pack_size: str = "all") -> List[Dict]:
+        self._log(f"Fetching Monster prices (pack_size={pack_size})")
         headers = {
             "Content-Type": "application/json",
             "websiteId": self.website_id,
@@ -43,8 +43,9 @@ class AldiIEScraper(BaseScraper):
                         "barcode": barcode,
                     })
 
-            self._log(f"Found {len(results)} products")
-            return results
+            filtered = self._filter_by_pack_size(results, pack_size)
+            self._log(f"Found {len(filtered)} products (pack_size={pack_size})")
+            return filtered
         except requests.RequestException as e:
             self._log(f"Error: {e}")
             return []

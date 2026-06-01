@@ -38,8 +38,8 @@ class TescoIEScraper(BaseScraper):
             ),
         })
 
-    def scrape(self, query: str = "monster energy") -> List[Dict]:
-        self._log(f"Searching: {query}")
+    def scrape(self, query: str = "monster energy", pack_size: str = "all") -> List[Dict]:
+        self._log(f"Searching: {query} (pack_size={pack_size})")
         url = self.SEARCH_URL.format(query=query)
 
         try:
@@ -105,8 +105,9 @@ class TescoIEScraper(BaseScraper):
                         "retailer": "tesco",
                     })
 
-            self._log(f"Found {len(results)} Monster products")
-            return results
+            filtered = self._filter_by_pack_size(results, pack_size)
+            self._log(f"Found {len(filtered)} Monster products (pack_size={pack_size})")
+            return filtered
 
         except Exception as e:
             self._log(f"Error: {e}")

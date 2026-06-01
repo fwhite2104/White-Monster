@@ -35,8 +35,8 @@ class SuperValuIEScraper(BaseScraper):
             "Referer": "https://shop.supervalu.ie/",
         })
 
-    def scrape(self, query: str = "monster white") -> List[Dict]:
-        self._log("Browsing Sports & Energy Drinks category (O301710)")
+    def scrape(self, query: str = "monster white", pack_size: str = "all") -> List[Dict]:
+        self._log(f"Browsing Sports & Energy Drinks category (O301710) (pack_size={pack_size})")
         results = []
         page = 1
         take = 50
@@ -83,5 +83,6 @@ class SuperValuIEScraper(BaseScraper):
                 self._log(f"Error: {e}")
                 break
 
-        self._log(f"Found {len(results)} products")
-        return results
+        filtered = self._filter_by_pack_size(results, pack_size)
+        self._log(f"Found {len(filtered)} products (pack_size={pack_size})")
+        return filtered

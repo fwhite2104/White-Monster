@@ -7,8 +7,8 @@ class LidlIEScraper(BaseScraper):
         super().__init__("lidl", delay=1.0)
         self.api_url = "https://search.api.lidl.ie/v1/search"
 
-    def scrape(self, query: str = "monster white") -> List[Dict]:
-        self._log(f"Searching: {query}")
+    def scrape(self, query: str = "monster white", pack_size: str = "all") -> List[Dict]:
+        self._log(f"Searching: {query} (pack_size={pack_size})")
         results = []
         page = 0
 
@@ -52,5 +52,6 @@ class LidlIEScraper(BaseScraper):
                 self._log(f"Error: {e}")
                 break
 
-        self._log(f"Found {len(results)} products")
-        return results
+        filtered = self._filter_by_pack_size(results, pack_size)
+        self._log(f"Found {len(filtered)} products (pack_size={pack_size})")
+        return filtered
