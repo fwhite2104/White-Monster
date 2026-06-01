@@ -19,9 +19,9 @@ function getRetailerColor(retailer: string): string {
 
 export function BestDealBanner({ bestPrice, totalPrices, savings }: BestDealBannerProps) {
   const shouldReduceMotion = useReducedMotion()
-  const store = bestPrice.stores!
-  const product = bestPrice.products!
-  const retailerColor = getRetailerColor(store.retailer)
+  const store = bestPrice.stores ?? { name: 'Unknown Store', retailer: 'other', suburb: '' }
+  const product = bestPrice.products ?? { name: 'Unknown Product' }
+  const retailerColor = getRetailerColor(store.retailer ?? 'other')
 
   return (
     <motion.div
