@@ -1,5 +1,6 @@
 'use client'
 
+import { ArrowUpDown, Filter } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -25,7 +26,8 @@ export function SortControls({
   return (
     <div className="flex flex-wrap gap-3">
       <Select value={sort} onValueChange={(val) => val && onSortChange(val)}>
-        <SelectTrigger className="w-[140px]">
+        <SelectTrigger className="w-[150px]">
+          <ArrowUpDown className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
           <SelectValue placeholder="Sort by" />
         </SelectTrigger>
         <SelectContent>
@@ -36,7 +38,8 @@ export function SortControls({
       </Select>
 
       <Select value={variant} onValueChange={(val) => val && onVariantChange(val)}>
-        <SelectTrigger className="w-[200px]">
+        <SelectTrigger className="w-[220px]">
+          <Filter className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
           <SelectValue placeholder="Variant" />
         </SelectTrigger>
         <SelectContent>

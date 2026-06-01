@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { MapPin } from 'lucide-react'
+import { motion, useReducedMotion } from 'framer-motion'
+import { MapPin, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Header } from '@/components/shared/Header'
 import { Footer } from '@/components/shared/Footer'
@@ -10,12 +11,16 @@ import { SortControls } from '@/components/dashboard/SortControls'
 import { PriceList } from '@/components/dashboard/PriceList'
 import { StoreUploadForm } from '@/components/dashboard/StoreUploadForm'
 import { LastUpdated } from '@/components/dashboard/LastUpdated'
+import { BestDealBanner } from '@/components/dashboard/BestDealBanner'
+import { PriceChart } from '@/components/dashboard/PriceChart'
+import { LoadingSkeleton } from '@/components/dashboard/LoadingSkeleton'
 import StoreMap from '@/components/map'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { CORK_CENTER, DEFAULT_RADIUS_KM } from '@/lib/constants'
 import type { Price, Store } from '@/lib/types'
 
 export default function Home() {
+  const shouldReduceMotion = useReducedMotion()
   const { location, loading: geoLoading, error: geoError, requestLocation } = useGeolocation()
   const [prices, setPrices] = useState<Price[]>([])
   const [stores, setStores] = useState<Store[]>([])
@@ -71,6 +76,10 @@ export default function Home() {
     }
   })
 
+  const bestPrice = prices.length > 0 ? prices[0] : null
+  const maxPrice = prices.length > 0 ? Math.max(...prices.map((p) => Number(p.price))) : 0
+  const savings = bestPrice && maxPrice > 0 ? maxPrice - Number(bestPrice.price) : 0
+
   return (
     <div className="min-h-full flex flex-col">
       <Header />
@@ -110,25 +119,42 @@ export default function Home() {
           </div>
         </div>
 
+        {!loading && !error && bestPrice && (
+          <BestDealBanner
+            bestPrice={bestPrice}
+            totalPrices={prices.length}
+            savings={savings}
+          />
+        )}
+
         <StoreMap
           stores={storesWithDistance}
           userLocation={location}
           highlightedStoreId={highlightedStoreId}
         />
 
+        {!loading && !error && prices.length > 2 && (
+          <PriceChart prices={prices} />
+        )}
+
         {loading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-28 bg-muted animate-pulse rounded-lg" />
-            ))}
-          </div>
+          <LoadingSkeleton count={4} />
         ) : error ? (
-          <div className="text-center py-12 text-destructive">
-            <p>{error}</p>
-            <Button variant="outline" onClick={fetchData} className="mt-3">
-              Retry
-            </Button>
-          </div>
+          <motion.div
+            initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-16 space-y-4"
+          >
+            <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertCircle className="h-8 w-8 text-destructive" />
+            </div>
+            <div>
+              <p className="text-lg font-medium text-destructive">{error}</p>
+              <Button variant="outline" onClick={fetchData} className="mt-3">
+                Retry
+              </Button>
+            </div>
+          </motion.div>
         ) : (
           <PriceList
             prices={prices}
