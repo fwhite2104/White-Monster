@@ -9,6 +9,7 @@ from lidl_ie import LidlIEScraper
 from aldi_ie import AldiIEScraper
 from tesco_ie import TescoIEScraper
 from supervalu_ie import SuperValuIEScraper
+from supervalu_softdrinks_ie import SuperValuSoftDrinksScraper
 from dunnes_ie import DunnesIEScraper
 
 SUPABASE_URL = os.environ["SUPABASE_URL"]
@@ -114,12 +115,19 @@ def main():
     )
     push_prices(supabase, tesco_prices, "tesco", tesco_store)
 
-    print("\n--- SuperValu Ireland ---")
+    print("\n--- SuperValu Ireland (Sports & Energy) ---")
     supervalu_prices = SuperValuIEScraper().scrape()
     supervalu_store = get_or_create_store(
         supabase, "supervalu", "SuperValu Ireland (National)", 51.8985, -8.4756, "Cork City"
     )
     push_prices(supabase, supervalu_prices, "supervalu", supervalu_store)
+
+    print("\n--- SuperValu Ireland (Soft Drinks - 4 Packs) ---")
+    supervalu_sd_prices = SuperValuSoftDrinksScraper().scrape()
+    supervalu_sd_store = get_or_create_store(
+        supabase, "supervalu", "SuperValu Ireland Soft Drinks (National)", 51.8985, -8.4756, "Cork City"
+    )
+    push_prices(supabase, supervalu_sd_prices, "supervalu", supervalu_sd_store)
 
     print("\n--- Dunnes Stores Ireland ---")
     dunnes_prices = DunnesIEScraper().scrape()
@@ -128,7 +136,7 @@ def main():
     )
     push_prices(supabase, dunnes_prices, "dunnes", dunnes_store)
 
-    total = len(lidl_prices) + len(aldi_prices) + len(tesco_prices) + len(supervalu_prices) + len(dunnes_prices)
+    total = len(lidl_prices) + len(aldi_prices) + len(tesco_prices) + len(supervalu_prices) + len(supervalu_sd_prices) + len(dunnes_prices)
     print(f"\nDone. Total: {total} prices")
 
 
