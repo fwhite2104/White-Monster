@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { calculateDistance } from '@/lib/geo'
-import { CORK_CENTER } from '@/lib/constants'
+import { CORK_CENTER, DEFAULT_RADIUS_KM } from '@/lib/constants'
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
 
   const lat = parseFloat(searchParams.get('lat') ?? String(CORK_CENTER.lat))
   const lng = parseFloat(searchParams.get('lng') ?? String(CORK_CENTER.lng))
-  const radiusKm = parseFloat(searchParams.get('radius') ?? '20')
+  const radiusKm = parseFloat(searchParams.get('radius') ?? String(DEFAULT_RADIUS_KM))
   const variant = searchParams.get('variant') ?? 'zero_sugar'
   const sort = searchParams.get('sort') ?? 'price'
   const packSize = searchParams.get('pack_size') ?? 'all'
@@ -17,9 +17,9 @@ export async function GET(request: NextRequest) {
   const { data: prices, error } = await supabase
     .from('prices')
     .select(`
-      id, price, source, scraped_at,
+      id, store_id, product_id, price, source, scraped_at,
       stores (id, name, retailer, address, suburb, lat, lng),
-      products (id, name, variant, size_ml, image_url)
+      products (id, name, variant, size_ml, image_url, pack_size)
     `)
     .eq('products.variant', variant)
     .eq('stores.is_active', true)
@@ -39,11 +39,9 @@ export async function GET(request: NextRequest) {
 
   if (packSize !== 'all') {
     filtered = filtered?.filter((p: any) => {
-      const name = (p.products?.name ?? '').toLowerCase()
-      const isFourPack = /\b4\s*pack\b|\b4\s*x\s*|\b4x\b|\b4\s*×|\bfour\s*pack\b|\bmultipack\b/.test(name)
-      const isSingle = /\bsingle\b|\b1\s*x\s*|\b1x\b|\b1\s*can\b|\bone\s*can\b/.test(name)
-      if (packSize === '4_pack') return isFourPack
-      if (packSize === 'single') return isSingle || !isFourPack
+      const productPackSize = p.products?.pack_size ?? 'single'
+      if (packSize === '4_pack') return productPackSize === '4_pack'
+      if (packSize === 'single') return productPackSize === 'single'
       return true
     })
   }

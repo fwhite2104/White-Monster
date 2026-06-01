@@ -18,6 +18,7 @@ export interface Product {
   size_ml: number
   barcode?: string
   image_url?: string
+  pack_size: string
   is_active: boolean
   created_at: string
 }
