@@ -7,6 +7,9 @@ from typing import List, Dict
 from supabase import create_client, Client
 from lidl_ie import LidlIEScraper
 from aldi_ie import AldiIEScraper
+from tesco_ie import TescoIEScraper
+from supervalu_ie import SuperValuIEScraper
+from dunnes_ie import DunnesIEScraper
 
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_SERVICE_KEY = os.environ["SUPABASE_SERVICE_KEY"]
@@ -104,7 +107,29 @@ def main():
     )
     push_prices(supabase, aldi_prices, "aldi", aldi_store)
 
-    print(f"\nDone. Total: {len(lidl_prices) + len(aldi_prices)} prices")
+    print("\n--- Tesco Ireland ---")
+    tesco_prices = TescoIEScraper().scrape()
+    tesco_store = get_or_create_store(
+        supabase, "tesco", "Tesco Ireland (National)", 51.8985, -8.4756, "Cork City"
+    )
+    push_prices(supabase, tesco_prices, "tesco", tesco_store)
+
+    print("\n--- SuperValu Ireland ---")
+    supervalu_prices = SuperValuIEScraper().scrape()
+    supervalu_store = get_or_create_store(
+        supabase, "supervalu", "SuperValu Ireland (National)", 51.8985, -8.4756, "Cork City"
+    )
+    push_prices(supabase, supervalu_prices, "supervalu", supervalu_store)
+
+    print("\n--- Dunnes Stores Ireland ---")
+    dunnes_prices = DunnesIEScraper().scrape()
+    dunnes_store = get_or_create_store(
+        supabase, "dunnes", "Dunnes Stores Ireland (National)", 51.8985, -8.4756, "Cork City"
+    )
+    push_prices(supabase, dunnes_prices, "dunnes", dunnes_store)
+
+    total = len(lidl_prices) + len(aldi_prices) + len(tesco_prices) + len(supervalu_prices) + len(dunnes_prices)
+    print(f"\nDone. Total: {total} prices")
 
 
 if __name__ == "__main__":
