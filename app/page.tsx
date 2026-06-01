@@ -44,6 +44,7 @@ export default function Home() {
         fetch(
           `/api/prices?lat=${lat}&lng=${lng}&radius=${radius}&variant=${variant}&sort=${sort}&pack_size=${packSize}`
         ),
+        // radius defaults to DEFAULT_RADIUS_KM (10km) from constants
         fetch(`/api/stores?lat=${lat}&lng=${lng}&radius=${radius}`),
       ])
 

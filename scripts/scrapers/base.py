@@ -48,7 +48,6 @@ class BaseScraper(ABC):
             r'\bfour\s*pack\b',
             r'\bmultipack\b',
             r'\bmulti\s*pack\b',
-            r'\b4\s*\.\s*',
             r'\b4\s*\*\s*',
         ]
 

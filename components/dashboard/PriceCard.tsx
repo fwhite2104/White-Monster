@@ -26,8 +26,8 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover }: Pric
   const shouldReduceMotion = useReducedMotion()
   const lat = userLat ?? CORK_CENTER.lat
   const lng = userLng ?? CORK_CENTER.lng
-  const store = price.stores!
-  const product = price.products!
+  const store = price.stores ?? { name: 'Unknown', retailer: 'other', lat: 0, lng: 0, suburb: '', address: '' }
+  const product = price.products ?? { name: 'Unknown Product', variant: 'unknown' }
   const retailerColor = getRetailerColor(store.retailer)
 
   const distance = getDistance(

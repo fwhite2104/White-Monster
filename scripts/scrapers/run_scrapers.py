@@ -157,10 +157,7 @@ def main():
 
     print("\n--- SuperValu Ireland (Soft Drinks - 4 Packs) ---")
     supervalu_sd_prices = SuperValuSoftDrinksScraper().scrape()
-    supervalu_sd_store = get_or_create_store(
-        supabase, "supervalu", "SuperValu Ireland Soft Drinks (National)", 51.8985, -8.4756, "Cork City"
-    )
-    push_prices(supabase, supervalu_sd_prices, "supervalu", supervalu_sd_store)
+    push_prices(supabase, supervalu_sd_prices, "supervalu", supervalu_store)
 
     print("\n--- Dunnes Stores Ireland ---")
     dunnes_prices = DunnesIEScraper().scrape()
