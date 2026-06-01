@@ -6,8 +6,8 @@ from typing import List, Dict
 
 from supabase import create_client, Client
 from base import BaseScraper
-# DISABLED: from lidl_ie import LidlIEScraper
-# DISABLED: from aldi_ie import AldiIEScraper
+from lidl_ie import LidlIEScraper
+from aldi_ie import AldiIEScraper
 from tesco_ie import TescoIEScraper
 from supervalu_ie import SuperValuIEScraper
 from supervalu_softdrinks_ie import SuperValuSoftDrinksScraper
@@ -15,6 +15,11 @@ from dunnes_ie import DunnesIEScraper
 
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_SERVICE_KEY = os.environ["SUPABASE_SERVICE_KEY"]
+
+
+def _log(message: str):
+    ts = datetime.now(timezone.utc).isoformat()
+    print(f"[{ts}] {message}")
 
 
 def _extract_variant(product_name: str) -> str:
@@ -80,6 +85,24 @@ def push_prices(
     supabase: Client, prices: List[Dict], retailer: str, store_id: str
 ):
     for p in prices:
+        if not BaseScraper._validate_product(p):
+            print(f"  [WARN] Skipping invalid product: {p}")
+            continue
+
+        # Validate scraped product before processing
+        if not isinstance(p, dict):
+            print(f"  [WARN] Skipping invalid product (not a dict): {p}")
+            continue
+        if not p.get("product_name") or not isinstance(p.get("product_name"), str) or not p["product_name"].strip():
+            print(f"  [WARN] Skipping product with missing/empty name")
+            continue
+        if not isinstance(p.get("price"), (int, float)) or p["price"] <= 0:
+            print(f"  [WARN] Skipping product with invalid price: {p.get('price')}")
+            continue
+        if p["price"] > 100:
+            print(f"  [WARN] Skipping product with suspicious price > 100 EUR: {p['price']}")
+            continue
+
         variant = _extract_variant(p["product_name"])
         pack_size = BaseScraper._detect_pack_size(p["product_name"])
 
@@ -134,40 +157,96 @@ def push_prices(
 
 
 def main():
+    required_env = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY']
+    missing = [k for k in required_env if not os.environ.get(k)]
+    if missing:
+        print(f"ERROR: Missing required environment variables: {', '.join(missing)}")
+        print("Set SUPABASE_URL and SUPABASE_SERVICE_KEY before running.")
+        sys.exit(1)
+
     supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-    print(f"=== Monster Cork Scraper === {datetime.now(timezone.utc).isoformat()}")
+    _log("=== Monster Cork Scraper ===")
 
-    print("\n--- Lidl Ireland --- SKIPPED (API DNS resolution error - domain no longer resolves)")
+    _log("--- Lidl Ireland ---")
+    try:
+        lidl_prices = LidlIEScraper().scrape()
+        lidl_store = get_or_create_store(
+            supabase, "lidl", "Lidl Ireland (National)", 51.8985, -8.4756, "Cork City"
+        )
+        push_prices(supabase, lidl_prices, "lidl", lidl_store)
+    except Exception as e:
+        _log(f"  [WARN] Lidl scraper failed: {e}")
+        lidl_prices = []
 
-    print("\n--- Aldi Ireland --- SKIPPED (API 403 Forbidden - Akamai blocked)")
+    _log("--- Aldi Ireland ---")
+    try:
+        aldi_prices = AldiIEScraper().scrape()
+        aldi_store = get_or_create_store(
+            supabase, "aldi", "Aldi Ireland (National)", 51.8985, -8.4756, "Cork City"
+        )
+        push_prices(supabase, aldi_prices, "aldi", aldi_store)
+    except Exception as e:
+        _log(f"  [WARN] Aldi scraper failed: {e}")
+        aldi_prices = []
 
-    print("\n--- Tesco Ireland ---")
-    tesco_prices = TescoIEScraper().scrape()
-    tesco_store = get_or_create_store(
-        supabase, "tesco", "Tesco Ireland (National)", 51.8985, -8.4756, "Cork City"
-    )
-    push_prices(supabase, tesco_prices, "tesco", tesco_store)
+    _log("--- Tesco Ireland ---")
+    try:
+        tesco_prices = TescoIEScraper().scrape()
+        tesco_store = get_or_create_store(
+            supabase, "tesco", "Tesco Ireland (National)", 51.8985, -8.4756, "Cork City"
+        )
+        push_prices(supabase, tesco_prices, "tesco", tesco_store)
+    except Exception as e:
+        _log(f"  [WARN] Tesco scraper failed: {e}")
+        tesco_prices = []
 
-    print("\n--- SuperValu Ireland (Sports & Energy) ---")
-    supervalu_prices = SuperValuIEScraper().scrape()
-    supervalu_store = get_or_create_store(
-        supabase, "supervalu", "SuperValu Ireland (National)", 51.8985, -8.4756, "Cork City"
-    )
-    push_prices(supabase, supervalu_prices, "supervalu", supervalu_store)
+    _log("--- SuperValu Ireland (Sports & Energy) ---")
+    try:
+        supervalu_prices = SuperValuIEScraper().scrape()
+        supervalu_store = get_or_create_store(
+            supabase, "supervalu", "SuperValu Ireland (National)", 51.8985, -8.4756, "Cork City"
+        )
+        push_prices(supabase, supervalu_prices, "supervalu", supervalu_store)
+    except Exception as e:
+        _log(f"  [WARN] SuperValu scraper failed: {e}")
+        supervalu_prices = []
 
-    print("\n--- SuperValu Ireland (Soft Drinks - 4 Packs) ---")
-    supervalu_sd_prices = SuperValuSoftDrinksScraper().scrape()
-    push_prices(supabase, supervalu_sd_prices, "supervalu", supervalu_store)
+    _log("--- SuperValu Ireland (Soft Drinks - 4 Packs) ---")
+    try:
+        supervalu_sd_prices = SuperValuSoftDrinksScraper().scrape()
+        push_prices(supabase, supervalu_sd_prices, "supervalu", supervalu_store)
+    except Exception as e:
+        _log(f"  [WARN] SuperValu Soft Drinks scraper failed: {e}")
+        supervalu_sd_prices = []
 
-    print("\n--- Dunnes Stores Ireland ---")
-    dunnes_prices = DunnesIEScraper().scrape()
-    dunnes_store = get_or_create_store(
-        supabase, "dunnes", "Dunnes Stores Ireland (National)", 51.8985, -8.4756, "Cork City"
-    )
-    push_prices(supabase, dunnes_prices, "dunnes", dunnes_store)
+    _log("--- Dunnes Stores Ireland ---")
+    try:
+        dunnes_prices = DunnesIEScraper().scrape()
+        dunnes_store = get_or_create_store(
+            supabase, "dunnes", "Dunnes Stores Ireland (National)", 51.8985, -8.4756, "Cork City"
+        )
+        push_prices(supabase, dunnes_prices, "dunnes", dunnes_store)
+    except Exception as e:
+        _log(f"  [WARN] Dunnes scraper failed: {e}")
+        dunnes_prices = []
 
-    total = len(tesco_prices) + len(supervalu_prices) + len(supervalu_sd_prices) + len(dunnes_prices)
-    print(f"\nDone. Total: {total} prices")
+    results = {}
+    for name, prices in [
+        ("Lidl", lidl_prices),
+        ("Aldi", aldi_prices),
+        ("Tesco", tesco_prices),
+        ("SuperValu", supervalu_prices),
+        ("SuperValu Soft Drinks", supervalu_sd_prices),
+        ("Dunnes", dunnes_prices),
+    ]:
+        results[name] = len(prices) if prices else "FAILED"
+
+    print(f"\n=== Scraper Results Summary ===")
+    for name, count in results.items():
+        status = f"{count} prices" if count != "FAILED" else "FAILED"
+        print(f"  {name}: {status}")
+    total = sum(v for v in results.values() if isinstance(v, int))
+    print(f"  Total: {total} prices")
 
 
 if __name__ == "__main__":

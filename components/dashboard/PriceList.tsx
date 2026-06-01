@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, useReducedMotion } from 'framer-motion'
-import { AlertCircle, SearchX } from 'lucide-react'
+import { SearchX } from 'lucide-react'
 import { PriceCard } from './PriceCard'
 import type { Price } from '@/lib/types'
 
@@ -17,7 +17,6 @@ export function PriceList({
   prices,
   userLat,
   userLng,
-  highlightedStoreId,
   onStoreHover,
 }: PriceListProps) {
   const shouldReduceMotion = useReducedMotion()
@@ -43,13 +42,14 @@ export function PriceList({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" role="list" aria-label="Price results">
       {prices.map((price, index) => (
         <motion.div
           key={price.id}
           initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.06, duration: 0.35, ease: 'easeOut' }}
+          role="listitem"
         >
           <PriceCard
             price={price}

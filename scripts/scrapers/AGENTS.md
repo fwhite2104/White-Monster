@@ -32,7 +32,7 @@
 - All scrapers filter for `"monster" in product_name.lower()` before returning results
 
 ## ANTI-PATTERNS
-- Do NOT add browser automation (Selenium/Playwright) — scrapers are API-only
+- Browser automation (Playwright) is ALLOWED for stores where API access is blocked (Aldi IE, Lidl IE). Prefer API/curl_cffi where it works.
 - Do NOT remove the 2s delay — politeness requirement for retailer APIs
 - Do NOT hardcode store coordinates in individual scraper files — use `run_scrapers.py` orchestration
 - Do NOT commit `SUPABASE_SERVICE_KEY` — it must come from env var only

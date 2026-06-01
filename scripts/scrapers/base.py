@@ -6,10 +6,12 @@ from typing import List, Dict
 
 
 class BaseScraper(ABC):
-    def __init__(self, retailer: str, delay: float = 2.0):
+    def __init__(self, retailer: str, delay: float = 2.0, timeout: int = 30):
         self.retailer = retailer
         self.delay = delay
+        self.timeout = timeout
         self.session = requests.Session()
+        self.session.timeout = self.timeout
         self.session.headers.update({
             "User-Agent": "MonsterCork/1.0 (Price Comparison Bot; +https://monster-cork.vercel.app)",
             "Accept-Language": "en-IE,en;q=0.9",
@@ -24,6 +26,49 @@ class BaseScraper(ABC):
 
     def _log(self, message: str):
         print(f"[{self.retailer}] {message}")
+
+    def _screenshot_debug(self, page, name_suffix=""):
+        try:
+            filename = f"debug_{self.retailer}_{name_suffix}.png" if name_suffix else f"debug_{self.retailer}.png"
+            page.screenshot(path=filename)
+            self._log(f"  Debug screenshot saved: {filename}")
+        except Exception as e:
+            self._log(f"  Failed to save debug screenshot: {e}")
+
+    def _retry_request(self, fn, max_retries=3, base_delay=2.0):
+        last_err = None
+        for attempt in range(max_retries + 1):
+            try:
+                result = fn()
+                if attempt > 0:
+                    self._log(f"  Retry attempt {attempt} succeeded")
+                return result
+            except Exception as e:
+                last_err = e
+                if attempt < max_retries:
+                    delay = base_delay * (2 ** attempt)
+                    self._log(f"  Attempt {attempt + 1} failed: {e}. Retrying in {delay:.1f}s...")
+                    time.sleep(delay)
+                else:
+                    self._log(f"  All {max_retries + 1} attempts failed. Last error: {e}")
+        raise last_err
+
+    @staticmethod
+    def _validate_product(product: dict) -> bool:
+        if not isinstance(product, dict):
+            return False
+        name = product.get('product_name')
+        if not isinstance(name, str) or not name.strip():
+            return False
+        price = product.get('price')
+        if not isinstance(price, (int, float)) or price <= 0:
+            return False
+        if price > 100:
+            return False
+        currency = product.get('currency')
+        if currency and currency != 'EUR':
+            return False
+        return True
 
     @staticmethod
     def _detect_pack_size(product_name: str) -> str:

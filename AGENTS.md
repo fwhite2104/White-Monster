@@ -17,7 +17,7 @@ monster-cork/
 │   └── api/                # Route handlers
 │       ├── prices/route.ts # GET/POST prices
 │       ├── stores/route.ts # GET stores by distance
-│       └── health/route.ts # Keep-alive / health ping
+│       └── health/route.ts # Health + data freshness monitoring
 ├── components/
 │   ├── ui/                 # shadcn/ui components (auto-generated)
 │   ├── dashboard/          # App-specific components (filters, list, map, upload)
@@ -39,7 +39,7 @@ monster-cork/
 │   ├── lidl_ie.py          # Lidl IE API scraper
 │   └── requirements.txt
 ├── supabase/migrations/    # SQL schema + seed data
-└── .github/workflows/      # scrape-daily.yml, keep-alive.yml
+└── .github/workflows/      # scrape-daily.yml
 ```
 
 ## WHERE TO LOOK
@@ -93,7 +93,6 @@ monster-cork/
 - **No tests** — zero test framework, zero test files
 - **Missing App Router convention files** — no `app/loading.tsx`, `app/error.tsx`, `app/not-found.tsx`, `middleware.ts`
 - **Dual `createClient` exports** — `lib/supabase/server.ts` and `lib/supabase/client.ts` both export `createClient()`, easy to import wrong one
-- **Duplicate keep-alive mechanisms** — `vercel.json` cron + `.github/workflows/keep-alive.yml` both ping Supabase every 3 days
 - **No pinned Python dependencies** — `scripts/scrapers/requirements.txt` uses `>=` ranges, no lock file
 - **Boilerplate public/ assets** — unused `next.svg`, `vercel.svg`, etc. ship to production
 - **Boilerplate README** — default `create-next-app` output, zero project-specific docs
@@ -101,7 +100,7 @@ monster-cork/
 ## UNIQUE STYLES
 - **Polyglot project**: TypeScript/Next.js web app + Python scrapers in same repo, no monorepo tooling
 - **Scrapers use Supabase service-role key** — bypass RLS by design (backend-only scripts)
-- **Health endpoint doubles as keep-alive ping** — `/api/health` queries `products` table to prevent Supabase free-tier pausing
+- **Health endpoint is the single keep-alive** — `/api/health` reports data freshness and prevents Supabase free-tier pausing (Vercel cron pings it every 3 days)
 - **Geolocation is client-side only** — `use-geolocation.ts` hook, no server-side geolocation
 - **All prices have dual source tracking** — `source: 'scraper' | 'user_upload'` field on every price row
 - **No middleware for Supabase session refresh** — `lib/supabase/server.ts` catch block explicitly notes this gap
@@ -124,7 +123,7 @@ SUPABASE_URL=<url> SUPABASE_SERVICE_KEY=<key> python run_scrapers.py
 ```
 
 ## NOTES
-- Supabase free tier pauses after 7 days of inactivity; dual cron systems exist to prevent this
+- Supabase free tier pauses after 7 days of inactivity; Vercel cron prevents this by pinging `/api/health` every 3 days
 - Scrapers run via GitHub Actions (`scrape-daily.yml`) at 06:00 UTC daily
 - `next-env.d.ts` is in `.gitignore` — do not commit it
 - `.sisyphus/` at repo root is OpenCode session metadata, not project code

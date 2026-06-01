@@ -19,7 +19,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { useGeolocation } from '@/hooks/use-geolocation'
-import { RETAILERS, CORK_CENTER } from '@/lib/constants'
+import { RETAILERS, CORK_CENTER, MONSTER_VARIANTS } from '@/lib/constants'
 
 export function StoreUploadForm({ onSuccess }: { onSuccess?: () => void }) {
   const [open, setOpen] = useState(false)
@@ -28,7 +28,8 @@ export function StoreUploadForm({ onSuccess }: { onSuccess?: () => void }) {
     storeName: '',
     retailer: 'other',
     price: '',
-    productName: 'White Monster Zero Sugar',
+    variant: 'zero_sugar',
+    packSize: 'single',
     notes: '',
   })
   const [submitting, setSubmitting] = useState(false)
@@ -47,16 +48,25 @@ export function StoreUploadForm({ onSuccess }: { onSuccess?: () => void }) {
     const lat = location?.lat ?? CORK_CENTER.lat
     const lng = location?.lng ?? CORK_CENTER.lng
 
+    const variantLabel = MONSTER_VARIANTS.find(v => v.value === formData.variant)?.label ?? 'White Monster Zero Sugar'
+    const suffix = formData.packSize === '4_pack' ? ' 4-Pack' : ''
+    const productName = `${variantLabel}${suffix}`
+
     setSubmitting(true)
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 15000)
     try {
       const response = await fetch('/api/prices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           storeName: formData.storeName,
           retailer: formData.retailer,
           price: priceVal,
-          productName: formData.productName,
+          productName,
+          variant: formData.variant,
+          packSize: formData.packSize,
           notes: formData.notes,
           lat,
           lng,
@@ -69,7 +79,8 @@ export function StoreUploadForm({ onSuccess }: { onSuccess?: () => void }) {
           storeName: '',
           retailer: 'other',
           price: '',
-          productName: 'White Monster Zero Sugar',
+          variant: 'zero_sugar',
+          packSize: 'single',
           notes: '',
         })
         onSuccess?.()
@@ -77,9 +88,14 @@ export function StoreUploadForm({ onSuccess }: { onSuccess?: () => void }) {
         const data = await response.json()
         setSubmitError(data.error || 'Failed to submit')
       }
-    } catch {
-      setSubmitError('Network error. Please try again.')
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setSubmitError('Request timed out. Please try again.')
+      } else {
+        setSubmitError('Network error. Please try again.')
+      }
     } finally {
+      clearTimeout(timeout)
       setSubmitting(false)
     }
   }
@@ -87,13 +103,13 @@ export function StoreUploadForm({ onSuccess }: { onSuccess?: () => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" aria-label="Report a price for a Monster Energy drink">
           Report a Price
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Report a White Monster Price</DialogTitle>
+          <DialogTitle>Report a Monster Price</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -123,6 +139,41 @@ export function StoreUploadForm({ onSuccess }: { onSuccess?: () => void }) {
                     {r.label}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Variant</Label>
+            <Select
+              value={formData.variant}
+              onValueChange={(v) => v && setFormData({ ...formData, variant: v })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MONSTER_VARIANTS.map((v) => (
+                  <SelectItem key={v.value} value={v.value}>
+                    {v.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Pack Size</Label>
+            <Select
+              value={formData.packSize}
+              onValueChange={(v) => v && setFormData({ ...formData, packSize: v })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="single">Single Can</SelectItem>
+                <SelectItem value="4_pack">4-Pack</SelectItem>
               </SelectContent>
             </Select>
           </div>

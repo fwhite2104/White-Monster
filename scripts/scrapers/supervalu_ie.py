@@ -12,6 +12,7 @@ Key findings from testing:
 """
 
 import requests
+import time
 from typing import List, Dict
 from base import BaseScraper
 
@@ -43,45 +44,51 @@ class SuperValuIEScraper(BaseScraper):
         max_items = 100
 
         while len(results) < max_items:
-            try:
-                response = self.session.get(
-                    self.api_url,
-                    params={
-                        "take": take,
-                        "page": page,
-                        "skip": (page - 1) * take,
-                    },
-                    timeout=30,
-                )
-                response.raise_for_status()
-                data = response.json()
-                items = data.get("items", [])
-                if not items:
+            response = None
+            for attempt in range(3):
+                try:
+                    response = self.session.get(
+                        self.api_url,
+                        params={
+                            "take": take,
+                            "page": page,
+                            "skip": (page - 1) * take,
+                        },
+                        timeout=self.timeout,
+                    )
+                    response.raise_for_status()
                     break
+                except requests.RequestException as e:
+                    if attempt == 2:
+                        self._log(f"  Error after 3 retries: {e}")
+                        break
+                    self._log(f"  Retry {attempt + 1}: {e}")
+                    time.sleep(2 * (attempt + 1))
 
-                for item in items:
-                    name = item.get("name", "")
-                    brand = item.get("brand", "")
-                    if "monster" in name.lower() or "monster" in brand.lower():
-                        results.append({
-                            "product_name": name,
-                            "price": float(item.get("priceNumeric", 0)),
-                            "currency": "EUR",
-                            "retailer": "supervalu",
-                        })
-
-                total = data.get("total", 0)
-                if page * take >= total or page * take >= max_items:
-                    break
-                page += 1
-                self._wait()
-
-            except requests.RequestException as e:
-                self._log(f"Error: {e}")
+            if response is None or not response.ok:
                 break
-            except Exception as e:
-                self._log(f"Error: {e}")
+
+            data = response.json()
+            items = data.get("items", [])
+            if not items:
                 break
+
+            for item in items:
+                name = item.get("name", "")
+                brand = item.get("brand", "")
+                if "monster" in name.lower() or "monster" in brand.lower():
+                    results.append({
+                        "product_name": name,
+                        "price": float(item.get("priceNumeric", 0)),
+                        "currency": "EUR",
+                        "retailer": "supervalu",
+                    })
+
+            total = data.get("total", 0)
+            if page * take >= total or page * take >= max_items:
+                break
+            page += 1
+            self._wait()
 
         filtered = self._filter_by_pack_size(results, pack_size)
         self._log(f"Found {len(filtered)} products (pack_size={pack_size})")

@@ -23,6 +23,7 @@ export function AnimatedCounter({
 
   useEffect(() => {
     if (shouldReduceMotion) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCount(target)
       return
     }

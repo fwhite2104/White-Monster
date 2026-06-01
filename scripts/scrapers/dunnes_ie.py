@@ -46,7 +46,7 @@ class DunnesIEScraper(BaseScraper):
         url = self.SEARCH_URL.format(query=query)
 
         try:
-            response = self.session.get(url, timeout=30)
+            response = self.session.get(url, timeout=self.timeout)
 
             if not response.ok:
                 self._log(f"Non-200 status: {response.status_code}")

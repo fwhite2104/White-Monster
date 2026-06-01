@@ -6,7 +6,10 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { CORK_CENTER, RETAILERS } from '@/lib/constants'
 
-delete (L.Icon.Default.prototype as any)._getIconUrl
+interface IconDefaultProto {
+  _getIconUrl?: () => string
+}
+delete (L.Icon.Default.prototype as IconDefaultProto)._getIconUrl
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -81,7 +84,10 @@ function MapCenter({ center }: { center: [number, number] }) {
 
 export default function StoreMap({ stores, userLocation, highlightedStoreId }: StoreMapProps) {
   const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true)
+  }, [])
 
   if (!mounted) {
     return <div className="h-[400px] w-full bg-muted animate-pulse rounded-lg" />

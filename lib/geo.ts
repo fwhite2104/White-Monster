@@ -36,8 +36,9 @@ export function sortByDistance<T extends { lat: number; lng: number }>(
     { latitude: centerLat, longitude: centerLng },
     items.map((item) => ({ latitude: item.lat, longitude: item.lng, ...item }))
   ).map((item) => {
-    const { latitude, longitude, ...rest } = item as any
-    return { lat: latitude, lng: longitude, ...rest } as T
+    const typedItem = item as Record<string, unknown>
+    const { latitude, longitude, ...rest } = typedItem
+    return { lat: Number(latitude), lng: Number(longitude), ...rest } as T
   })
 }
 

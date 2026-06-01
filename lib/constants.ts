@@ -24,3 +24,8 @@ export const MONSTER_VARIANTS = [
 export const DEFAULT_RADIUS_KM = 10
 export const MAX_RADIUS_KM = 50
 export const MIN_RADIUS_KM = 1
+
+export function getRetailerColor(retailer: string): string {
+  const found = RETAILERS.find((r) => r.value === retailer.toLowerCase())
+  return found?.color ?? '#6B7280'
+}

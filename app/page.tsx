@@ -39,13 +39,18 @@ export default function Home() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     setError(null)
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 15000)
     try {
       const [pricesRes, storesRes] = await Promise.all([
         fetch(
-          `/api/prices?lat=${lat}&lng=${lng}&radius=${radius}&variant=${variant}&sort=${sort}&pack_size=${packSize}`
+          `/api/prices?lat=${lat}&lng=${lng}&radius=${radius}&variant=${variant}&sort=${sort}&pack_size=${packSize}`,
+          { signal: controller.signal }
         ),
         // radius defaults to DEFAULT_RADIUS_KM (10km) from constants
-        fetch(`/api/stores?lat=${lat}&lng=${lng}&radius=${radius}`),
+        fetch(`/api/stores?lat=${lat}&lng=${lng}&radius=${radius}`, {
+          signal: controller.signal,
+        }),
       ])
 
       if (!pricesRes.ok) throw new Error('Failed to fetch prices')
@@ -60,13 +65,19 @@ export default function Home() {
         setLastUpdated(pricesData.prices[0].scraped_at)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setError('Request timed out. Please try again.')
+      } else {
+        setError(err instanceof Error ? err.message : 'Something went wrong')
+      }
     } finally {
+      clearTimeout(timeout)
       setLoading(false)
     }
   }, [lat, lng, radius, sort, variant, packSize])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData()
   }, [fetchData])
 
@@ -87,7 +98,7 @@ export default function Home() {
       <Header />
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6 space-y-6">
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between" aria-label="Price filters">
           <div className="flex-1 w-full sm:w-auto">
             <RadiusFilter value={radius} onChange={setRadius} />
           </div>
@@ -131,11 +142,13 @@ export default function Home() {
           />
         )}
 
-        <StoreMap
-          stores={storesWithDistance}
-          userLocation={location}
-          highlightedStoreId={highlightedStoreId}
-        />
+        <div aria-label="Store map">
+          <StoreMap
+            stores={storesWithDistance}
+            userLocation={location}
+            highlightedStoreId={highlightedStoreId}
+          />
+        </div>
 
         {!loading && !error && prices.length > 2 && (
           <PriceChart prices={prices} />
@@ -160,13 +173,15 @@ export default function Home() {
             </div>
           </motion.div>
         ) : (
-          <PriceList
-            prices={prices}
-            userLat={location?.lat}
-            userLng={location?.lng}
-            highlightedStoreId={highlightedStoreId}
-            onStoreHover={setHighlightedStoreId}
-          />
+          <div aria-label="Price results">
+            <PriceList
+              prices={prices}
+              userLat={location?.lat}
+              userLng={location?.lng}
+              highlightedStoreId={highlightedStoreId}
+              onStoreHover={setHighlightedStoreId}
+            />
+          </div>
         )}
       </main>
 

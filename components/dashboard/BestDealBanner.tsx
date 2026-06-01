@@ -3,18 +3,13 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import { TrendingDown, MapPin, Store } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { RETAILERS } from '@/lib/constants'
+import { getRetailerColor } from '@/lib/constants'
 import type { Price } from '@/lib/types'
 
 interface BestDealBannerProps {
   bestPrice: Price
   totalPrices: number
   savings?: number
-}
-
-function getRetailerColor(retailer: string): string {
-  const found = RETAILERS.find((r) => r.value === retailer.toLowerCase())
-  return found?.color ?? '#6B7280'
 }
 
 export function BestDealBanner({ bestPrice, totalPrices, savings }: BestDealBannerProps) {

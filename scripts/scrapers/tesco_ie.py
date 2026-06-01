@@ -43,7 +43,9 @@ class TescoIEScraper(BaseScraper):
         url = self.SEARCH_URL.format(query=query)
 
         try:
-            response = self.session.get(url, timeout=30)
+            response = self._retry_request(
+                lambda: self.session.get(url, timeout=self.timeout)
+            )
 
             if response.status_code > 400:
                 self._log(f"HTTP {response.status_code} - possible block")

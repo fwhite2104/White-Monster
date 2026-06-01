@@ -11,7 +11,7 @@ interface RadiusFilterProps {
 
 export function RadiusFilter({ value, onChange }: RadiusFilterProps) {
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4" aria-label="Search radius in kilometers">
       <span className="text-sm font-medium whitespace-nowrap">Radius</span>
       <Slider
         value={[value]}
@@ -23,6 +23,7 @@ export function RadiusFilter({ value, onChange }: RadiusFilterProps) {
         max={MAX_RADIUS_KM}
         step={1}
         className="flex-1"
+        aria-label="Search radius in kilometers"
       />
       <Badge variant="secondary" className="min-w-[60px] justify-center">
         {value} km

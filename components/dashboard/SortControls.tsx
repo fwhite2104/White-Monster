@@ -28,7 +28,7 @@ export function SortControls({
   onPackSizeChange,
 }: SortControlsProps) {
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-wrap gap-3" aria-label="Sort and filter prices">
       <Select value={sort} onValueChange={(val) => val && onSortChange(val)}>
         <SelectTrigger className="w-[150px]">
           <ArrowUpDown className="h-3.5 w-3.5 mr-2 text-muted-foreground" />

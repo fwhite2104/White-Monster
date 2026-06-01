@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 
 interface GeolocationState {
   location: { lat: number; lng: number } | null

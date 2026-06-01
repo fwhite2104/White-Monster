@@ -1,17 +1,12 @@
 'use client'
 
 import { motion, useReducedMotion } from 'framer-motion'
-import { RETAILERS } from '@/lib/constants'
+import { getRetailerColor } from '@/lib/constants'
 import type { Price } from '@/lib/types'
 
 interface PriceChartProps {
   prices: Price[]
   maxItems?: number
-}
-
-function getRetailerColor(retailer: string): string {
-  const found = RETAILERS.find((r) => r.value === retailer.toLowerCase())
-  return found?.color ?? '#6B7280'
 }
 
 export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
@@ -37,7 +32,7 @@ export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
 
       <div className="space-y-2">
         {sorted.map((price, index) => {
-          const store = price.stores!
+          const store = price.stores ?? { name: 'Unknown', retailer: 'other' }
           const priceNum = Number(price.price)
           const heightPercent = ((priceNum - minPrice) / priceRange) * 60 + 40
           const retailerColor = getRetailerColor(store.retailer)

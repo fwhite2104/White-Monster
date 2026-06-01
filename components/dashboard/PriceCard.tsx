@@ -1,12 +1,14 @@
 'use client'
 
+
 import { motion, useReducedMotion } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Clock, Tag, Share2, Bell } from 'lucide-react'
+import { MapPin, Clock, Share2, Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { getDistance } from 'geolib'
-import { CORK_CENTER, RETAILERS } from '@/lib/constants'
+import { CORK_CENTER, getRetailerColor } from '@/lib/constants'
+import { getTimeAgo } from '@/lib/geo'
 import type { Price } from '@/lib/types'
 
 interface PriceCardProps {
@@ -15,11 +17,6 @@ interface PriceCardProps {
   userLat?: number
   userLng?: number
   onHover?: () => void
-}
-
-function getRetailerColor(retailer: string): string {
-  const found = RETAILERS.find((r) => r.value === retailer.toLowerCase())
-  return found?.color ?? '#6B7280'
 }
 
 export function PriceCard({ price, isCheapest, userLat, userLng, onHover }: PriceCardProps) {
@@ -34,14 +31,6 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover }: Pric
     { latitude: lat, longitude: lng },
     { latitude: store.lat, longitude: store.lng }
   )
-
-  const timeAgo = (() => {
-    const diff = Date.now() - new Date(price.scraped_at).getTime()
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    if (hours < 1) return 'Just now'
-    if (hours < 24) return `${hours}h ago`
-    return `${Math.floor(hours / 24)}d ago`
-  })()
 
   return (
     <motion.div
@@ -111,7 +100,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover }: Pric
                 }}>
                   <Share2 className="h-3.5 w-3.5" />
                 </Button>
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => alert('Price alert feature coming soon!')}>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" aria-label="Notify me" title="Price alerts coming soon" disabled>
                   <Bell className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -133,7 +122,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover }: Pric
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Clock className="h-3 w-3" />
               <span>
-                {price.source === 'user_upload' ? 'User reported' : 'Auto-scraped'} &middot; {timeAgo}
+                {price.source === 'user_upload' ? 'User reported' : 'Auto-scraped'} &middot; {getTimeAgo(price.scraped_at)}
               </span>
             </div>
           </div>
