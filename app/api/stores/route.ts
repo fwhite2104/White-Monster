@@ -53,8 +53,13 @@ export async function GET(request: NextRequest) {
 
     const radiusMeters = radiusKm * 1000
     const typedStores = (stores ?? []) as Store[]
-    const withDistance = typedStores
-      .filter((s) => !s.name.includes('(National)'))
+
+    const physicalStores = typedStores.filter((s) => !s.name.includes('(National)'))
+    const nationalStores = typedStores.filter((s) => s.name.includes('(National)'))
+
+    const physicalRetailers = new Set(physicalStores.map((s) => s.retailer))
+
+    const withDistance = [...physicalStores, ...nationalStores.filter((s) => !physicalRetailers.has(s.retailer))]
       .map((s) => ({
         ...s,
         distance: calculateDistance(lat, lng, s.lat, s.lng),
