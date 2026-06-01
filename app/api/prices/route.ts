@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
   const radiusKm = parseFloat(searchParams.get('radius') ?? '20')
   const variant = searchParams.get('variant') ?? 'zero_sugar'
   const sort = searchParams.get('sort') ?? 'price'
+  const packSize = searchParams.get('pack_size') ?? 'all'
 
   const { data: prices, error } = await supabase
     .from('prices')
@@ -29,27 +30,40 @@ export async function GET(request: NextRequest) {
   }
 
   const radiusMeters = radiusKm * 1000
-  const filtered = prices
+  let filtered = prices
     ?.map((p: any) => ({
       ...p,
       distance: calculateDistance(lat, lng, p.stores.lat, p.stores.lng),
     }))
     .filter((p: any) => p.distance <= radiusMeters)
-    .sort((a: any, b: any) => {
-      if (sort === 'price') return Number(a.price) - Number(b.price)
-      if (sort === 'distance') return a.distance - b.distance
-      return a.stores.name.localeCompare(b.stores.name)
+
+  if (packSize !== 'all') {
+    filtered = filtered?.filter((p: any) => {
+      const name = (p.products?.name ?? '').toLowerCase()
+      const isFourPack = /\b4\s*pack\b|\b4\s*x\s*|\b4x\b|\b4\s*×|\bfour\s*pack\b|\bmultipack\b/.test(name)
+      const isSingle = /\bsingle\b|\b1\s*x\s*|\b1x\b|\b1\s*can\b|\bone\s*can\b/.test(name)
+      if (packSize === '4_pack') return isFourPack
+      if (packSize === 'single') return isSingle || !isFourPack
+      return true
     })
+  }
+
+  filtered = filtered?.sort((a: any, b: any) => {
+    if (sort === 'price') return Number(a.price) - Number(b.price)
+    if (sort === 'distance') return a.distance - b.distance
+    return a.stores.name.localeCompare(b.stores.name)
+  })
 
   return NextResponse.json({
     prices: filtered,
-    meta: {
-      total: filtered?.length ?? 0,
-      radius: radiusKm,
-      variant,
-      center: { lat, lng },
-      sort,
-    },
+      meta: {
+        total: filtered?.length ?? 0,
+        radius: radiusKm,
+        variant,
+        pack_size: packSize,
+        center: { lat, lng },
+        sort,
+      },
   })
 }
 

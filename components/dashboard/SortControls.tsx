@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowUpDown, Filter } from 'lucide-react'
+import { ArrowUpDown, Filter, Package } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -15,6 +15,8 @@ interface SortControlsProps {
   onSortChange: (sort: string) => void
   variant: string
   onVariantChange: (variant: string) => void
+  packSize: string
+  onPackSizeChange: (packSize: string) => void
 }
 
 export function SortControls({
@@ -22,6 +24,8 @@ export function SortControls({
   onSortChange,
   variant,
   onVariantChange,
+  packSize,
+  onPackSizeChange,
 }: SortControlsProps) {
   return (
     <div className="flex flex-wrap gap-3">
@@ -48,6 +52,18 @@ export function SortControls({
               {v.label}
             </SelectItem>
           ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={packSize} onValueChange={(val) => val && onPackSizeChange(val)}>
+        <SelectTrigger className="w-[160px]">
+          <Package className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+          <SelectValue placeholder="Pack Size" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Sizes</SelectItem>
+          <SelectItem value="single">Single Can</SelectItem>
+          <SelectItem value="4_pack">4-Pack</SelectItem>
         </SelectContent>
       </Select>
     </div>

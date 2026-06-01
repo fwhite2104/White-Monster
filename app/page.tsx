@@ -29,6 +29,7 @@ export default function Home() {
   const [radius, setRadius] = useState(DEFAULT_RADIUS_KM)
   const [sort, setSort] = useState('price')
   const [variant, setVariant] = useState('zero_sugar')
+  const [packSize, setPackSize] = useState('all')
   const [highlightedStoreId, setHighlightedStoreId] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
 
@@ -41,7 +42,7 @@ export default function Home() {
     try {
       const [pricesRes, storesRes] = await Promise.all([
         fetch(
-          `/api/prices?lat=${lat}&lng=${lng}&radius=${radius}&variant=${variant}&sort=${sort}`
+          `/api/prices?lat=${lat}&lng=${lng}&radius=${radius}&variant=${variant}&sort=${sort}&pack_size=${packSize}`
         ),
         fetch(`/api/stores?lat=${lat}&lng=${lng}&radius=${radius}`),
       ])
@@ -62,7 +63,7 @@ export default function Home() {
     } finally {
       setLoading(false)
     }
-  }, [lat, lng, radius, sort, variant])
+  }, [lat, lng, radius, sort, variant, packSize])
 
   useEffect(() => {
     fetchData()
@@ -94,6 +95,8 @@ export default function Home() {
             onSortChange={setSort}
             variant={variant}
             onVariantChange={setVariant}
+            packSize={packSize}
+            onPackSizeChange={setPackSize}
           />
         </div>
 
