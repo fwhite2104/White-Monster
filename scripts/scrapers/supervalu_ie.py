@@ -1,12 +1,32 @@
+"""SuperValu Ireland scraper for Monster Energy drink prices.
+
+Uses the Mercatus-powered category browse API (not productsearch which
+returns 404). Monster products live in the Sports & Energy Drinks category
+(O301710). The X-Shopping-Mode header is required for promotions data.
+
+Key findings from testing:
+- /productsearch endpoint returns 404 — does NOT exist
+- /categories/O301710/search returns Monster products with EUR prices
+- Store ID 5550 is valid for delivery mode (Cork area)
+- X-Shopping-Mode UUID unlocks promotions data
+"""
+
 import requests
 from typing import List, Dict
 from base import BaseScraper
 
 
 class SuperValuIEScraper(BaseScraper):
+    # Category O301710 = "Sports & Energy Drinks" — where Monster products live
+    CATEGORY_ID = "O301710"
+    STORE_ID = "5550"
+
     def __init__(self):
         super().__init__("supervalu", delay=1.5)
-        self.api_url = "https://storefrontgateway.supervalu.ie/api/stores/5550/productsearch"
+        self.api_url = (
+            f"https://storefrontgateway.supervalu.ie/api/stores/{self.STORE_ID}"
+            f"/categories/{self.CATEGORY_ID}/search"
+        )
         self.session.headers.update({
             "X-Site-Host": "https://shop.supervalu.ie",
             "X-Shopping-Mode": "22222222-2222-2222-2222-222222222222",
@@ -16,18 +36,20 @@ class SuperValuIEScraper(BaseScraper):
         })
 
     def scrape(self, query: str = "monster white") -> List[Dict]:
-        self._log(f"Searching: {query}")
+        self._log("Browsing Sports & Energy Drinks category (O301710)")
         results = []
         page = 1
+        take = 50
+        max_items = 100
 
-        while True:
+        while len(results) < max_items:
             try:
                 response = self.session.get(
                     self.api_url,
                     params={
-                        "search": query,
+                        "take": take,
                         "page": page,
-                        "take": 30,
+                        "skip": (page - 1) * take,
                     },
                     timeout=30,
                 )
@@ -39,7 +61,8 @@ class SuperValuIEScraper(BaseScraper):
 
                 for item in items:
                     name = item.get("name", "")
-                    if "monster" in name.lower():
+                    brand = item.get("brand", "")
+                    if "monster" in name.lower() or "monster" in brand.lower():
                         results.append({
                             "product_name": name,
                             "price": float(item.get("priceNumeric", 0)),
@@ -48,7 +71,7 @@ class SuperValuIEScraper(BaseScraper):
                         })
 
                 total = data.get("total", 0)
-                if page * 30 >= total:
+                if page * take >= total or page * take >= max_items:
                     break
                 page += 1
                 self._wait()

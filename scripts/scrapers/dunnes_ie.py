@@ -1,6 +1,17 @@
+"""
+Dunnes Stores Ireland scraper for Monster Energy drink prices.
+
+Dunnes uses a React SPA with all product data embedded in
+window.__PRELOADED_STATE__ as JSON. Product details are in
+productCardDictionary keyed by product IDs from searchResults.
+CSS selectors don't work because the server-rendered HTML has
+no product cards. curl_cffi with impersonate="chrome" bypasses
+Cloudflare. Search for "monster" (not "monster white").
+"""
+
 from curl_cffi import requests as curl_requests
-from bs4 import BeautifulSoup
 import re
+import json
 from typing import List, Dict
 from base import BaseScraper
 
@@ -30,7 +41,7 @@ class DunnesIEScraper(BaseScraper):
             "Accept-Language": "en-IE,en;q=0.9",
         })
 
-    def scrape(self, query: str = "monster white") -> List[Dict]:
+    def scrape(self, query: str = "monster") -> List[Dict]:
         self._log(f"Searching: {query}")
         url = self.SEARCH_URL.format(query=query)
 
@@ -45,34 +56,7 @@ class DunnesIEScraper(BaseScraper):
                 self._log("Cloudflare challenge detected — cannot scrape")
                 return []
 
-            soup = BeautifulSoup(response.text, "html.parser")
-            results = []
-
-            cards = self._find_product_cards(soup)
-            self._log(f"Found {len(cards)} product card candidates")
-
-            for card in cards:
-                name = self._extract_name(card)
-                if not name:
-                    continue
-                if "monster" not in name.lower():
-                    continue
-
-                price_text = self._extract_price_text(card)
-                if not price_text:
-                    continue
-
-                price = self._parse_price(price_text)
-                if price is None:
-                    continue
-
-                results.append({
-                    "product_name": name,
-                    "price": price,
-                    "currency": "EUR",
-                    "retailer": "dunnes",
-                })
-
+            results = self._extract_products(response.text)
             self._log(f"Found {len(results)} Monster products")
             return results
 
@@ -80,66 +64,97 @@ class DunnesIEScraper(BaseScraper):
             self._log(f"Error: {e}")
             return []
 
+    def _extract_products(self, html: str) -> List[Dict]:
+        state_marker = "__PRELOADED_STATE__"
+        state_idx = html.find(state_marker)
+        if state_idx == -1:
+            self._log("No __PRELOADED_STATE__ found")
+            return []
+
+        sr_match = re.search(
+            r'"searchResults":\[([^\]]*)\]', html[state_idx:]
+        )
+        if not sr_match:
+            self._log("No searchResults found")
+            return []
+
+        product_ids = re.findall(r'"(\d{9,12})"', sr_match.group(1))
+        if not product_ids:
+            return []
+
+        pcd_idx = html.rfind('"productCardDictionary":{', state_idx)
+        if pcd_idx == -1:
+            pcd_idx = html.find('"productCardDictionary":{', state_idx)
+        if pcd_idx == -1:
+            return []
+
+        results = []
+        for pid in product_ids:
+            product = self._extract_product(html, pcd_idx, pid)
+            if product:
+                results.append(product)
+
+        return results
+
+    def _extract_product(
+        self, html: str, search_start: int, product_id: str
+    ) -> Dict | None:
+        pid_key = f'"{product_id}":'
+        idx = html.find(pid_key, search_start)
+        if idx == -1:
+            return None
+
+        obj_start = html.find("{", idx + len(pid_key))
+        if obj_start == -1:
+            return None
+
+        depth = 0
+        obj_end = obj_start
+        for i in range(obj_start, min(obj_start + 10000, len(html))):
+            if html[i] == "{":
+                depth += 1
+            elif html[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    obj_end = i + 1
+                    break
+
+        if depth != 0:
+            return None
+
+        obj_str = html[obj_start:obj_end]
+        try:
+            product = json.loads(obj_str)
+        except json.JSONDecodeError:
+            return None
+
+        name = product.get("name", "")
+        brand = product.get("brand", "")
+        if "monster" not in name.lower() and "monster" not in brand.lower():
+            return None
+
+        price_data = product.get("price", {})
+        price_str = str(price_data.get("now", "")) if isinstance(price_data, dict) else str(price_data)
+        if not price_str:
+            return None
+
+        price_match = re.search(r"€?\s*(\d+\.?\d*)", price_str)
+        if not price_match:
+            return None
+
+        try:
+            price = float(price_match.group(1))
+        except ValueError:
+            return None
+
+        return {
+            "product_name": name,
+            "price": price,
+            "currency": "EUR",
+            "retailer": "dunnes",
+        }
+
     @staticmethod
     def _is_cloudflare_challenge(html: str) -> bool:
         lowered = html.lower()
         return any(marker.lower() in lowered for marker in CLOUDFLARE_MARKERS)
-
-    @staticmethod
-    def _find_product_cards(soup: BeautifulSoup):
-        selectors = [
-            {"class_": re.compile(r"product", re.I)},
-            {"class_": re.compile(r"card", re.I)},
-            {"class_": re.compile(r"item", re.I)},
-            {"class_": re.compile(r"tile", re.I)},
-            {"name": "li"},
-        ]
-        for sel in selectors:
-            cards = soup.find_all(**sel)
-            if len(cards) >= 2:
-                return cards
-        return []
-
-    @staticmethod
-    def _extract_name(card) -> str:
-        selectors = [
-            {"name": "h3"},
-            {"name": "h2"},
-            {"class_": re.compile(r"name", re.I)},
-            {"class_": re.compile(r"title", re.I)},
-            {"class_": re.compile(r"desc", re.I)},
-        ]
-        for sel in selectors:
-            el = card.find(**sel)
-            if el:
-                text = el.get_text(strip=True)
-                if text:
-                    return text
-        return ""
-
-    @staticmethod
-    def _extract_price_text(card) -> str:
-        selectors = [
-            {"string": re.compile(r"€")},
-            {"class_": re.compile(r"price", re.I)},
-            {"class_": re.compile(r"amount", re.I)},
-        ]
-        for sel in selectors:
-            el = card.find(**sel)
-            if el:
-                if hasattr(el, "get_text"):
-                    text = el.get_text(strip=True)
-                elif isinstance(el, str):
-                    text = el.strip()
-                else:
-                    continue
-                if "€" in text:
-                    return text
-        return ""
-
-    @staticmethod
-    def _parse_price(text: str) -> float | None:
-        match = re.search(r"€\s*([\d,]+\.?\d*)", text)
-        if match:
-            return float(match.group(1).replace(",", ""))
-        return None
