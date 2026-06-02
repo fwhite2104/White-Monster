@@ -34,6 +34,7 @@ export function StoreUploadForm({ onSuccess }: { onSuccess?: () => void }) {
   })
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitted, setSubmitted] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -74,6 +75,7 @@ export function StoreUploadForm({ onSuccess }: { onSuccess?: () => void }) {
       })
 
       if (response.ok) {
+        setSubmitted(true)
         setOpen(false)
         setFormData({
           storeName: '',
@@ -101,7 +103,7 @@ export function StoreUploadForm({ onSuccess }: { onSuccess?: () => void }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) setSubmitted(false) }}>
       <DialogTrigger>
         <Button variant="outline" size="sm" aria-label="Report a price for a Monster Energy drink">
           Report a Price
@@ -215,7 +217,7 @@ export function StoreUploadForm({ onSuccess }: { onSuccess?: () => void }) {
             <p className="text-sm text-destructive">{submitError}</p>
           )}
 
-          <Button type="submit" className="w-full" disabled={submitting}>
+          <Button type="submit" className="w-full" disabled={submitting || submitted}>
             {submitting ? 'Submitting...' : 'Submit Price'}
           </Button>
         </form>

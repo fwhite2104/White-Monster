@@ -255,39 +255,35 @@ export async function POST(request: NextRequest) {
     const notes = validateOptionalString(body.notes, 'notes', 500)
     const address = validateOptionalString(body.address, 'address', 300)
 
-    const { data: existingStore, error: findStoreError } = await supabase
+    const { data: storeData, error: storeError } = await supabase
       .from('stores')
+      .upsert(
+        { name: storeName, retailer, lat, lng, address },
+        { onConflict: 'name,retailer', ignoreDuplicates: true }
+      )
       .select('id')
-      .eq('name', storeName)
-      .eq('lat', lat)
-      .eq('lng', lng)
-      .single()
 
-    if (findStoreError && findStoreError.code !== 'PGRST116') {
-      return NextResponse.json({ error: findStoreError.message }, { status: 500 })
+    if (storeError) {
+      return NextResponse.json({ error: storeError.message }, { status: 500 })
     }
 
-    let storeId = existingStore?.id
+    let storeId = storeData?.[0]?.id
     if (!storeId) {
-      const { data: newStore, error: storeError } = await supabase
+      const { data: existingStore, error: findStoreError } = await supabase
         .from('stores')
-        .insert({
-          name: storeName,
-          retailer,
-          lat,
-          lng,
-          address,
-        })
         .select('id')
+        .eq('name', storeName)
+        .eq('retailer', retailer)
         .single()
-      if (storeError) {
-        return NextResponse.json({ error: storeError.message }, { status: 500 })
+
+      if (findStoreError) {
+        return NextResponse.json({ error: findStoreError.message }, { status: 500 })
       }
-      storeId = newStore?.id
+      storeId = existingStore?.id
     }
 
     if (!storeId) {
-      return NextResponse.json({ error: 'Failed to create store' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to create or find store' }, { status: 500 })
     }
 
     const { data: product, error: productError } = await supabase
@@ -302,24 +298,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
-    const { data, error } = await supabase
+    const { error: priceError } = await supabase
       .from('prices')
-      .insert({
-        store_id: storeId,
-        product_id: product.id,
-        price,
-        source: 'user_upload',
-        notes,
-      })
+      .upsert(
+        {
+          store_id: storeId,
+          product_id: product.id,
+          price,
+          source: 'user_upload',
+          notes,
+          scraped_at: null,
+        },
+        { onConflict: 'store_id,product_id,source' }
+      )
+
+    if (priceError) {
+      return NextResponse.json({ error: priceError.message }, { status: 500 })
+    }
+
+    const { data, error: fetchError } = await supabase
+      .from('prices')
       .select(`
         id, store_id, product_id, price, source, scraped_at,
         stores (id, name, retailer, address, suburb, lat, lng),
         products (id, name, variant, size_ml, image_url, pack_size)
       `)
+      .eq('store_id', storeId)
+      .eq('product_id', product.id)
+      .eq('source', 'user_upload')
       .single()
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (fetchError) {
+      return NextResponse.json({ error: fetchError.message }, { status: 500 })
     }
 
     return NextResponse.json(data, { status: 201 })

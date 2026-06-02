@@ -58,25 +58,22 @@ def _extract_variant(product_name: str) -> str:
 def get_or_create_store(
     supabase: Client, retailer: str, name: str, lat: float, lng: float, suburb: str
 ) -> str:
-    result = (
-        supabase.table("stores")
-        .select("id")
-        .eq("retailer", retailer)
-        .eq("name", name)
-        .execute()
-    )
-    if result.data:
-        return result.data[0]["id"]
-    result = (
-        supabase.table("stores")
-        .insert({
+    supabase.table("stores").upsert(
+        {
             "name": name,
             "retailer": retailer,
             "lat": lat,
             "lng": lng,
             "suburb": suburb,
             "address": "National pricing",
-        })
+        },
+        on_conflict="name,retailer",
+    ).execute()
+    result = (
+        supabase.table("stores")
+        .select("id")
+        .eq("retailer", retailer)
+        .eq("name", name)
         .execute()
     )
     return result.data[0]["id"]
@@ -85,6 +82,7 @@ def get_or_create_store(
 def push_prices(
     supabase: Client, prices: List[Dict], retailer: str, store_id: str
 ):
+    now = datetime.now(timezone.utc).isoformat()
     for p in prices:
         if not BaseScraper._validate_product(p):
             print(f"  [WARN] Skipping invalid product: {p}")
@@ -125,35 +123,16 @@ def push_prices(
         product_id = product_result.data[0]["id"]
         print(f"  Matched '{p['product_name']}' -> product_id={product_id}")
 
-        existing = (
-            supabase.table("prices")
-            .select("id")
-            .eq("store_id", store_id)
-            .eq("product_id", product_id)
-            .eq("source", "scraper")
-            .execute()
-        )
-        now = datetime.now(timezone.utc).isoformat()
-
-        if existing.data:
-            (
-                supabase.table("prices")
-                .update({"price": p["price"], "scraped_at": now})
-                .eq("id", existing.data[0]["id"])
-                .execute()
-            )
-        else:
-            (
-                supabase.table("prices")
-                .insert({
-                    "store_id": store_id,
-                    "product_id": product_id,
-                    "price": p["price"],
-                    "source": "scraper",
-                    "scraped_at": now,
-                })
-                .execute()
-            )
+        supabase.table("prices").upsert(
+            {
+                "store_id": store_id,
+                "product_id": product_id,
+                "price": p["price"],
+                "source": "scraper",
+                "scraped_at": now,
+            },
+            on_conflict="store_id,product_id,source",
+        ).execute()
         print(f"  {p['product_name']}: EUR {p['price']}")
 
 
