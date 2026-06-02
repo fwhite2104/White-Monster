@@ -183,11 +183,13 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange 
 
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogTrigger>
-        <Button variant="outline" size="sm" aria-label="Report a price for a Monster Energy drink">
-          Report a Price
-        </Button>
-      </DialogTrigger>
+      {externalOpen === undefined && (
+        <DialogTrigger>
+          <Button variant="outline" size="sm" aria-label="Report a price for a Monster Energy drink">
+            Report a Price
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className={submitted ? 'sm:max-w-md' : undefined}>
         {submitted ? (
           <div className="flex flex-col items-center justify-center py-10 gap-4 text-center">

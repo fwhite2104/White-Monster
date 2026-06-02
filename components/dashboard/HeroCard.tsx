@@ -1,9 +1,10 @@
 'use client'
 
 import { motion, useReducedMotion } from 'framer-motion'
-import { MapPin, Clock, TrendingDown } from 'lucide-react'
+import { MapPin, Clock, TrendingDown, CirclePlus } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { getRetailerColor } from '@/lib/constants'
 import { formatDistance, getTimeAgo } from '@/lib/geo'
 import type { Price } from '@/lib/types'
@@ -14,6 +15,7 @@ interface HeroCardProps {
   totalResults: number
   userLat?: number
   userLng?: number
+  onReportPrice?: () => void
 }
 
 function getVariantLabel(product: { variant?: string; pack_size?: string; size_ml?: number }): string {
@@ -26,7 +28,7 @@ function getVariantLabel(product: { variant?: string; pack_size?: string; size_m
   return [variantName, packLabel].filter(Boolean).join(' · ')
 }
 
-export function HeroCard({ bestPrice, nextBestPrice, totalResults }: HeroCardProps) {
+export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice }: HeroCardProps) {
   const shouldReduceMotion = useReducedMotion()
 
   if (!bestPrice) {
@@ -37,7 +39,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults }: HeroCardPro
         transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
       >
         <Card className="bg-card ring-1 ring-foreground/10">
-          <CardContent className="p-6 text-center space-y-3">
+          <CardContent className="p-6 text-center space-y-4">
             <div className="mx-auto w-14 h-14 rounded-full bg-muted/50 flex items-center justify-center">
               <MapPin className="h-7 w-7 text-muted-foreground" />
             </div>
@@ -49,6 +51,12 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults }: HeroCardPro
                 Try expanding your search radius or checking back later.
               </p>
             </div>
+            {onReportPrice && (
+              <Button onClick={onReportPrice} variant="default" size="lg" className="mt-2">
+                <CirclePlus className="size-4 mr-2" />
+                Be the first to report a price
+              </Button>
+            )}
           </CardContent>
         </Card>
       </motion.div>
@@ -155,10 +163,16 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults }: HeroCardPro
             )}
           </div>
 
-          <div className="mt-3 pt-3 border-t border-foreground/10">
+          <div className="mt-3 pt-3 border-t border-foreground/10 flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
               {totalResults} price{totalResults !== 1 ? 's' : ''} found nearby
             </p>
+            {onReportPrice && (
+              <Button onClick={onReportPrice} variant="outline" size="sm" className="gap-1.5 text-xs h-7">
+                <CirclePlus className="size-3.5" />
+                Report a Price
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

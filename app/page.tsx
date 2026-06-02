@@ -216,6 +216,7 @@ export default function Home() {
               totalResults={prices.length}
               userLat={location?.lat}
               userLng={location?.lng}
+              onReportPrice={() => setShowUploadForm(true)}
             />
           </>
         )}
@@ -265,12 +266,7 @@ export default function Home() {
         )}
 
         {!loading && !error && (
-          <div className="flex items-center justify-between">
-            <LastUpdated date={lastUpdated} />
-            <div className="hidden md:block">
-              <StoreUploadForm onSuccess={fetchData} />
-            </div>
-          </div>
+          <LastUpdated date={lastUpdated} />
         )}
 
         {!loading && !error && prices.length > 0 && (
