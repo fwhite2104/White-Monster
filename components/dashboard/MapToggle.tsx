@@ -31,7 +31,7 @@ export function MapToggle({ showMap, onToggle, storeCount, children }: MapToggle
         </span>
         <motion.span
           animate={{ rotate: showMap ? 180 : 0 }}
-          transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' }}
+          transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
           className="shrink-0"
         >
           <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -42,10 +42,10 @@ export function MapToggle({ showMap, onToggle, storeCount, children }: MapToggle
         {showMap && (
           <motion.div
             key="map-container"
-            initial={shouldReduceMotion ? false : { height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={shouldReduceMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+            initial={shouldReduceMotion ? false : { height: 0, opacity: 0, scale: 0.97, transformOrigin: "top" }}
+            animate={{ height: 'auto', opacity: 1, scale: 1 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { height: 0, opacity: 0, scale: 0.97, transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] } }}
+            transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
             className="overflow-hidden"
           >
             <div className="pt-2">

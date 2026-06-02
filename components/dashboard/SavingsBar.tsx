@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
 import { X, TrendingDown, MapPin } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import type { Price } from '@/lib/types'
 
 interface SavingsBarProps {
@@ -35,18 +36,18 @@ export function SavingsBar({ prices }: SavingsBarProps) {
     <AnimatePresence>
       {savings && !dismissed && (
         <motion.div
-          initial={shouldReduceMotion ? undefined : { y: 64, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={shouldReduceMotion ? undefined : { y: 64, opacity: 0 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
-          className={[
+          initial={shouldReduceMotion ? undefined : { y: 64, opacity: 0, scale: 0.97 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          exit={shouldReduceMotion ? undefined : { y: 64, opacity: 0, scale: 0.95, transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] } }}
+          transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+          className={cn(
             'fixed left-0 right-0 z-30',
-            'bottom-[68px] md:bottom-0',
+            'bottom-[68px] md:bottom-0', // Coupling: bottom-[68px] matches BottomTabNav height
             'bg-gradient-to-r from-primary/90 via-primary/85 to-primary/90',
             'backdrop-blur-md',
             'border-t border-primary/20',
-            'shadow-lg',
-          ].join(' ')}
+            'shadow-lg'
+          )}
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
           role="status"
           aria-live="polite"
@@ -76,13 +77,13 @@ export function SavingsBar({ prices }: SavingsBarProps) {
             <motion.button
               whileTap={shouldReduceMotion ? undefined : { scale: 0.9 }}
               onClick={() => setDismissed(true)}
-              className={[
+              className={cn(
                 'flex items-center justify-center',
                 'h-8 w-8 rounded-full shrink-0',
                 'bg-primary-foreground/10 hover:bg-primary-foreground/20',
                 'text-primary-foreground/80 hover:text-primary-foreground',
-                'transition-colors',
-              ].join(' ')}
+                'transition-colors'
+              )}
               aria-label="Dismiss savings bar"
             >
               <X className="h-4 w-4" />

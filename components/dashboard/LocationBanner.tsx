@@ -100,9 +100,9 @@ export function LocationBanner({
 
   return (
     <motion.div
-      initial={shouldReduceMotion ? false : { opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
+      initial={shouldReduceMotion ? false : { opacity: 0, y: -8, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
       className="space-y-3"
     >
       <div
@@ -186,10 +186,9 @@ export function LocationBanner({
 
       {showManual && (
         <motion.div
-          initial={shouldReduceMotion ? false : { opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={shouldReduceMotion ? {} : { opacity: 0, height: 0 }}
-          transition={{ duration: 0.25 }}
+          initial={shouldReduceMotion ? false : { opacity: 0, y: -8, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
           className="space-y-2"
         >
           <div className="relative">

@@ -54,9 +54,9 @@ export function BottomTabNav({
   return (
     <>
       <motion.button
-        initial={shouldReduceMotion ? false : { scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.3, ease: 'easeOut' }}
+        initial={shouldReduceMotion ? false : { scale: 0.8, opacity: 0, y: 8 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
         whileTap={shouldReduceMotion ? {} : { scale: 0.9 }}
         onClick={onReportPrice}
         className={cn(
@@ -74,9 +74,9 @@ export function BottomTabNav({
       </motion.button>
 
       <motion.div
-        initial={shouldReduceMotion ? false : { y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
+        initial={shouldReduceMotion ? false : { y: 20, opacity: 0, scale: 0.97 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
         className={cn(
           'fixed bottom-0 left-0 right-0 z-40',
           'bg-card/95 backdrop-blur-md border-t border-border',
@@ -115,7 +115,7 @@ export function BottomTabNav({
                     <motion.div
                       layoutId="activeTabIndicator"
                       className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 size-1 rounded-full bg-primary"
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                      transition={{ type: "spring", duration: 0.5, bounce: 0.2 }}
                     />
                   )}
                 </div>

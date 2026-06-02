@@ -143,7 +143,7 @@ export function FilterDrawer({
               onClick={filter.apply}
               aria-pressed={active}
               className={cn(
-                'inline-flex items-center h-11 px-4 rounded-full text-sm font-medium whitespace-nowrap transition-colors shrink-0',
+                'inline-flex items-center h-11 px-4 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 shrink-0',
                 active
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-card ring-1 ring-foreground/10 text-foreground hover:ring-primary/30 hover:bg-primary/5'
@@ -160,7 +160,7 @@ export function FilterDrawer({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-11 px-4 shrink-0 rounded-full relative"
+                className="h-11 px-4 shrink-0 rounded-full relative transition-all duration-200"
               />
             }
           >
@@ -276,8 +276,8 @@ export function FilterDrawer({
 
       {activeFilterCount > 0 && (
         <motion.div
-          initial={shouldReduceMotion ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.97, y: -4 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
           className="flex items-center gap-2"
         >
           <span className="text-xs text-muted-foreground">
