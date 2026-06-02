@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback, useId } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -17,15 +18,58 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
+  DialogFooter,
 } from '@/components/ui/dialog'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { RETAILERS, CORK_CENTER, MONSTER_VARIANTS } from '@/lib/constants'
+
+const CORK_STORES = [
+  'Centra Wilton',
+  'Centra Douglas',
+  'Centra Ballincollig',
+  'Centra Blackpool',
+  'Centra Mayfield',
+  'SuperValu Wilton',
+  'SuperValu Douglas',
+  'SuperValu Ballincollig',
+  'SuperValu Bishopstown',
+  'SuperValu Carrigaline',
+  'SuperValu Midleton',
+  'SuperValu Cobh',
+  'Tesco Wilton',
+  'Tesco Douglas',
+  'Tesco Ballincollig',
+  'Tesco Blackpool',
+  'Tesco Mahon Point',
+  'Tesco Carrigaline',
+  'Dunnes Stores Wilton',
+  'Dunnes Stores Douglas',
+  'Dunnes Stores Blackpool',
+  'Dunnes Stores Mahon Point',
+  'Dunnes Stores Ballincollig',
+  'Dunnes Stores Midleton',
+  'Dunnes Stores Carrigaline',
+  'Lidl Wilton',
+  'Lidl Douglas',
+  'Lidl Blackpool',
+  'Lidl Ballincollig',
+  'Lidl Mayfield',
+  'Lidl Mahon',
+  'Aldi Wilton',
+  'Aldi Douglas',
+  'Aldi Blackpool',
+  'Aldi Ballincollig',
+  'Aldi Mayfield',
+  'Aldi Mahon Point',
+]
 
 export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange }: { onSuccess?: () => void; externalOpen?: boolean; onExternalOpenChange?: (open: boolean) => void }) {
   const [internalOpen, setInternalOpen] = useState(false)
   const open = externalOpen !== undefined ? externalOpen : internalOpen
   const setOpen = onExternalOpenChange ?? setInternalOpen
   const { location, error: geoError, requestLocation } = useGeolocation()
+  const formId = useId()
   const [formData, setFormData] = useState({
     storeName: '',
     retailer: 'other',
@@ -34,25 +78,40 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange 
     packSize: 'single',
     notes: '',
   })
+  const [touched, setTouched] = useState<Set<string>>(new Set())
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
+
+  const markTouched = useCallback((field: string) => {
+    setTouched(prev => new Set(prev).add(field))
+  }, [])
+
+  const priceVal = parseFloat(formData.price)
+  const priceValid = formData.price === '' ? null : (
+    !isNaN(priceVal) && (
+      formData.packSize === '4_pack' ? (priceVal >= 3 && priceVal <= 20) : (priceVal >= 0.5 && priceVal <= 5)
+    )
+  )
+  const storeNameValid = formData.storeName.trim().length >= 3 ? true : formData.storeName === '' ? null : false
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitError(null)
 
-    const priceVal = parseFloat(formData.price)
     if (isNaN(priceVal)) {
       setSubmitError('Price must be a valid number')
+      markTouched('price')
       return
     }
     if (formData.packSize === '4_pack' && (priceVal < 3 || priceVal > 20)) {
       setSubmitError('4-pack price must be between €3 and €20')
+      markTouched('price')
       return
     }
     if (formData.packSize === 'single' && (priceVal < 0.5 || priceVal > 5)) {
       setSubmitError('Single can price must be between €0.50 and €5.00')
+      markTouched('price')
       return
     }
 
@@ -95,6 +154,7 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange 
           packSize: 'single',
           notes: '',
         })
+        setTouched(new Set())
         onSuccess?.()
       } else {
         const data = await response.json()
@@ -112,130 +172,244 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange 
     }
   }
 
+  const handleDialogClose = useCallback((v: boolean) => {
+    setOpen(v)
+    if (v) {
+      setSubmitted(false)
+      setSubmitError(null)
+      setTouched(new Set())
+    }
+  }, [setOpen])
+
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) setSubmitted(false) }}>
+    <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogTrigger>
         <Button variant="outline" size="sm" aria-label="Report a price for a Monster Energy drink">
           Report a Price
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Report a Monster Price</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label>Store Name</Label>
-            <Input
-              placeholder="e.g., Centra Wilton"
-              value={formData.storeName}
-              onChange={(e) =>
-                setFormData({ ...formData, storeName: e.target.value })
-              }
-              required
-            />
+      <DialogContent className={submitted ? 'sm:max-w-md' : undefined}>
+        {submitted ? (
+          <div className="flex flex-col items-center justify-center py-10 gap-4 text-center">
+            <div className="size-14 rounded-full bg-primary/10 flex items-center justify-center">
+              <svg
+                className="size-7 text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+            </div>
+            <div>
+              <DialogTitle className="text-lg mb-1">Price Submitted!</DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                Thank you for contributing to the community. Your price report helps everyone find the best deals on Monster Energy in Cork.
+              </p>
+            </div>
+            <DialogFooter>
+              <DialogClose>
+                <Button variant="outline">Done</Button>
+              </DialogClose>
+            </DialogFooter>
           </div>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>Report a Monster Price</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor={`${formId}-store`}>Store Name</Label>
+                <div className="relative">
+                  <Input
+                    id={`${formId}-store`}
+                    list={`${formId}-store-suggestions`}
+                    placeholder="e.g., Centra Wilton"
+                    value={formData.storeName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, storeName: e.target.value })
+                    }
+                    onBlur={() => markTouched('storeName')}
+                    className={
+                      touched.has('storeName') && storeNameValid === false
+                        ? 'border-destructive pr-9'
+                        : touched.has('storeName') && storeNameValid === true
+                          ? 'border-primary pr-9'
+                          : undefined
+                    }
+                    required
+                  />
+                  {touched.has('storeName') && storeNameValid !== null && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      {storeNameValid ? (
+                        <svg className="size-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                        </svg>
+                      ) : (
+                        <svg className="size-4 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                    </span>
+                  )}
+                  <datalist id={`${formId}-store-suggestions`}>
+                    {CORK_STORES.map((store) => (
+                      <option key={store} value={store} />
+                    ))}
+                  </datalist>
+                </div>
+              </div>
 
-          <div>
-            <Label>Retailer</Label>
-            <Select
-              value={formData.retailer}
-              onValueChange={(v) => v && setFormData({ ...formData, retailer: v })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {RETAILERS.map((r) => (
-                  <SelectItem key={r.value} value={r.value}>
-                    {r.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <div>
+                <Label htmlFor={`${formId}-retailer`}>Retailer</Label>
+                <Select
+                  value={formData.retailer}
+                  onValueChange={(v) => v && setFormData({ ...formData, retailer: v })}
+                >
+                  <SelectTrigger id={`${formId}-retailer`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {RETAILERS.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>
+                        {r.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div>
-            <Label>Variant</Label>
-            <Select
-              value={formData.variant}
-              onValueChange={(v) => v && setFormData({ ...formData, variant: v })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {MONSTER_VARIANTS.map((v) => (
-                  <SelectItem key={v.value} value={v.value}>
-                    {v.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <div>
+                <Label htmlFor={`${formId}-variant`}>Variant</Label>
+                <Select
+                  value={formData.variant}
+                  onValueChange={(v) => v && setFormData({ ...formData, variant: v })}
+                >
+                  <SelectTrigger id={`${formId}-variant`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONSTER_VARIANTS.map((v) => (
+                      <SelectItem key={v.value} value={v.value}>
+                        {v.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div>
-            <Label>Pack Size</Label>
-            <Select
-              value={formData.packSize}
-              onValueChange={(v) => v && setFormData({ ...formData, packSize: v })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="single">Single Can</SelectItem>
-                <SelectItem value="4_pack">4-Pack</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              <div>
+                <Label htmlFor={`${formId}-packsize`}>Pack Size</Label>
+                <Select
+                  value={formData.packSize}
+                  onValueChange={(v) => v && setFormData({ ...formData, packSize: v })}
+                >
+                  <SelectTrigger id={`${formId}-packsize`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="single">Single Can</SelectItem>
+                    <SelectItem value="4_pack">4-Pack</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div>
-            <Label>Price (EUR)</Label>
-            <Input
-              type="number"
-              step="0.01"
-              min={formData.packSize === '4_pack' ? 3 : 0.5}
-              max={formData.packSize === '4_pack' ? 20 : 5}
-              placeholder={formData.packSize === '4_pack' ? '6.50' : '2.50'}
-              value={formData.price}
-              onChange={(e) =>
-                setFormData({ ...formData, price: e.target.value })
-              }
-              required
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              {formData.packSize === '4_pack'
-                ? 'Enter the total 4-pack price (typically €5–€9)'
-                : 'Enter the price per single can (typically €1.50–€3)'}
-            </p>
-          </div>
+              <div>
+                <Label htmlFor={`${formId}-price`}>Price (EUR)</Label>
+                <div className="relative">
+                  <Input
+                    id={`${formId}-price`}
+                    type="number"
+                    step="0.01"
+                    min={formData.packSize === '4_pack' ? 3 : 0.5}
+                    max={formData.packSize === '4_pack' ? 20 : 5}
+                    placeholder={formData.packSize === '4_pack' ? '6.50' : '2.50'}
+                    value={formData.price}
+                    onChange={(e) =>
+                      setFormData({ ...formData, price: e.target.value })
+                    }
+                    onBlur={() => markTouched('price')}
+                    className={
+                      touched.has('price') && priceValid === false
+                        ? 'border-destructive pr-9'
+                        : touched.has('price') && priceValid === true
+                          ? 'border-primary pr-9'
+                          : undefined
+                    }
+                    required
+                  />
+                  {touched.has('price') && priceValid !== null && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      {priceValid ? (
+                        <svg className="size-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                        </svg>
+                      ) : (
+                        <svg className="size-4 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formData.packSize === '4_pack'
+                    ? 'Enter the total 4-pack price (typically €5–€9)'
+                    : 'Enter the price per single can (typically €1.50–€3)'}
+                </p>
+              </div>
 
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={requestLocation}
-            className="w-full"
-          >
-            {location ? 'Update Location' : 'Use My Location'}
-          </Button>
-          {geoError && (
-            <p className="text-xs text-destructive">{geoError}</p>
-          )}
-          <p className="text-xs text-muted-foreground">
-            {location
-              ? `Location: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`
-              : `Default: Cork City (${CORK_CENTER.lat}, ${CORK_CENTER.lng})`}
-          </p>
+              <div>
+                <Label htmlFor={`${formId}-notes`}>Notes <span className="text-xs text-muted-foreground font-normal">(optional)</span></Label>
+                <Textarea
+                  id={`${formId}-notes`}
+                  placeholder="e.g., Found at the back of the chiller, on special offer"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  className="min-h-[60px] resize-none text-sm"
+                  rows={2}
+                />
+              </div>
 
-          {submitError && (
-            <p className="text-sm text-destructive">{submitError}</p>
-          )}
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={requestLocation}
+                className="w-full"
+              >
+                {location ? 'Update Location' : 'Use My Location'}
+              </Button>
+              {geoError && (
+                <p className="text-xs text-destructive">{geoError}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {location
+                  ? `Location: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`
+                  : `Default: Cork City (${CORK_CENTER.lat}, ${CORK_CENTER.lng})`}
+              </p>
 
-          <Button type="submit" className="w-full" disabled={submitting || submitted}>
-            {submitting ? 'Submitting...' : 'Submit Price'}
-          </Button>
-        </form>
+              {submitError && (
+                <p className="text-sm text-destructive">{submitError}</p>
+              )}
+
+              <Button type="submit" className="w-full" disabled={submitting}>
+                {submitting ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="size-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Submitting...
+                  </span>
+                ) : (
+                  'Submit Price'
+                )}
+              </Button>
+            </form>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   )
