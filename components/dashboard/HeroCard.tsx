@@ -32,9 +32,9 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults }: HeroCardPro
   if (!bestPrice) {
     return (
       <motion.div
-        initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
       >
         <Card className="bg-card ring-1 ring-foreground/10">
           <CardContent className="p-6 text-center space-y-3">
@@ -69,7 +69,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults }: HeroCardPro
     <motion.div
       initial={shouldReduceMotion ? false : { opacity: 0, y: 16, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
+      transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
     >
       <Card className="relative overflow-hidden bg-card ring-1 ring-primary/30">
         <div
@@ -88,7 +88,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults }: HeroCardPro
                 className="text-4xl sm:text-5xl font-bold text-primary tracking-tight"
                 initial={shouldReduceMotion ? false : { scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
+                transition={{ type: 'spring', duration: 0.5, bounce: 0.2, delay: 0.1 }}
               >
                 €{Number(bestPrice.price).toFixed(2)}
               </motion.p>
@@ -140,9 +140,9 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults }: HeroCardPro
 
             {savings !== null && savings > 0 && (
               <motion.div
-                initial={shouldReduceMotion ? false : { opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3, duration: 0.4 }}
+                initial={shouldReduceMotion ? false : { opacity: 0, x: 12, scale: 0.95 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                transition={{ delay: 0.2, duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
                 className="mt-3 md:mt-0"
               >
                 <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary rounded-lg px-3 py-2">

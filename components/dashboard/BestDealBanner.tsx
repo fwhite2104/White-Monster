@@ -30,7 +30,7 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, savings:
     <motion.div
       initial={shouldReduceMotion ? false : { opacity: 0, y: -20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
+      transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
       className="relative overflow-hidden rounded-2xl"
     >
       <div
@@ -52,8 +52,8 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, savings:
           <div className="flex-1 space-y-2 min-w-0">
             <div className="flex items-center gap-2">
               <motion.div
-                animate={shouldReduceMotion ? {} : { rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                animate={shouldReduceMotion ? {} : { rotate: [0, 5, -5, 0] }}
+                transition={{ duration: 3, repeat: Infinity, repeatDelay: 4 }}
               >
                 <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               </motion.div>
@@ -120,7 +120,7 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, savings:
           style={{ background: `linear-gradient(90deg, transparent, ${retailerColor}, transparent)` }}
           initial={shouldReduceMotion ? false : { scaleX: 0 }}
           animate={{ scaleX: 1 }}
-          transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}
+          transition={{ duration: 1, delay: 0.5, ease: [0.23, 1, 0.32, 1] }}
         />
       </div>
     </motion.div>

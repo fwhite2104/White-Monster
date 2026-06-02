@@ -65,8 +65,7 @@ export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
         )}
       </div>
 
-      {/* --- SVG Bar Chart --- */}
-      <div className="w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0" style={{ willChange: 'transform, opacity' }}>
         <svg
           role="img"
           aria-label="Price comparison bar chart"
@@ -75,7 +74,6 @@ export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
           preserveAspectRatio="xMidYMid meet"
           style={{ height: 'auto' }}
         >
-          {/* Grid lines + Y-axis labels */}
           {gridLines.map((val) => {
             const y = 220 - ((val - chartMin) / priceRange) * 180
             return (
@@ -103,7 +101,6 @@ export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
             )
           })}
 
-          {/* Bars */}
           {sorted.map((price, index) => {
             const priceNum = Number(price.price)
             const barHeight = Math.max(
@@ -131,8 +128,8 @@ export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
 
             return (
               <g key={price.id}>
-                {/* Bar */}
                 <motion.rect
+                  layout
                   x={x}
                   y={220}
                   width={barWidth}
@@ -144,11 +141,10 @@ export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
                   transition={{
                     duration: 0.5,
                     delay: index * 0.05,
-                    ease: 'easeOut',
+                    ease: [0.23, 1, 0.32, 1],
                   }}
                 />
 
-                {/* Price label on top */}
                 <motion.text
                   x={x + barWidth / 2}
                   y={y - 8}
@@ -164,7 +160,6 @@ export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
                   €{priceNum.toFixed(2)}
                 </motion.text>
 
-                {/* Per-can price for 4-packs */}
                 {perCanPrice && (
                   <text
                     x={x + barWidth / 2}
@@ -178,7 +173,6 @@ export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
                   </text>
                 )}
 
-                {/* Bar label */}
                 <text
                   x={x + barWidth / 2}
                   y={228}
@@ -191,7 +185,6 @@ export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
                   {label}
                 </text>
 
-                {/* Scraped-at freshness */}
                 {price.scraped_at && (
                   <text
                     x={x + barWidth / 2}
@@ -205,7 +198,6 @@ export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
                   </text>
                 )}
 
-                {/* Best price badge */}
                 {isCheapest && (
                   <motion.rect
                     x={x - 1}
@@ -219,7 +211,7 @@ export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
                     strokeOpacity={0.5}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: [0.3, 0.7, 0.3] }}
-                    transition={{ duration: 2.5, repeat: Infinity }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                   />
                 )}
               </g>
@@ -228,7 +220,6 @@ export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
         </svg>
       </div>
 
-      {/* Legend */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/50">
         <div className="flex items-center gap-1.5">
           <div className="h-2 w-2 rounded-full bg-primary" />
