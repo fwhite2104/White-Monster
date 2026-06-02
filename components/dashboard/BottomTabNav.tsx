@@ -54,27 +54,28 @@ export function BottomTabNav({
 
   return (
     <>
-      <motion.button
-        initial={shouldReduceMotion ? false : { scale: 0.8, opacity: 0, y: 8 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-        whileTap={shouldReduceMotion ? {} : { scale: 0.88 }}
-        onClick={onReportPrice}
-        className={cn(
-          'fixed bottom-20 right-5 z-50',
-          'flex items-center justify-center',
-          'size-14 rounded-full',
-          'bg-primary text-primary-foreground',
-          'shadow-[0_4px_20px_oklch(0.72_0.22_145_/_0.35)]',
-          'hover:shadow-[0_4px_28px_oklch(0.72_0.22_145_/_0.5)]',
-          'active:bg-primary-dark',
-          'transition-shadow',
-          'md:hidden'
-        )}
-        aria-label="Report a price"
+      <div
+        className="fixed bottom-24 right-5 z-50 md:hidden"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        <CirclePlus className="size-6" />
-      </motion.button>
+        <motion.button
+          initial={shouldReduceMotion ? false : { scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.15, type: 'spring', duration: 0.35, bounce: 0.1 }}
+          whileTap={shouldReduceMotion ? {} : { scale: 0.97 }}
+          onClick={onReportPrice}
+          className={cn(
+            'flex flex-col items-center justify-center gap-0.5',
+            'size-16 min-h-[56px] min-w-[56px] rounded-full',
+            'bg-primary text-primary-foreground',
+            'shadow-[0_4px_24px_var(--color-brand-glow)]',
+          )}
+          aria-label="Report a price"
+        >
+          <CirclePlus className="size-7" />
+          <span className="text-[10px] font-medium uppercase tracking-wide">Report</span>
+        </motion.button>
+      </div>
 
       <motion.div
         initial={shouldReduceMotion ? false : { y: 20, opacity: 0 }}

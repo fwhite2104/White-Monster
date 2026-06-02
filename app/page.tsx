@@ -14,8 +14,12 @@ import { LoadingSkeleton } from '@/components/dashboard/LoadingSkeleton'
 import { LastUpdated } from '@/components/dashboard/LastUpdated'
 import { StoreUploadForm } from '@/components/dashboard/StoreUploadForm'
 import { LocationBanner } from '@/components/dashboard/LocationBanner'
-import { MapToggle } from '@/components/dashboard/MapToggle'
+import { Map } from 'lucide-react'
+import { MapBottomSheet } from '@/components/map/MapBottomSheet'
+import { MapInfoCard } from '@/components/map/MapInfoCard'
+import { ReportPriceCard } from '@/components/dashboard/ReportPriceCard'
 import { BottomTabNav, type TabKey } from '@/components/dashboard/BottomTabNav'
+import { Button } from '@/components/ui/button'
 import { SavingsBar } from '@/components/dashboard/SavingsBar'
 import { FirstVisitScreen } from '@/components/dashboard/FirstVisitScreen'
 import {
@@ -51,6 +55,9 @@ export default function Home() {
   const [highlightedStoreId, setHighlightedStoreId] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<TabKey>('list')
+  const [selectedStore, setSelectedStore] = useState<Store | null>(null)
+  const [reportStoreName, setReportStoreName] = useState<string | undefined>(undefined)
+  const [reportPromptShown, setReportPromptShown] = useState(false)
 
   const lat = location?.lat ?? CORK_CENTER.lat
   const lng = location?.lng ?? CORK_CENTER.lng
@@ -130,6 +137,33 @@ export default function Home() {
     setRadius(DEFAULT_RADIUS_KM)
   }, [])
 
+  const handleMarkerClick = useCallback(
+    (storeId: string) => {
+      const store = storesWithDistance.find((s) => s.id === storeId)
+      if (store) setSelectedStore(store)
+    },
+    [storesWithDistance],
+  )
+
+  const handleMapInfoReportPrice = useCallback(
+    (storeId: string) => {
+      const store = storesWithDistance.find((s) => s.id === storeId)
+      if (store) {
+        setReportStoreName(store.name)
+        setShowUploadForm(true)
+      }
+      setSelectedStore(null)
+    },
+    [storesWithDistance],
+  )
+
+  const handleUploadFormOpenChange = useCallback((open: boolean) => {
+    setShowUploadForm(open)
+    if (!open) {
+      setReportStoreName(undefined)
+    }
+  }, [])
+
   const activeFilterCount = [
     sort !== 'price',
     variant !== 'zero_sugar',
@@ -160,7 +194,7 @@ export default function Home() {
         Skip to content
       </a>
 
-      <Header />
+      <Header onReportPrice={() => setShowUploadForm(true)} />
 
       <main id="main-content" className="flex-1 max-w-6xl mx-auto w-full px-4 pt-4 pb-24 md:pb-6 md:pt-6 space-y-4 md:space-y-6">
         <LocationBanner
@@ -222,6 +256,10 @@ export default function Home() {
           </>
         )}
 
+        {!loading && !error && prices.length > 0 && (
+          <ReportPriceCard onReportPrice={() => setShowUploadForm(true)} variant="desktop" />
+        )}
+
         {loading && (
           <div className="space-y-4">
             <LoadingSkeleton variant="hero" />
@@ -244,24 +282,47 @@ export default function Home() {
 
         {!loading && !error && stores.length > 0 && (
           <>
+            {/* Mobile: trigger button + MapBottomSheet */}
             <div className="md:hidden">
-              <MapToggle
-                showMap={showMap}
-                onToggle={() => setShowMap(!showMap)}
-                storeCount={stores.length}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-11 px-4 w-full rounded-xl gap-2 text-sm font-medium"
+                onClick={() => setShowMap(true)}
+                aria-label={`View ${stores.length} store${stores.length !== 1 ? 's' : ''} on map`}
               >
+                <Map className="h-4 w-4 shrink-0" />
+                <span className="flex-1 text-left">
+                  View {stores.length} store{stores.length !== 1 ? 's' : ''} on map
+                </span>
+              </Button>
+              <MapBottomSheet isOpen={showMap} onClose={() => setShowMap(false)} title="Store Map">
                 <StoreMap
                   stores={storesWithDistance}
                   userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
                   highlightedStoreId={highlightedStoreId}
                 />
-              </MapToggle>
+              </MapBottomSheet>
             </div>
-            <div className="hidden md:block" aria-label="Store map">
+
+            {/* Desktop: inline StoreMap with MapInfoCard overlay */}
+            <div className="hidden md:block relative" aria-label="Store map">
+              {selectedStore && (
+                <div className="absolute inset-0 z-10 flex items-start justify-center p-4 pointer-events-none">
+                  <div className="pointer-events-auto w-full max-w-sm">
+                    <MapInfoCard
+                      store={selectedStore}
+                      onReportPrice={handleMapInfoReportPrice}
+                      onClose={() => setSelectedStore(null)}
+                    />
+                  </div>
+                </div>
+              )}
               <StoreMap
                 stores={storesWithDistance}
                 userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
                 highlightedStoreId={highlightedStoreId}
+                onMarkerClick={handleMarkerClick}
               />
             </div>
           </>
@@ -279,6 +340,9 @@ export default function Home() {
               userLng={location?.lng}
               highlightedStoreId={highlightedStoreId}
               onStoreHover={setHighlightedStoreId}
+              onReportPrice={() => setShowUploadForm(true)}
+              reportPromptShown={reportPromptShown}
+              onReportPromptSeen={() => setReportPromptShown(true)}
             />
           </div>
         )}
@@ -302,7 +366,8 @@ export default function Home() {
       <StoreUploadForm
         onSuccess={fetchData}
         externalOpen={showUploadForm}
-        onExternalOpenChange={setShowUploadForm}
+        onExternalOpenChange={handleUploadFormOpenChange}
+        prefillStoreName={reportStoreName}
       />
     </div>
   )

@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
-import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { motion, useReducedMotion, useInView, AnimatePresence } from 'framer-motion'
 import { SearchX, ChevronDown, ChevronUp } from 'lucide-react'
 import { PriceCard } from './PriceCard'
+import { ReportPriceCard } from '@/components/dashboard/ReportPriceCard'
 import type { Price } from '@/lib/types'
 
 const INITIAL_DISPLAY_COUNT = 3
+const REPORT_PROMPT_INSERT_INDEX = 5
 
 interface PriceListProps {
   prices: Price[]
@@ -14,6 +16,9 @@ interface PriceListProps {
   userLng?: number
   highlightedStoreId?: string | null
   onStoreHover?: (storeId: string | null) => void
+  onReportPrice?: () => void
+  reportPromptShown?: boolean
+  onReportPromptSeen?: () => void
 }
 
 export function PriceList({
@@ -21,13 +26,35 @@ export function PriceList({
   userLat,
   userLng,
   onStoreHover,
+  onReportPrice,
+  reportPromptShown,
+  onReportPromptSeen,
 }: PriceListProps) {
   const shouldReduceMotion = useReducedMotion()
   const [showAll, setShowAll] = useState(false)
+  const reportCardRef = useRef<HTMLDivElement>(null)
+  const reportCardInView = useInView(reportCardRef, { once: true, amount: 0.3 })
 
   const totalCount = prices.length
   const hiddenCount = Math.max(0, totalCount - INITIAL_DISPLAY_COUNT)
   const displayedPrices = showAll ? prices : prices.slice(0, INITIAL_DISPLAY_COUNT)
+
+  const shouldShowReportCard =
+    onReportPrice &&
+    displayedPrices.length > REPORT_PROMPT_INSERT_INDEX &&
+    !reportPromptShown
+
+  const handleReportPromptInView = useCallback(() => {
+    if (onReportPromptSeen) {
+      onReportPromptSeen()
+    }
+  }, [onReportPromptSeen])
+
+  useEffect(() => {
+    if (reportCardInView) {
+      handleReportPromptInView()
+    }
+  }, [reportCardInView, handleReportPromptInView])
 
   if (prices.length === 0) {
     return (
@@ -49,39 +76,68 @@ export function PriceList({
     )
   }
 
+  const items: React.ReactNode[] = []
+
+  displayedPrices.forEach((price, index) => {
+    if (shouldShowReportCard && index === REPORT_PROMPT_INSERT_INDEX) {
+      items.push(
+        <motion.div
+          key="report-price-card-inline"
+          ref={reportCardRef}
+          initial={shouldReduceMotion ? false : { scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+            transition={{
+              delay: showAll ? 0 : REPORT_PROMPT_INSERT_INDEX * 0.05,
+              duration: 0.3,
+              ease: [0.23, 1, 0.32, 1],
+            }}
+          layout
+          role="listitem"
+        >
+          <ReportPriceCard
+            onReportPrice={onReportPrice}
+            variant="inline"
+          />
+        </motion.div>
+      )
+    }
+
+    items.push(
+      <motion.div
+        key={price.id}
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 16, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.97 }}
+        transition={{
+          delay: showAll ? 0 : index * 0.05,
+          duration: 0.3,
+          ease: [0.23, 1, 0.32, 1],
+        }}
+        layout
+        role="listitem"
+      >
+        <PriceCard
+          price={price}
+          isCheapest={index === 0}
+          userLat={userLat}
+          userLng={userLng}
+          onHover={() => onStoreHover?.(price.store_id)}
+        />
+      </motion.div>
+    )
+  })
+
   return (
     <div className="space-y-2.5 sm:space-y-3" role="list" aria-label="Price results">
       <AnimatePresence mode="popLayout">
-        {displayedPrices.map((price, index) => (
-          <motion.div
-            key={price.id}
-            initial={shouldReduceMotion ? false : { opacity: 0, y: 16, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.97 }}
-            transition={{
-              delay: showAll ? 0 : index * 0.05,
-              duration: 0.35,
-              ease: [0.23, 1, 0.32, 1],
-            }}
-            layout
-            role="listitem"
-          >
-            <PriceCard
-              price={price}
-              isCheapest={index === 0}
-              userLat={userLat}
-              userLng={userLng}
-              onHover={() => onStoreHover?.(price.store_id)}
-            />
-          </motion.div>
-        ))}
+        {items}
       </AnimatePresence>
 
       {hiddenCount > 0 && (
         <motion.div
           initial={shouldReduceMotion ? false : { opacity: 0, y: 8, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ delay: showAll ? 0 : INITIAL_DISPLAY_COUNT * 0.05, duration: 0.35 }}
+          transition={{ delay: showAll ? 0 : INITIAL_DISPLAY_COUNT * 0.05, duration: 0.3 }}
         >
           <button
             type="button"
