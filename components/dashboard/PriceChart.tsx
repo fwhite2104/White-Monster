@@ -9,6 +9,11 @@ interface PriceChartProps {
   maxItems?: number
 }
 
+function formatLabel(retailer: string, packSize: string): string {
+  if (packSize === '4_pack') return `${retailer} (4pk)`
+  return retailer
+}
+
 export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
   const shouldReduceMotion = useReducedMotion()
   const sorted = [...prices].sort((a, b) => Number(a.price) - Number(b.price)).slice(0, maxItems)
@@ -16,8 +21,6 @@ export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
   if (sorted.length < 2) return null
 
   const maxPrice = Math.max(...sorted.map((p) => Number(p.price)))
-  const minPrice = Math.min(...sorted.map((p) => Number(p.price)))
-  const priceRange = maxPrice - minPrice || 1
 
   return (
     <motion.div
@@ -33,10 +36,12 @@ export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
       <div className="space-y-2">
         {sorted.map((price, index) => {
           const store = price.stores ?? { name: 'Unknown', retailer: 'other' }
+          const product = price.products ?? { name: 'Unknown Product', pack_size: 'single' }
           const priceNum = Number(price.price)
-          const heightPercent = ((priceNum - minPrice) / priceRange) * 60 + 40
-          const retailerColor = getRetailerColor(store.retailer)
+          const widthPercent = maxPrice > 0 ? (priceNum / maxPrice) * 100 : 0
+          const retailerColor = getRetailerColor(store.retailer ?? 'other')
           const isCheapest = index === 0
+          const label = formatLabel(store.retailer ?? 'other', product.pack_size ?? 'single')
 
           return (
             <motion.div
@@ -46,8 +51,8 @@ export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
               transition={{ delay: index * 0.05, duration: 0.3 }}
               className="flex items-center gap-3"
             >
-              <div className="w-20 sm:w-24 shrink-0">
-                <span className="text-xs font-medium truncate block">{store.retailer}</span>
+              <div className="w-20 sm:w-28 shrink-0">
+                <span className="text-xs font-medium truncate block">{label}</span>
               </div>
 
               <div className="flex-1 h-6 bg-muted/30 rounded-full overflow-hidden relative">
@@ -55,7 +60,7 @@ export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
                   className="h-full rounded-full relative"
                   style={{ backgroundColor: retailerColor }}
                   initial={shouldReduceMotion ? false : { width: 0 }}
-                  animate={{ width: `${heightPercent}%` }}
+                  animate={{ width: `${Math.max(widthPercent, 8)}%` }}
                   transition={{ duration: 0.6, delay: index * 0.05, ease: 'easeOut' }}
                 >
                   {isCheapest && (
@@ -85,7 +90,7 @@ export function PriceChart({ prices, maxItems = 8 }: PriceChartProps) {
         <div className="flex items-center gap-1.5">
           <div className="h-2 w-2 rounded-full bg-muted" />
           <span className="text-xs text-muted-foreground">
-            Range: EUR {minPrice.toFixed(2)} - EUR {maxPrice.toFixed(2)}
+            Range: EUR 0 - EUR {maxPrice.toFixed(2)}
           </span>
         </div>
       </div>
