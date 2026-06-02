@@ -24,6 +24,7 @@ function StateScreen({
     <motion.div
       initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.93, transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] } }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
       className="flex flex-col items-center justify-center py-16 px-4 text-center"
     >
@@ -211,8 +212,8 @@ export function StaleDataWarning({ lastUpdated }: { lastUpdated: string | null }
 
   return (
     <motion.div
-      initial={shouldReduceMotion ? false : { opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={shouldReduceMotion ? false : { opacity: 0, y: -8, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.3 }}
       className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-4 py-3 text-sm text-amber-200"
     >
