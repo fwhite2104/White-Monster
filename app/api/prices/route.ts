@@ -18,6 +18,8 @@ import {
   validateOptionalString,
 } from '@/lib/validate'
 
+export const dynamic = 'force-dynamic'
+
 interface StoreData {
   id: string
   name: string
@@ -199,21 +201,32 @@ export async function GET(request: NextRequest) {
           return true
         })
 
-    packFiltered.sort((a, b) => {
-      if (sort === 'price') return Number(a.price) - Number(b.price)
+    const withPerCanPrice = packFiltered.map((p) => ({
+      ...p,
+      per_can_price: p.products?.pack_size === '4_pack'
+        ? Number((Number(p.price) / 4).toFixed(2))
+        : Number(p.price),
+    }))
+
+    withPerCanPrice.sort((a, b) => {
+      if (sort === 'price') return Number(a.per_can_price) - Number(b.per_can_price)
       if (sort === 'distance') return a.distance - b.distance
       return a.stores.name.localeCompare(b.stores.name)
     })
 
     return NextResponse.json({
-      prices: packFiltered,
+      prices: withPerCanPrice,
       meta: {
-        total: packFiltered.length,
+        total: withPerCanPrice.length,
         radius: radiusKm,
         variant,
         pack_size: packSize,
         center: { lat, lng },
         sort,
+      },
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
       },
     })
   } catch (err) {
@@ -248,9 +261,9 @@ export async function POST(request: NextRequest) {
       body.retailer && body.retailer !== ''
         ? validateEnum(body.retailer, 'retailer', RETAILERS.map((r) => r.value))
         : 'other'
-    const price = validatePrice(body.price)
-    const variant = validateEnum(body.variant ?? 'zero_sugar', 'variant', MONSTER_VARIANTS.map((v) => v.value))
     const packSize = validateEnum(body.packSize ?? 'single', 'packSize', ['single', '4_pack'])
+    const price = validatePrice(body.price, packSize)
+    const variant = validateEnum(body.variant ?? 'zero_sugar', 'variant', MONSTER_VARIANTS.map((v) => v.value))
     const lat = validateLat(body.lat)
     const lng = validateLng(body.lng)
     const notes = validateOptionalString(body.notes, 'notes', 500)

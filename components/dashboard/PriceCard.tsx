@@ -28,6 +28,11 @@ function getVariantLabel(product: { variant?: string; pack_size?: string }): str
   return [variantName, packLabel].filter(Boolean).join(' · ')
 }
 
+function formatPerCanPrice(price: Price): string | null {
+  if (price.products?.pack_size !== '4_pack') return null
+  return Number(price.per_can_price ?? Number(price.price) / 4).toFixed(2)
+}
+
 export function PriceCard({ price, isCheapest, userLat, userLng, onHover }: PriceCardProps) {
   const shouldReduceMotion = useReducedMotion()
   const lat = userLat ?? CORK_CENTER.lat
@@ -42,9 +47,11 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover }: Pric
   )
 
   const variantLabel = getVariantLabel(product)
+  const perCanDisplay = formatPerCanPrice(price)
 
   const handleShare = () => {
-    const text = `Found ${product.name} for €${Number(price.price).toFixed(2)} at ${store.name}!`
+    const canPrice = perCanDisplay ? ` (€${perCanDisplay}/can)` : ''
+    const text = `Found ${product.name} for €${Number(price.price).toFixed(2)}${canPrice} at ${store.name}!`
     navigator.clipboard.writeText(`${text} ${window.location.href}`)
   }
 
@@ -90,6 +97,11 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover }: Pric
                 >
                   €{Number(price.price).toFixed(2)}
                 </p>
+                {perCanDisplay && (
+                  <span className="text-xs text-muted-foreground">
+                    (€{perCanDisplay}/can)
+                  </span>
+                )}
                 {isCheapest && (
                   <motion.div
                     initial={shouldReduceMotion ? false : { scale: 0 }}

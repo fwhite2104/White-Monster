@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { SlidersHorizontal, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -34,6 +34,8 @@ interface FilterDrawerProps {
   onPackSizeChange: (packSize: string) => void
   radius: number
   onRadiusChange: (radius: number) => void
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 interface QuickFilter {
@@ -53,9 +55,13 @@ export function FilterDrawer({
   onPackSizeChange,
   radius,
   onRadiusChange,
+  open: externalOpen,
+  onOpenChange: externalOnOpenChange,
 }: FilterDrawerProps) {
   const shouldReduceMotion = useReducedMotion()
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = externalOpen !== undefined ? externalOpen : internalOpen
+  const setOpen = externalOnOpenChange || setInternalOpen
 
   const quickFilters: QuickFilter[] = [
     {
@@ -92,6 +98,26 @@ export function FilterDrawer({
     radius !== DEFAULTS.radius,
   ].filter(Boolean).length
 
+  const pillGroupRef = useRef<HTMLDivElement>(null)
+
+  const handlePillKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    const buttons = pillGroupRef.current?.querySelectorAll<HTMLButtonElement>('button')
+    if (!buttons || buttons.length === 0) return
+
+    const currentIndex = Array.from(buttons).findIndex((btn) => btn === document.activeElement)
+    if (currentIndex === -1) return
+
+    if (e.key === 'ArrowRight') {
+      e.preventDefault()
+      const nextIndex = (currentIndex + 1) % buttons.length
+      buttons[nextIndex]?.focus()
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault()
+      const prevIndex = (currentIndex - 1 + buttons.length) % buttons.length
+      buttons[prevIndex]?.focus()
+    }
+  }, [])
+
   const handleReset = useCallback(() => {
     onSortChange(DEFAULTS.sort)
     onVariantChange(DEFAULTS.variant)
@@ -101,7 +127,13 @@ export function FilterDrawer({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+      <div
+        ref={pillGroupRef}
+        role="group"
+        aria-label="Quick filters"
+        className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none"
+        onKeyDown={handlePillKeyDown}
+      >
         {quickFilters.map((filter) => {
           const active = filter.isActive(sort, variant, packSize, radius)
           return (
@@ -109,6 +141,7 @@ export function FilterDrawer({
               key={filter.label}
               whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
               onClick={filter.apply}
+              aria-pressed={active}
               className={cn(
                 'inline-flex items-center h-11 px-4 rounded-full text-sm font-medium whitespace-nowrap transition-colors shrink-0',
                 active
@@ -252,7 +285,7 @@ export function FilterDrawer({
           </span>
           <button
             onClick={handleReset}
-            className="text-xs text-primary hover:underline"
+            className="text-xs text-primary hover:underline min-h-[44px] inline-flex items-center px-2"
           >
             Reset all
           </button>

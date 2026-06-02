@@ -43,8 +43,16 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange 
     setSubmitError(null)
 
     const priceVal = parseFloat(formData.price)
-    if (isNaN(priceVal) || priceVal < 1 || priceVal > 50) {
-      setSubmitError('Price must be between EUR 1 and EUR 50')
+    if (isNaN(priceVal)) {
+      setSubmitError('Price must be a valid number')
+      return
+    }
+    if (formData.packSize === '4_pack' && (priceVal < 3 || priceVal > 20)) {
+      setSubmitError('4-pack price must be between €3 and €20')
+      return
+    }
+    if (formData.packSize === 'single' && (priceVal < 0.5 || priceVal > 5)) {
+      setSubmitError('Single can price must be between €0.50 and €5.00')
       return
     }
 
@@ -187,15 +195,20 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange 
             <Input
               type="number"
               step="0.01"
-              min="1"
-              max="50"
-              placeholder="2.50"
+              min={formData.packSize === '4_pack' ? 3 : 0.5}
+              max={formData.packSize === '4_pack' ? 20 : 5}
+              placeholder={formData.packSize === '4_pack' ? '6.50' : '2.50'}
               value={formData.price}
               onChange={(e) =>
                 setFormData({ ...formData, price: e.target.value })
               }
               required
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              {formData.packSize === '4_pack'
+                ? 'Enter the total 4-pack price (typically €5–€9)'
+                : 'Enter the price per single can (typically €1.50–€3)'}
+            </p>
           </div>
 
           <Button

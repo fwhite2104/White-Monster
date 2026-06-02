@@ -49,9 +49,13 @@ export function validateOptionalString(value: unknown, field: string, max: numbe
   return value
 }
 
-export function validatePrice(value: unknown, field = 'price'): number {
+export function validatePrice(value: unknown, packSize: string = 'single', field = 'price'): number {
   const num = Number(value)
   if (!Number.isFinite(num)) throw new Error(`Invalid ${field}: must be a valid finite number`)
-  if (num < 1 || num > 50) throw new Error(`Invalid ${field}: must be between 1 and 50`)
+  if (packSize === '4_pack') {
+    if (num < 3 || num > 20) throw new Error(`Invalid ${field}: 4-pack price must be between €3 and €20`)
+  } else {
+    if (num < 0.5 || num > 5) throw new Error(`Invalid ${field}: single can price must be between €0.50 and €5.00`)
+  }
   return num
 }

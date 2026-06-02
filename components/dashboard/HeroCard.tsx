@@ -59,6 +59,9 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults }: HeroCardPro
   const product = bestPrice.products ?? { name: 'Monster', variant: 'unknown', pack_size: 'single' }
   const retailerColor = getRetailerColor(store.retailer)
   const distance = typeof bestPrice.distance === 'number' ? bestPrice.distance : 0
+  const perCanPrice = product.pack_size === '4_pack'
+    ? Number(bestPrice.per_can_price ?? Number(bestPrice.price) / 4).toFixed(2)
+    : null
   const savings = nextBestPrice ? Number(nextBestPrice.price) - Number(bestPrice.price) : null
   const variantLabel = getVariantLabel(product)
 
@@ -89,6 +92,11 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults }: HeroCardPro
               >
                 €{Number(bestPrice.price).toFixed(2)}
               </motion.p>
+              {perCanPrice && (
+                <span className="text-xs text-muted-foreground md:text-sm">
+                  (€{perCanPrice}/can)
+                </span>
+              )}
               <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium md:text-sm">
                 best price
               </span>

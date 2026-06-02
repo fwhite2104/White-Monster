@@ -19,6 +19,9 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, savings:
   const store = bestPrice.stores ?? { name: 'Unknown Store', retailer: 'other', suburb: '' }
   const product = bestPrice.products ?? { name: 'Unknown Product' }
   const retailerColor = getRetailerColor(store.retailer ?? 'other')
+  const perCanPrice = bestPrice.products?.pack_size === '4_pack'
+    ? Number(bestPrice.per_can_price ?? Number(bestPrice.price) / 4).toFixed(2)
+    : null
   const savings = nextBestPrice
     ? Number(nextBestPrice.price) - Number(bestPrice.price)
     : legacySavings ?? null
@@ -63,6 +66,11 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, savings:
               <span className="text-primary">
                 €{Number(bestPrice.price).toFixed(2)}
               </span>
+              {perCanPrice && (
+                <span className="text-muted-foreground text-sm sm:text-base md:text-lg font-normal ml-2">
+                  (€{perCanPrice}/can)
+                </span>
+              )}
               <span className="text-muted-foreground text-sm sm:text-base md:text-lg font-normal ml-2">
                 for {product.name}
               </span>

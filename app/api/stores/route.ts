@@ -10,6 +10,8 @@ import {
 import { validateLat, validateLng, validateRadius, validateEnum } from '@/lib/validate'
 import type { Store } from '@/lib/types'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
   const searchParams = request.nextUrl.searchParams
@@ -73,7 +75,11 @@ export async function GET(request: NextRequest) {
     const withDistance = [...physicalStoresInRange, ...nationalStoresInRange]
       .sort((a, b) => a.distance - b.distance)
 
-    return NextResponse.json({ stores: withDistance })
+    return NextResponse.json({ stores: withDistance }, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      },
+    })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Invalid input'
     return NextResponse.json({ error: message }, { status: 400 })

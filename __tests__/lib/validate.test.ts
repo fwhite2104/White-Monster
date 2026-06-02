@@ -65,14 +65,23 @@ describe('validateEnum', () => {
 })
 
 describe('validatePrice', () => {
-  it('accepts valid prices', () => {
+  it('accepts valid single can prices', () => {
     expect(validatePrice(2.50)).toBe(2.50)
-    expect(validatePrice(1)).toBe(1)
-    expect(validatePrice(50)).toBe(50)
+    expect(validatePrice(0.5)).toBe(0.5)
+    expect(validatePrice(5)).toBe(5)
   })
-  it('rejects prices outside 1-50', () => {
-    expect(() => validatePrice(0.99)).toThrow()
-    expect(() => validatePrice(51)).toThrow()
+  it('accepts valid 4-pack prices', () => {
+    expect(validatePrice(6.50, '4_pack')).toBe(6.50)
+    expect(validatePrice(3, '4_pack')).toBe(3)
+    expect(validatePrice(20, '4_pack')).toBe(20)
+  })
+  it('rejects single can prices outside 0.50-5.00', () => {
+    expect(() => validatePrice(0.49)).toThrow()
+    expect(() => validatePrice(5.01)).toThrow()
+  })
+  it('rejects 4-pack prices outside 3-20', () => {
+    expect(() => validatePrice(2.99, '4_pack')).toThrow()
+    expect(() => validatePrice(20.01, '4_pack')).toThrow()
   })
   it('rejects non-finite numbers', () => {
     expect(() => validatePrice(NaN)).toThrow()

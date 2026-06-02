@@ -8,7 +8,7 @@ export function Footer() {
         </p>
         <p className="mt-1">
           Map data &copy;{' '}
-          <a href="https://www.openstreetmap.org/copyright" className="underline">
+          <a href="https://www.openstreetmap.org/copyright" className="underline min-h-[44px] inline-flex items-center">
             OpenStreetMap
           </a>{' '}
           contributors.

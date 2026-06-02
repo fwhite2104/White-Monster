@@ -36,6 +36,8 @@ export interface Price {
   stores?: Store
   products?: Product
   distance?: number
+  /** Price per individual can, computed from pack_size. Equal to `price` for singles, `price / 4` for 4-packs. */
+  per_can_price?: number
 }
 
 export interface PriceWithDistance extends Price {

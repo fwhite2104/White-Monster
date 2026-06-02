@@ -7,6 +7,7 @@ import type { Price, Store } from '@/lib/types'
 import { Header } from '@/components/shared/Header'
 import { Footer } from '@/components/shared/Footer'
 import { HeroCard } from '@/components/dashboard/HeroCard'
+import { BestDealBanner } from '@/components/dashboard/BestDealBanner'
 import { FilterDrawer } from '@/components/dashboard/FilterDrawer'
 import { PriceList } from '@/components/dashboard/PriceList'
 import { PriceChart } from '@/components/dashboard/PriceChart'
@@ -15,7 +16,8 @@ import { LastUpdated } from '@/components/dashboard/LastUpdated'
 import { StoreUploadForm } from '@/components/dashboard/StoreUploadForm'
 import { LocationBanner } from '@/components/dashboard/LocationBanner'
 import { MapToggle } from '@/components/dashboard/MapToggle'
-import { StickyBar } from '@/components/dashboard/StickyBar'
+import { BottomTabNav, type TabKey } from '@/components/dashboard/BottomTabNav'
+import { SavingsBar } from '@/components/dashboard/SavingsBar'
 import { FirstVisitScreen } from '@/components/dashboard/FirstVisitScreen'
 import {
   LocationDeniedState,
@@ -46,8 +48,10 @@ export default function Home() {
   const [packSize, setPackSize] = useState('all')
   const [showMap, setShowMap] = useState(false)
   const [showUploadForm, setShowUploadForm] = useState(false)
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
   const [highlightedStoreId, setHighlightedStoreId] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<TabKey>('list')
 
   const lat = location?.lat ?? CORK_CENTER.lat
   const lng = location?.lng ?? CORK_CENTER.lng
@@ -149,9 +153,16 @@ export default function Home() {
 
   return (
     <div className="min-h-full flex flex-col">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        Skip to content
+      </a>
+
       <Header />
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 pt-4 pb-24 md:pb-6 md:pt-6 space-y-4 md:space-y-6">
+      <main id="main-content" className="flex-1 max-w-6xl mx-auto w-full px-4 pt-4 pb-24 md:pb-6 md:pt-6 space-y-4 md:space-y-6">
         <LocationBanner
           status={status}
           locationLabel={locationLabel}
@@ -169,6 +180,8 @@ export default function Home() {
           onPackSizeChange={setPackSize}
           radius={radius}
           onRadiusChange={setRadius}
+          open={filterDrawerOpen}
+          onOpenChange={setFilterDrawerOpen}
         />
 
         <StaleDataWarning lastUpdated={lastUpdated} />
@@ -190,13 +203,22 @@ export default function Home() {
         )}
 
         {!loading && !error && (
-          <HeroCard
-            bestPrice={bestPrice}
-            nextBestPrice={nextBestPrice}
-            totalResults={prices.length}
-            userLat={location?.lat}
-            userLng={location?.lng}
-          />
+          <>
+            {bestPrice && nextBestPrice && (Number(nextBestPrice.price) - Number(bestPrice.price)) > 0 && (
+              <BestDealBanner
+                bestPrice={bestPrice}
+                nextBestPrice={nextBestPrice}
+                totalPrices={prices.length}
+              />
+            )}
+            <HeroCard
+              bestPrice={bestPrice}
+              nextBestPrice={nextBestPrice}
+              totalResults={prices.length}
+              userLat={location?.lat}
+              userLng={location?.lng}
+            />
+          </>
         )}
 
         {loading && (
@@ -253,13 +275,11 @@ export default function Home() {
         )}
 
         {!loading && !error && prices.length > 2 && (
-          <div className="hidden md:block">
-            <PriceChart prices={prices} />
-          </div>
+          <PriceChart prices={prices} />
         )}
 
         {!loading && !error && prices.length > 0 && (
-          <div aria-label="Price results">
+          <div aria-live="polite" aria-atomic="true" aria-label="Price results">
             <PriceList
               prices={prices}
               userLat={location?.lat}
@@ -271,11 +291,15 @@ export default function Home() {
         )}
       </main>
 
+      <SavingsBar prices={prices} />
+
       <Footer />
 
-      <StickyBar
+      <BottomTabNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
         onReportPrice={() => setShowUploadForm(true)}
-        onFilterToggle={() => {}}
+        onFilterToggle={() => setFilterDrawerOpen(true)}
         onLocationRequest={requestLocation}
         locationLabel={locationLabel}
         isLocating={status === 'requesting'}
