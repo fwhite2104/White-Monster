@@ -107,29 +107,38 @@ export function LocationBanner({
     >
       <div
         className={cn(
-          'flex items-center gap-3 rounded-xl px-4 py-3 ring-1 ring-foreground/10',
-          isSuccess && 'bg-primary/5',
-          isError && 'bg-destructive/5',
+          'flex items-center gap-3 rounded-xl px-4 py-3 ring-1 ring-foreground/8',
+          isSuccess && 'bg-primary/5 ring-primary/15',
+          isError && 'bg-destructive/5 ring-destructive/15',
           status === 'idle' && 'bg-card',
           status === 'requesting' && 'bg-card'
         )}
       >
-        <span
+        <div
           className={cn(
-            'shrink-0',
-            isSuccess && 'text-primary',
-            isError && 'text-destructive',
-            status === 'idle' && 'text-muted-foreground',
-            status === 'requesting' && 'text-primary'
+            'flex items-center justify-center size-8 rounded-lg shrink-0',
+            isSuccess && 'bg-primary/15',
+            isError && 'bg-destructive/15',
+            status === 'idle' && 'bg-muted/50',
+            status === 'requesting' && 'bg-primary/15'
           )}
         >
-          {config.icon}
-        </span>
+          <span
+            className={cn(
+              isSuccess && 'text-primary',
+              isError && 'text-destructive',
+              status === 'idle' && 'text-muted-foreground',
+              status === 'requesting' && 'text-primary'
+            )}
+          >
+            {config.icon}
+          </span>
+        </div>
 
         <p
           className={cn(
             'flex-1 text-sm font-medium truncate',
-            isSuccess && 'text-primary',
+            isSuccess && 'text-foreground',
             isError && 'text-destructive',
             status === 'idle' && 'text-foreground',
             status === 'requesting' && 'text-muted-foreground'
@@ -142,7 +151,7 @@ export function LocationBanner({
           <Button
             variant={isError ? 'outline' : 'default'}
             size="sm"
-            className="h-11 px-4 shrink-0 min-w-[44px]"
+            className="h-10 px-3 shrink-0 min-w-[44px]"
             onClick={config.ctaAction}
           >
             {config.ctaLabel}
@@ -153,7 +162,7 @@ export function LocationBanner({
           <Button
             variant="ghost"
             size="icon-sm"
-            className="h-11 w-11 shrink-0"
+            className="h-10 w-10 shrink-0"
             onClick={() => setShowManual((v) => !v)}
             aria-label="Search by area"
           >
@@ -165,7 +174,7 @@ export function LocationBanner({
           <Button
             variant="ghost"
             size="icon-sm"
-            className="h-11 w-11 shrink-0"
+            className="h-10 w-10 shrink-0"
             onClick={() => setShowManual((v) => !v)}
             aria-label="Search by area"
           >
@@ -177,9 +186,9 @@ export function LocationBanner({
       {status === 'requesting' && !shouldReduceMotion && (
         <div className="flex justify-center">
           <motion.div
-            className="w-2 h-2 rounded-full bg-primary"
-            animate={{ scale: [1, 1.4, 1], opacity: [1, 0.5, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
+            className="w-1.5 h-1.5 rounded-full bg-primary"
+            animate={{ scale: [1, 1.6, 1], opacity: [1, 0.4, 1] }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
           />
         </div>
       )}
@@ -217,7 +226,7 @@ export function LocationBanner({
               <button
                 key={loc.label}
                 onClick={() => handleSuggestionClick(loc)}
-                className="inline-flex items-center gap-1.5 h-11 px-3 rounded-lg bg-card ring-1 ring-foreground/10 hover:ring-primary/30 hover:bg-primary/5 transition-colors text-sm text-foreground"
+                className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg bg-card ring-1 ring-foreground/8 hover:ring-primary/30 hover:bg-primary/5 transition-all duration-200 text-sm text-foreground"
               >
                 <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
                 {loc.suburb}

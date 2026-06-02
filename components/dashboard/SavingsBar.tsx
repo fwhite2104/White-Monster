@@ -42,11 +42,11 @@ export function SavingsBar({ prices }: SavingsBarProps) {
           transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
           className={cn(
             'fixed left-0 right-0 z-30',
-            'bottom-[68px] md:bottom-0', // Coupling: bottom-[68px] matches BottomTabNav height
-            'bg-gradient-to-r from-primary/90 via-primary/85 to-primary/90',
+            'bottom-[68px] md:bottom-0',
+            'bg-primary/95',
             'backdrop-blur-md',
-            'border-t border-primary/20',
-            'shadow-lg'
+            'border-t border-primary-dark/30',
+            'shadow-[0_-4px_20px_oklch(0.72_0.22_145_/_0.2)]'
           )}
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
           role="status"
@@ -54,20 +54,20 @@ export function SavingsBar({ prices }: SavingsBarProps) {
         >
           <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-foreground/15 shrink-0">
-                <TrendingDown className="h-4 w-4 text-primary-foreground" />
+              <div className="flex items-center justify-center size-7 rounded-full bg-primary-foreground/15 shrink-0">
+                <TrendingDown className="h-3.5 w-3.5 text-primary-foreground" />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-bold text-primary-foreground leading-tight">
                   You could save{' '}
-                  <span className="text-base">€{savings.amount.toFixed(2)}</span>
+                  <span className="text-base">{'\u20AC'}{savings.amount.toFixed(2)}</span>
                 </p>
                 <p className="text-[11px] text-primary-foreground/70 leading-tight mt-0.5 flex items-center gap-1">
                   <MapPin className="h-3 w-3 shrink-0" />
                     <span className="truncate">
-                      Best price at {savings.storeName} (€{savings.cheapestPrice.toFixed(2)})
+                      Best price at {savings.storeName} ({'\u20AC'}{savings.cheapestPrice.toFixed(2)})
                       {savings.cheapestPerCan && (
-                        <span className="text-primary-foreground/50"> · €{savings.cheapestPerCan}/can</span>
+                        <span className="text-primary-foreground/50"> {'\u00B7'} {'\u20AC'}{savings.cheapestPerCan}/can</span>
                       )}
                     </span>
                 </p>
@@ -79,10 +79,10 @@ export function SavingsBar({ prices }: SavingsBarProps) {
               onClick={() => setDismissed(true)}
               className={cn(
                 'flex items-center justify-center',
-                'h-8 w-8 rounded-full shrink-0',
+                'size-8 rounded-full shrink-0',
                 'bg-primary-foreground/10 hover:bg-primary-foreground/20',
                 'text-primary-foreground/80 hover:text-primary-foreground',
-                'transition-colors'
+                'transition-colors duration-200'
               )}
               aria-label="Dismiss savings bar"
             >

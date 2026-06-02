@@ -143,10 +143,10 @@ export function FilterDrawer({
               onClick={filter.apply}
               aria-pressed={active}
               className={cn(
-                'inline-flex items-center h-11 px-4 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 shrink-0',
+                'inline-flex items-center h-10 px-3.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 shrink-0',
                 active
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-card ring-1 ring-foreground/10 text-foreground hover:ring-primary/30 hover:bg-primary/5'
+                  ? 'bg-primary text-primary-foreground shadow-[0_2px_12px_oklch(0.72_0.22_145_/_0.25)]'
+                  : 'bg-card ring-1 ring-foreground/8 text-foreground hover:ring-primary/30 hover:bg-primary/5'
               )}
             >
               {filter.label}
@@ -160,7 +160,7 @@ export function FilterDrawer({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-11 px-4 shrink-0 rounded-full relative transition-all duration-200"
+                className="h-10 px-3.5 shrink-0 rounded-full relative transition-all duration-200"
               />
             }
           >
@@ -169,7 +169,7 @@ export function FilterDrawer({
             {activeFilterCount > 0 && (
               <Badge
                 variant="default"
-                className="ml-1.5 h-5 min-w-5 px-1 text-[10px]"
+                className="ml-1.5 h-4 min-w-4 px-1 text-[9px]"
               >
                 {activeFilterCount}
               </Badge>
@@ -226,10 +226,10 @@ export function FilterDrawer({
                 </Select>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 pt-1">
                 <div className="flex items-center justify-between">
                   <Label>Search radius</Label>
-                  <Badge variant="secondary" className="min-w-[60px] justify-center">
+                  <Badge variant="secondary" className="min-w-[60px] justify-center text-xs">
                     {radius} km
                   </Badge>
                 </div>
@@ -245,7 +245,7 @@ export function FilterDrawer({
                   className="w-full"
                   aria-label="Search radius in kilometers"
                 />
-                <div className="flex justify-between text-xs text-muted-foreground">
+                <div className="flex justify-between text-[10px] text-muted-foreground">
                   <span>{MIN_RADIUS_KM} km</span>
                   <span>{MAX_RADIUS_KM} km</span>
                 </div>
@@ -256,15 +256,15 @@ export function FilterDrawer({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-11"
+                className="h-10"
                 onClick={handleReset}
               >
-                <RotateCcw className="h-4 w-4 mr-1.5" />
-                Reset filters
+                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                Reset
               </Button>
               <Button
                 size="sm"
-                className="h-11"
+                className="h-10"
                 onClick={() => setOpen(false)}
               >
                 Apply
@@ -276,8 +276,8 @@ export function FilterDrawer({
 
       {activeFilterCount > 0 && (
         <motion.div
-          initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.97, y: -4 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
+          initial={shouldReduceMotion ? false : { opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
           className="flex items-center gap-2"
         >
           <span className="text-xs text-muted-foreground">

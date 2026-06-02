@@ -4,6 +4,7 @@ import { type ReactNode } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Map, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 interface MapToggleProps {
   showMap: boolean
@@ -20,7 +21,11 @@ export function MapToggle({ showMap, onToggle, storeCount, children }: MapToggle
       <Button
         variant="outline"
         size="sm"
-        className="h-11 px-4 w-full rounded-xl gap-2 text-sm font-medium"
+        className={cn(
+          'h-11 px-4 w-full rounded-xl gap-2 text-sm font-medium',
+          'transition-all duration-200',
+          showMap && 'bg-primary/10 border-primary/20 text-primary'
+        )}
         onClick={onToggle}
         aria-expanded={showMap}
         aria-label={showMap ? 'Hide map' : `View ${storeCount} stores on map`}
@@ -42,10 +47,10 @@ export function MapToggle({ showMap, onToggle, storeCount, children }: MapToggle
         {showMap && (
           <motion.div
             key="map-container"
-            initial={shouldReduceMotion ? false : { height: 0, opacity: 0, scale: 0.97, transformOrigin: "top" }}
-            animate={{ height: 'auto', opacity: 1, scale: 1 }}
-            exit={shouldReduceMotion ? { opacity: 0 } : { height: 0, opacity: 0, scale: 0.97, transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] } }}
-            transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
+            initial={shouldReduceMotion ? false : { height: 0, opacity: 0, transformOrigin: "top" }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { height: 0, opacity: 0, transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] } }}
+            transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
             className="overflow-hidden"
           >
             <div className="pt-2">

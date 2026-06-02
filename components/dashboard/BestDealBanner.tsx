@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, useReducedMotion } from 'framer-motion'
-import { TrendingDown, MapPin, Store } from 'lucide-react'
+import { TrendingDown, MapPin, Store, Database, Users } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { getRetailerColor } from '@/lib/constants'
 import type { Price } from '@/lib/types'
@@ -28,47 +28,51 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, savings:
 
   return (
     <motion.div
-      initial={shouldReduceMotion ? false : { opacity: 0, y: -20, scale: 0.95 }}
+      initial={shouldReduceMotion ? false : { opacity: 0, y: -12, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-      className="relative overflow-hidden rounded-2xl"
+      className="relative overflow-hidden rounded-xl ring-1 ring-primary/20"
     >
-      <div
-        className="absolute inset-0 opacity-20"
-        style={{
-          background: `linear-gradient(135deg, ${retailerColor}, oklch(0.7 0.25 145), ${retailerColor})`,
-        }}
-      />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-primary/4 to-transparent" />
 
-      <div
-        className="absolute inset-0 rounded-2xl opacity-40"
-        style={{
-          boxShadow: `0 0 30px ${retailerColor}40, inset 0 0 30px ${retailerColor}20`,
-        }}
-      />
+      <div className="relative p-4 sm:p-5 md:p-6 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center size-8 rounded-lg bg-primary/15">
+              <TrendingDown className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-primary uppercase tracking-wider">
+                Best Deal Found
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {totalPrices} price{totalPrices !== 1 ? 's' : ''} compared
+              </p>
+            </div>
+          </div>
 
-      <div className="relative bg-gradient-to-br from-card/95 via-card/90 to-card/95 backdrop-blur-sm rounded-2xl ring-1 ring-foreground/10 p-4 sm:p-5 md:p-6">
+          {bestPrice.source === 'user_upload' ? (
+            <Badge variant="outline" className="border-primary/20 text-primary/80 gap-1 text-[10px]">
+              <Users className="h-3 w-3" />
+              Community
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="border-muted/20 text-muted-foreground gap-1 text-[10px]">
+              <Database className="h-3 w-3" />
+              Scraped
+            </Badge>
+          )}
+        </div>
+
         <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4">
           <div className="flex-1 space-y-2 min-w-0">
-            <div className="flex items-center gap-2">
-              <motion.div
-                animate={shouldReduceMotion ? {} : { rotate: [0, 5, -5, 0] }}
-                transition={{ duration: 3, repeat: Infinity, repeatDelay: 4 }}
-              >
-                <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              </motion.div>
-              <span className="text-xs sm:text-sm font-medium text-primary uppercase tracking-wider">
-                Best Deal Found
-              </span>
-            </div>
-
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">
               <span className="text-primary">
-                €{Number(bestPrice.price).toFixed(2)}
+                {'\u20AC'}{Number(bestPrice.price).toFixed(2)}
               </span>
               {perCanPrice && (
                 <span className="text-muted-foreground text-sm sm:text-base md:text-lg font-normal ml-2">
-                  (€{perCanPrice}/can)
+                  ({'\u20AC'}{perCanPrice}/can)
                 </span>
               )}
               <span className="text-muted-foreground text-sm sm:text-base md:text-lg font-normal ml-2">
@@ -81,10 +85,12 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, savings:
                 <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                 <span className="text-xs sm:text-sm font-medium">{store.name}</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
-                <span className="text-xs sm:text-sm text-muted-foreground">{store.suburb}</span>
-              </div>
+              {store.suburb && (
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+                  <span className="text-xs sm:text-sm text-muted-foreground">{store.suburb}</span>
+                </div>
+              )}
               <Badge
                 variant="outline"
                 className="border-foreground/20"
@@ -104,14 +110,10 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, savings:
               <div className="text-right">
                 <p className="text-[10px] sm:text-xs text-muted-foreground">You save up to</p>
                 <p className="text-lg sm:text-xl font-bold text-primary">
-                  €{savings.toFixed(2)}
+                  {'\u20AC'}{savings.toFixed(2)}
                 </p>
               </div>
             )}
-            <div className="text-right">
-              <p className="text-[10px] sm:text-xs text-muted-foreground">Prices found</p>
-              <p className="text-lg sm:text-xl font-bold text-foreground">{totalPrices}</p>
-            </div>
           </div>
         </div>
 
