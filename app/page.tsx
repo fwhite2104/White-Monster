@@ -140,10 +140,11 @@ export default function Home() {
   if (status === 'idle' && location?.source === 'default') {
     return (
       <div className="min-h-full flex flex-col">
-        <Header />
+        <Header onReportPrice={() => setShowUploadForm(true)} />
         <FirstVisitScreen
           onRequestLocation={requestLocation}
           onManualSearch={handleOpenManualSearch}
+          onReportPrice={() => setShowUploadForm(true)}
         />
         <Footer />
       </div>
@@ -183,7 +184,7 @@ export default function Home() {
           onOpenChange={setFilterDrawerOpen}
         />
 
-        <StaleDataWarning lastUpdated={lastUpdated} />
+        <StaleDataWarning lastUpdated={lastUpdated} onReportPrice={() => setShowUploadForm(true)} />
 
         {status === 'denied' && (
           <LocationDeniedState
@@ -229,7 +230,7 @@ export default function Home() {
         )}
 
         {!loading && error && (
-          <ApiErrorState message={error} onRetry={fetchData} />
+          <ApiErrorState message={error} onRetry={fetchData} onReportPrice={() => setShowUploadForm(true)} />
         )}
 
         {!loading && !error && prices.length === 0 && status === 'success' && (
@@ -237,6 +238,7 @@ export default function Home() {
             filters={{ variant, packSize, radius }}
             onResetFilters={handleResetFilters}
             onExpandRadius={handleExpandRadius}
+            onReportPrice={() => setShowUploadForm(true)}
           />
         )}
 

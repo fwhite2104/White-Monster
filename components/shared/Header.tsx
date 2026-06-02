@@ -1,26 +1,40 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Zap } from 'lucide-react'
+import { Zap, CirclePlus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
-export function Header() {
+interface HeaderProps {
+  onReportPrice?: () => void
+}
+
+export function Header({ onReportPrice }: HeaderProps) {
   return (
-    <header
-      className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50"
-    >
-      <div className="max-w-6xl mx-auto px-4 py-2 md:py-4 flex items-center gap-3">
-        <motion.div
-          whileHover={{ rotate: 15, scale: 1.1 }}
-          transition={{ type: 'spring', duration: 0.5, bounce: 0.2 }}
-        >
-          <Zap className="h-6 w-6 text-primary" />
-        </motion.div>
-        <h1 className="text-xl font-bold tracking-tight">
-          Monster <span className="text-primary">Cork</span>
-        </h1>
-        <span className="text-xs text-muted-foreground ml-auto hidden sm:inline">
-          Find cheapest Monster nearby
-        </span>
+    <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-md">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2 md:py-3">
+        <div className="flex items-center gap-2.5">
+          <motion.div
+            whileHover={{ rotate: 15, scale: 1.1 }}
+            transition={{ type: 'spring', duration: 0.5, bounce: 0.2 }}
+          >
+            <Zap className="size-5 text-primary" aria-hidden="true" />
+          </motion.div>
+          <h1 className="text-lg font-bold tracking-tight">
+            Monster <span className="text-primary">Cork</span>
+          </h1>
+        </div>
+
+        {onReportPrice && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onReportPrice}
+            className="hidden gap-1.5 border-border/50 text-muted-foreground hover:text-foreground md:inline-flex"
+          >
+            <CirclePlus className="size-3.5" aria-hidden="true" />
+            Report a Price
+          </Button>
+        )}
       </div>
     </header>
   )
