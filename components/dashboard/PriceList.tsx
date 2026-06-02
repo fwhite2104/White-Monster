@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
 import { SearchX, ChevronDown, ChevronUp } from 'lucide-react'
 import { PriceCard } from './PriceCard'
 import type { Price } from '@/lib/types'
@@ -36,12 +36,12 @@ export function PriceList({
         animate={{ opacity: 1, scale: 1 }}
         className="text-center py-16 space-y-4"
       >
-        <div className="mx-auto w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center">
-          <SearchX className="h-8 w-8 text-muted-foreground" />
+        <div className="mx-auto w-14 h-14 rounded-2xl bg-muted/40 flex items-center justify-center">
+          <SearchX className="h-7 w-7 text-muted-foreground" />
         </div>
         <div>
-          <p className="text-lg font-medium text-foreground">No prices found</p>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-base font-semibold text-foreground">No prices found</p>
+          <p className="text-sm text-muted-foreground mt-1.5 max-w-xs mx-auto">
             Try increasing the radius or reporting a price.
           </p>
         </div>
@@ -50,41 +50,45 @@ export function PriceList({
   }
 
   return (
-    <div className="space-y-3" role="list" aria-label="Price results">
-      {displayedPrices.map((price, index) => (
-        <motion.div
-          key={price.id}
-          initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            delay: showAll ? 0 : index * 0.06,
-            duration: 0.35,
-            ease: [0.23, 1, 0.32, 1],
-          }}
-          role="listitem"
-        >
-          <PriceCard
-            price={price}
-            isCheapest={index === 0}
-            userLat={userLat}
-            userLng={userLng}
-            onHover={() => onStoreHover?.(price.store_id)}
-          />
-        </motion.div>
-      ))}
+    <div className="space-y-2.5 sm:space-y-3" role="list" aria-label="Price results">
+      <AnimatePresence mode="popLayout">
+        {displayedPrices.map((price, index) => (
+          <motion.div
+            key={price.id}
+            initial={shouldReduceMotion ? false : { opacity: 0, y: 16, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.97 }}
+            transition={{
+              delay: showAll ? 0 : index * 0.05,
+              duration: 0.35,
+              ease: [0.23, 1, 0.32, 1],
+            }}
+            layout
+            role="listitem"
+          >
+            <PriceCard
+              price={price}
+              isCheapest={index === 0}
+              userLat={userLat}
+              userLng={userLng}
+              onHover={() => onStoreHover?.(price.store_id)}
+            />
+          </motion.div>
+        ))}
+      </AnimatePresence>
 
       {hiddenCount > 0 && (
         <motion.div
           initial={shouldReduceMotion ? false : { opacity: 0, y: 8, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ delay: showAll ? 0 : INITIAL_DISPLAY_COUNT * 0.06, duration: 0.35 }}
+          transition={{ delay: showAll ? 0 : INITIAL_DISPLAY_COUNT * 0.05, duration: 0.35 }}
         >
           <button
             type="button"
             onClick={() => setShowAll((prev) => !prev)}
             aria-expanded={showAll}
             aria-controls="price-list"
-            className="group w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-border bg-muted/30 hover:bg-muted/50 text-sm text-muted-foreground hover:text-foreground transition-all duration-200 cursor-pointer"
+            className="group w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-border bg-muted/30 hover:bg-muted/50 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer"
           >
             {showAll ? (
               <>

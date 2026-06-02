@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Clock, Share2 } from 'lucide-react'
+import { MapPin, Clock, Share2, User, Bot } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { getDistance } from 'geolib'
 import { CORK_CENTER, getRetailerColor } from '@/lib/constants'
@@ -40,6 +40,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover }: Pric
   const store = price.stores ?? { name: 'Unknown', retailer: 'other', lat: 0, lng: 0, suburb: '', address: '' }
   const product = price.products ?? { name: 'Unknown Product', variant: 'unknown', pack_size: 'single' }
   const retailerColor = getRetailerColor(store.retailer)
+  const isUserReported = price.source === 'user_upload'
 
   const distance = getDistance(
     { latitude: lat, longitude: lng },
@@ -83,23 +84,23 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover }: Pric
             : 'relative bg-card ring-1 ring-foreground/10 hover:ring-foreground/20'
         }
       >
-        <CardContent className="p-4 min-h-[88px] flex items-center">
-          <div className="flex items-center gap-4 w-full">
-            <div
-              className="self-stretch w-1 rounded-full shrink-0"
-              style={{ backgroundColor: retailerColor }}
-            />
+        <CardContent className="p-0 min-h-[80px]">
+          <div
+            className="h-1 w-full rounded-t-[var(--radius)]"
+            style={{ backgroundColor: retailerColor }}
+          />
 
-            <div className="flex-1 min-w-0 grid grid-cols-[1fr_auto] gap-x-4 gap-y-1">
-              <div className="flex items-baseline gap-2">
-                <p
-                  className="text-2xl font-bold tracking-tight"
-                  style={{ color: isCheapest ? 'oklch(0.7 0.25 145)' : undefined }}
+          <div className="px-4 py-3 flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline gap-2.5 flex-wrap">
+                <span
+                  className="text-[1.65rem] font-bold tracking-tight leading-none tabular-nums"
+                  style={{ color: isCheapest ? 'oklch(0.72 0.22 145)' : undefined }}
                 >
                   €{Number(price.price).toFixed(2)}
-                </p>
+                </span>
                 {perCanDisplay && (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground tabular-nums">
                     (€{perCanDisplay}/can)
                   </span>
                 )}
@@ -109,40 +110,46 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover }: Pric
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                   >
-                    <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5">
+                    <Badge variant="success" className="text-[10px] px-1.5 py-0 font-semibold">
                       Best Price
                     </Badge>
                   </motion.div>
                 )}
               </div>
 
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground row-span-2 self-center">
-                <MapPin className="h-3.5 w-3.5 shrink-0" />
-                <span>{(distance / 1000).toFixed(1)} km</span>
-              </div>
-
-              <div className="flex items-center gap-2 min-w-0">
-                <span
-                  className="h-2 w-2 rounded-full shrink-0"
-                  style={{ backgroundColor: retailerColor }}
-                />
-                <span className="text-sm font-medium truncate">at {store.name}</span>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <span className="text-sm font-medium truncate">{store.name}</span>
                 {store.suburb && (
                   <span className="text-xs text-muted-foreground truncate hidden sm:inline">
                     · {store.suburb}
                   </span>
                 )}
+                <span className="text-xs text-muted-foreground ml-auto shrink-0 flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {(distance / 1000).toFixed(1)} km
+                </span>
               </div>
 
-              <div className="col-span-2 flex items-center gap-3 mt-1">
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
                 {variantLabel && (
                   <Badge variant="outline" className="border-foreground/15 text-[11px] h-5">
                     {variantLabel}
                   </Badge>
                 )}
+                <Badge
+                  variant={isUserReported ? 'info' : 'outline'}
+                  className="text-[10px] h-5 gap-1"
+                >
+                  {isUserReported ? (
+                    <User className="h-2.5 w-2.5" />
+                  ) : (
+                    <Bot className="h-2.5 w-2.5" />
+                  )}
+                  {isUserReported ? 'User reported' : 'Auto'}
+                </Badge>
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
-                  {price.source === 'user_upload' ? 'User reported' : 'Auto'} · {getTimeAgo(price.scraped_at)}
+                  {getTimeAgo(price.scraped_at)}
                 </span>
               </div>
             </div>
@@ -150,7 +157,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover }: Pric
             <Button
               variant="ghost"
               size="icon"
-              className="h-11 w-11 shrink-0"
+              className="h-9 w-9 shrink-0 mt-0.5 text-muted-foreground hover:text-foreground"
               onClick={handleShare}
               aria-label="Share price"
             >
