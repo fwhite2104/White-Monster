@@ -10,7 +10,6 @@ import { HeroCard } from '@/components/dashboard/HeroCard'
 import { BestDealBanner } from '@/components/dashboard/BestDealBanner'
 import { FilterDrawer } from '@/components/dashboard/FilterDrawer'
 import { PriceList } from '@/components/dashboard/PriceList'
-import { PriceChart } from '@/components/dashboard/PriceChart'
 import { LoadingSkeleton } from '@/components/dashboard/LoadingSkeleton'
 import { LastUpdated } from '@/components/dashboard/LastUpdated'
 import { StoreUploadForm } from '@/components/dashboard/StoreUploadForm'
@@ -272,10 +271,6 @@ export default function Home() {
               <StoreUploadForm onSuccess={fetchData} />
             </div>
           </div>
-        )}
-
-        {!loading && !error && prices.length > 2 && (
-          <PriceChart prices={prices} />
         )}
 
         {!loading && !error && prices.length > 0 && (
