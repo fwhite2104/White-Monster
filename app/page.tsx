@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { CORK_CENTER, DEFAULT_RADIUS_KM } from '@/lib/constants'
 import type { Price, Store } from '@/lib/types'
@@ -117,6 +117,16 @@ export default function Home() {
 
   const bestPrice = prices.length > 0 ? prices[0] : null
   const nextBestPrice = prices.length > 1 ? prices[1] : null
+
+  const selectedStorePrice = useMemo(() => {
+    if (!selectedStore) return undefined
+    const p = prices.find((pr) => pr.store_id === selectedStore.id)
+    return p ? Number(p.price) : undefined
+  }, [selectedStore, prices])
+
+  const isSelectedCheapest = selectedStore
+    ? bestPrice?.store_id === selectedStore.id
+    : false
 
   const handleRetryLocation = useCallback(() => {
     requestLocation()
@@ -296,34 +306,50 @@ export default function Home() {
                   View {stores.length} store{stores.length !== 1 ? 's' : ''} on map
                 </span>
               </Button>
-              <MapBottomSheet isOpen={showMap} onClose={() => setShowMap(false)} title="Store Map">
+              <MapBottomSheet
+                isOpen={showMap}
+                onClose={() => setShowMap(false)}
+                title="Store Map"
+                footer={
+                  selectedStore ? (
+                    <MapInfoCard
+                      store={selectedStore}
+                      price={selectedStorePrice}
+                      isCheapest={isSelectedCheapest}
+                      onReportPrice={handleMapInfoReportPrice}
+                      onClose={() => setSelectedStore(null)}
+                    />
+                  ) : undefined
+                }
+              >
                 <StoreMap
                   stores={storesWithDistance}
                   userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
                   highlightedStoreId={highlightedStoreId}
+                  onMarkerClick={handleMarkerClick}
                 />
               </MapBottomSheet>
             </div>
 
-            {/* Desktop: inline StoreMap with MapInfoCard overlay */}
-            <div className="hidden md:block relative" aria-label="Store map">
-              {selectedStore && (
-                <div className="absolute inset-0 z-10 flex items-start justify-center p-4 pointer-events-none">
-                  <div className="pointer-events-auto w-full max-w-sm">
-                    <MapInfoCard
-                      store={selectedStore}
-                      onReportPrice={handleMapInfoReportPrice}
-                      onClose={() => setSelectedStore(null)}
-                    />
-                  </div>
-                </div>
-              )}
+            {/* Desktop: inline StoreMap with MapInfoCard pinned to bottom */}
+            <div className="hidden md:block relative overflow-hidden rounded-lg" aria-label="Store map">
               <StoreMap
                 stores={storesWithDistance}
                 userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
                 highlightedStoreId={highlightedStoreId}
                 onMarkerClick={handleMarkerClick}
               />
+              {selectedStore && (
+                <div className="absolute bottom-0 left-0 right-0 z-10">
+                  <MapInfoCard
+                    store={selectedStore}
+                    price={selectedStorePrice}
+                    isCheapest={isSelectedCheapest}
+                    onReportPrice={handleMapInfoReportPrice}
+                    onClose={() => setSelectedStore(null)}
+                  />
+                </div>
+              )}
             </div>
           </>
         )}

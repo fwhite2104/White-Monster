@@ -9,11 +9,12 @@ interface MapBottomSheetProps {
   onClose: () => void
   title?: string
   children: ReactNode
+  footer?: ReactNode
 }
 
 const EASE_OUT: [number, number, number, number] = [0.23, 1, 0.32, 1]
 
-export function MapBottomSheet({ isOpen, onClose, title, children }: MapBottomSheetProps) {
+export function MapBottomSheet({ isOpen, onClose, title, children, footer }: MapBottomSheetProps) {
   const shouldReduceMotion = useReducedMotion()
 
   return (
@@ -98,6 +99,11 @@ export function MapBottomSheet({ isOpen, onClose, title, children }: MapBottomSh
             <div className="flex-1 overflow-y-auto overscroll-contain">
               {children}
             </div>
+            {footer && (
+              <div className="shrink-0">
+                {footer}
+              </div>
+            )}
           </motion.div>
         </>
       )}
