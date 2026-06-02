@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -7,9 +7,16 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#0a0a0a",
+};
+
 export const metadata: Metadata = {
-  title: "Monster Cork | Cheapest White Monster in Cork",
-  description: "Find the cheapest White Monster energy drink deals in Cork, Ireland. Compare prices across Tesco, Dunnes, SuperValu, Lidl, Aldi, and local shops.",
+  title: "Monster Cork | Find Cheapest Monster Energy Nearby",
+  description: "Find the cheapest Monster Energy drinks near you in Cork, Ireland. Compare prices across Tesco, Dunnes, SuperValu, Lidl, Aldi, Centra, and more. Live prices, store locator, and price reporting.",
 };
 
 export default function RootLayout({

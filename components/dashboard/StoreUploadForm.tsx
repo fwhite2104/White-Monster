@@ -21,8 +21,10 @@ import {
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { RETAILERS, CORK_CENTER, MONSTER_VARIANTS } from '@/lib/constants'
 
-export function StoreUploadForm({ onSuccess }: { onSuccess?: () => void }) {
-  const [open, setOpen] = useState(false)
+export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange }: { onSuccess?: () => void; externalOpen?: boolean; onExternalOpenChange?: (open: boolean) => void }) {
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = externalOpen !== undefined ? externalOpen : internalOpen
+  const setOpen = onExternalOpenChange ?? setInternalOpen
   const { location, error: geoError, requestLocation } = useGeolocation()
   const [formData, setFormData] = useState({
     storeName: '',

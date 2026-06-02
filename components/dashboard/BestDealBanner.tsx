@@ -8,15 +8,20 @@ import type { Price } from '@/lib/types'
 
 interface BestDealBannerProps {
   bestPrice: Price
+  nextBestPrice?: Price | null
   totalPrices: number
+  /** @deprecated Use nextBestPrice instead */
   savings?: number
 }
 
-export function BestDealBanner({ bestPrice, totalPrices, savings }: BestDealBannerProps) {
+export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, savings: legacySavings }: BestDealBannerProps) {
   const shouldReduceMotion = useReducedMotion()
   const store = bestPrice.stores ?? { name: 'Unknown Store', retailer: 'other', suburb: '' }
   const product = bestPrice.products ?? { name: 'Unknown Product' }
   const retailerColor = getRetailerColor(store.retailer ?? 'other')
+  const savings = nextBestPrice
+    ? Number(nextBestPrice.price) - Number(bestPrice.price)
+    : legacySavings ?? null
 
   return (
     <motion.div
@@ -39,38 +44,38 @@ export function BestDealBanner({ bestPrice, totalPrices, savings }: BestDealBann
         }}
       />
 
-      <div className="relative bg-gradient-to-br from-card/95 via-card/90 to-card/95 backdrop-blur-sm rounded-2xl ring-1 ring-foreground/10 p-5 sm:p-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="flex-1 space-y-2">
+      <div className="relative bg-gradient-to-br from-card/95 via-card/90 to-card/95 backdrop-blur-sm rounded-2xl ring-1 ring-foreground/10 p-4 sm:p-5 md:p-6">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4">
+          <div className="flex-1 space-y-2 min-w-0">
             <div className="flex items-center gap-2">
               <motion.div
                 animate={shouldReduceMotion ? {} : { rotate: [0, 10, -10, 0] }}
                 transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
               >
-                <TrendingDown className="h-5 w-5 text-primary" />
+                <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               </motion.div>
-              <span className="text-sm font-medium text-primary uppercase tracking-wider">
+              <span className="text-xs sm:text-sm font-medium text-primary uppercase tracking-wider">
                 Best Deal Found
               </span>
             </div>
 
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">
               <span className="text-primary">
-                EUR {Number(bestPrice.price).toFixed(2)}
+                €{Number(bestPrice.price).toFixed(2)}
               </span>
-              <span className="text-muted-foreground text-lg font-normal ml-2">
+              <span className="text-muted-foreground text-sm sm:text-base md:text-lg font-normal ml-2">
                 for {product.name}
               </span>
             </h2>
 
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <div className="flex items-center gap-1.5">
-                <Store className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">{store.name}</span>
+                <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+                <span className="text-xs sm:text-sm font-medium">{store.name}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">{store.suburb}</span>
+                <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+                <span className="text-xs sm:text-sm text-muted-foreground">{store.suburb}</span>
               </div>
               <Badge
                 variant="outline"
@@ -86,18 +91,18 @@ export function BestDealBanner({ bestPrice, totalPrices, savings }: BestDealBann
             </div>
           </div>
 
-          <div className="flex items-center gap-4 sm:flex-col sm:items-end">
-            {savings != null && savings > 0 && (
+          <div className="flex items-center gap-4 md:flex-col md:items-end">
+            {savings !== null && savings > 0 && (
               <div className="text-right">
-                <p className="text-xs text-muted-foreground">You save up to</p>
-                <p className="text-xl font-bold text-primary">
-                  EUR {savings.toFixed(2)}
+                <p className="text-[10px] sm:text-xs text-muted-foreground">You save up to</p>
+                <p className="text-lg sm:text-xl font-bold text-primary">
+                  €{savings.toFixed(2)}
                 </p>
               </div>
             )}
             <div className="text-right">
-              <p className="text-xs text-muted-foreground">Prices found</p>
-              <p className="text-xl font-bold text-foreground">{totalPrices}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Prices found</p>
+              <p className="text-lg sm:text-xl font-bold text-foreground">{totalPrices}</p>
             </div>
           </div>
         </div>

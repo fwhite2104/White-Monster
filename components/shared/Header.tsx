@@ -11,7 +11,7 @@ export function Header() {
       transition={{ duration: 0.4, ease: 'easeOut' }}
       className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50"
     >
-      <div className="max-w-6xl mx-auto px-4 py-4 flex items-center gap-3">
+      <div className="max-w-6xl mx-auto px-4 py-2 md:py-4 flex items-center gap-3">
         <motion.div
           whileHover={{ rotate: 15, scale: 1.1 }}
           transition={{ type: 'spring', stiffness: 400, damping: 10 }}
@@ -22,7 +22,7 @@ export function Header() {
           Monster <span className="text-primary">Cork</span>
         </h1>
         <span className="text-xs text-muted-foreground ml-auto hidden sm:inline">
-          Cheapest White Monster in Cork
+          Find cheapest Monster nearby
         </span>
       </div>
     </motion.header>

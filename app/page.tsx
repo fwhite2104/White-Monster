@@ -1,27 +1,41 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
-import { MapPin, AlertCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Header } from '@/components/shared/Header'
-import { Footer } from '@/components/shared/Footer'
-import { RadiusFilter } from '@/components/dashboard/RadiusFilter'
-import { SortControls } from '@/components/dashboard/SortControls'
-import { PriceList } from '@/components/dashboard/PriceList'
-import { StoreUploadForm } from '@/components/dashboard/StoreUploadForm'
-import { LastUpdated } from '@/components/dashboard/LastUpdated'
-import { BestDealBanner } from '@/components/dashboard/BestDealBanner'
-import { PriceChart } from '@/components/dashboard/PriceChart'
-import { LoadingSkeleton } from '@/components/dashboard/LoadingSkeleton'
-import StoreMap from '@/components/map'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { CORK_CENTER, DEFAULT_RADIUS_KM } from '@/lib/constants'
 import type { Price, Store } from '@/lib/types'
+import { Header } from '@/components/shared/Header'
+import { Footer } from '@/components/shared/Footer'
+import { HeroCard } from '@/components/dashboard/HeroCard'
+import { FilterDrawer } from '@/components/dashboard/FilterDrawer'
+import { PriceList } from '@/components/dashboard/PriceList'
+import { PriceChart } from '@/components/dashboard/PriceChart'
+import { LoadingSkeleton } from '@/components/dashboard/LoadingSkeleton'
+import { LastUpdated } from '@/components/dashboard/LastUpdated'
+import { StoreUploadForm } from '@/components/dashboard/StoreUploadForm'
+import { LocationBanner } from '@/components/dashboard/LocationBanner'
+import { MapToggle } from '@/components/dashboard/MapToggle'
+import { StickyBar } from '@/components/dashboard/StickyBar'
+import { FirstVisitScreen } from '@/components/dashboard/FirstVisitScreen'
+import {
+  LocationDeniedState,
+  LocationTimeoutState,
+  LocationUnavailableState,
+  NoResultsState,
+  ApiErrorState,
+  StaleDataWarning,
+} from '@/components/dashboard/StateScreens'
+import dynamic from 'next/dynamic'
+
+const StoreMap = dynamic(() => import('@/components/map/StoreMap'), {
+  ssr: false,
+  loading: () => <div className="h-[300px] md:h-[400px] w-full bg-muted animate-pulse rounded-lg" />,
+})
 
 export default function Home() {
-  const shouldReduceMotion = useReducedMotion()
-  const { location, loading: geoLoading, error: geoError, requestLocation } = useGeolocation()
+  const geo = useGeolocation()
+  const { location, status, locationLabel, requestLocation, setManualLocation } = geo
+
   const [prices, setPrices] = useState<Price[]>([])
   const [stores, setStores] = useState<Store[]>([])
   const [loading, setLoading] = useState(true)
@@ -30,6 +44,8 @@ export default function Home() {
   const [sort, setSort] = useState('price')
   const [variant, setVariant] = useState('zero_sugar')
   const [packSize, setPackSize] = useState('all')
+  const [showMap, setShowMap] = useState(false)
+  const [showUploadForm, setShowUploadForm] = useState(false)
   const [highlightedStoreId, setHighlightedStoreId] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
 
@@ -47,7 +63,6 @@ export default function Home() {
           `/api/prices?lat=${lat}&lng=${lng}&radius=${radius}&variant=${variant}&sort=${sort}&pack_size=${packSize}`,
           { signal: controller.signal }
         ),
-        // radius defaults to DEFAULT_RADIUS_KM (10km) from constants
         fetch(`/api/stores?lat=${lat}&lng=${lng}&radius=${radius}`, {
           signal: controller.signal,
         }),
@@ -91,89 +106,159 @@ export default function Home() {
   })
 
   const bestPrice = prices.length > 0 ? prices[0] : null
-  const maxPrice = prices.length > 0 ? Math.max(...prices.map((p) => Number(p.price))) : 0
-  const savings = bestPrice && maxPrice > 0 ? maxPrice - Number(bestPrice.price) : 0
+  const nextBestPrice = prices.length > 1 ? prices[1] : null
+
+  const handleRetryLocation = useCallback(() => {
+    requestLocation()
+  }, [requestLocation])
+
+  const handleOpenManualSearch = useCallback(() => {
+    requestLocation()
+  }, [requestLocation])
+
+  const handleExpandRadius = useCallback(() => {
+    setRadius((prev) => Math.min(prev + 10, 50))
+  }, [])
+
+  const handleResetFilters = useCallback(() => {
+    setSort('price')
+    setVariant('zero_sugar')
+    setPackSize('all')
+    setRadius(DEFAULT_RADIUS_KM)
+  }, [])
+
+  const activeFilterCount = [
+    sort !== 'price',
+    variant !== 'zero_sugar',
+    packSize !== 'all',
+    radius !== DEFAULT_RADIUS_KM,
+  ].filter(Boolean).length
+
+  if (status === 'idle' && location?.source === 'default') {
+    return (
+      <div className="min-h-full flex flex-col">
+        <Header />
+        <FirstVisitScreen
+          onRequestLocation={requestLocation}
+          onManualSearch={handleOpenManualSearch}
+        />
+        <Footer />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-full flex flex-col">
       <Header />
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6 space-y-6">
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between" aria-label="Price filters">
-          <div className="flex-1 w-full sm:w-auto">
-            <RadiusFilter value={radius} onChange={setRadius} />
-          </div>
-          <SortControls
-            sort={sort}
-            onSortChange={setSort}
-            variant={variant}
-            onVariantChange={setVariant}
-            packSize={packSize}
-            onPackSizeChange={setPackSize}
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 pt-4 pb-24 md:pb-6 md:pt-6 space-y-4 md:space-y-6">
+        <LocationBanner
+          status={status}
+          locationLabel={locationLabel}
+          onRetry={handleRetryLocation}
+          onManualSearch={handleOpenManualSearch}
+          onSelectLocation={setManualLocation}
+        />
+
+        <FilterDrawer
+          sort={sort}
+          onSortChange={setSort}
+          variant={variant}
+          onVariantChange={setVariant}
+          packSize={packSize}
+          onPackSizeChange={setPackSize}
+          radius={radius}
+          onRadiusChange={setRadius}
+        />
+
+        <StaleDataWarning lastUpdated={lastUpdated} />
+
+        {status === 'denied' && (
+          <LocationDeniedState
+            onRetry={handleRetryLocation}
+            onManualSearch={handleOpenManualSearch}
           />
-        </div>
+        )}
+        {status === 'timeout' && !loading && (
+          <LocationTimeoutState
+            onRetry={handleRetryLocation}
+            onManualSearch={handleOpenManualSearch}
+          />
+        )}
+        {status === 'unavailable' && !loading && (
+          <LocationUnavailableState onManualSearch={handleOpenManualSearch} />
+        )}
 
-        <div className="flex items-center gap-3 flex-wrap">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={requestLocation}
-            disabled={geoLoading}
-          >
-            <MapPin className="h-4 w-4 mr-1" />
-            {geoLoading ? 'Locating...' : location ? 'Update Location' : 'Use My Location'}
-          </Button>
-          {geoError && <span className="text-xs text-destructive">{geoError}</span>}
-          {location && (
-            <span className="text-xs text-muted-foreground">
-              {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
-            </span>
-          )}
-          <div className="ml-auto flex items-center gap-3">
-            <LastUpdated date={lastUpdated} />
-            <StoreUploadForm onSuccess={fetchData} />
-          </div>
-        </div>
-
-        {!loading && !error && bestPrice && (
-          <BestDealBanner
+        {!loading && !error && (
+          <HeroCard
             bestPrice={bestPrice}
-            totalPrices={prices.length}
-            savings={savings}
+            nextBestPrice={nextBestPrice}
+            totalResults={prices.length}
+            userLat={location?.lat}
+            userLng={location?.lng}
           />
         )}
 
-        <div aria-label="Store map">
-          <StoreMap
-            stores={storesWithDistance}
-            userLocation={location}
-            highlightedStoreId={highlightedStoreId}
+        {loading && (
+          <div className="space-y-4">
+            <LoadingSkeleton variant="hero" />
+            <LoadingSkeleton variant="card" count={3} />
+          </div>
+        )}
+
+        {!loading && error && (
+          <ApiErrorState message={error} onRetry={fetchData} />
+        )}
+
+        {!loading && !error && prices.length === 0 && status === 'success' && (
+          <NoResultsState
+            filters={{ variant, packSize, radius }}
+            onResetFilters={handleResetFilters}
+            onExpandRadius={handleExpandRadius}
           />
-        </div>
+        )}
+
+        {!loading && !error && stores.length > 0 && (
+          <>
+            <div className="md:hidden">
+              <MapToggle
+                showMap={showMap}
+                onToggle={() => setShowMap(!showMap)}
+                storeCount={stores.length}
+              >
+                <StoreMap
+                  stores={storesWithDistance}
+                  userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
+                  highlightedStoreId={highlightedStoreId}
+                />
+              </MapToggle>
+            </div>
+            <div className="hidden md:block" aria-label="Store map">
+              <StoreMap
+                stores={storesWithDistance}
+                userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
+                highlightedStoreId={highlightedStoreId}
+              />
+            </div>
+          </>
+        )}
+
+        {!loading && !error && (
+          <div className="flex items-center justify-between">
+            <LastUpdated date={lastUpdated} />
+            <div className="hidden md:block">
+              <StoreUploadForm onSuccess={fetchData} />
+            </div>
+          </div>
+        )}
 
         {!loading && !error && prices.length > 2 && (
-          <PriceChart prices={prices} />
+          <div className="hidden md:block">
+            <PriceChart prices={prices} />
+          </div>
         )}
 
-        {loading ? (
-          <LoadingSkeleton count={4} />
-        ) : error ? (
-          <motion.div
-            initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-16 space-y-4"
-          >
-            <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
-              <AlertCircle className="h-8 w-8 text-destructive" />
-            </div>
-            <div>
-              <p className="text-lg font-medium text-destructive">{error}</p>
-              <Button variant="outline" onClick={fetchData} className="mt-3">
-                Retry
-              </Button>
-            </div>
-          </motion.div>
-        ) : (
+        {!loading && !error && prices.length > 0 && (
           <div aria-label="Price results">
             <PriceList
               prices={prices}
@@ -187,6 +272,21 @@ export default function Home() {
       </main>
 
       <Footer />
+
+      <StickyBar
+        onReportPrice={() => setShowUploadForm(true)}
+        onFilterToggle={() => {}}
+        onLocationRequest={requestLocation}
+        locationLabel={locationLabel}
+        isLocating={status === 'requesting'}
+        activeFilterCount={activeFilterCount}
+      />
+
+      <StoreUploadForm
+        onSuccess={fetchData}
+        externalOpen={showUploadForm}
+        onExternalOpenChange={setShowUploadForm}
+      />
     </div>
   )
 }
