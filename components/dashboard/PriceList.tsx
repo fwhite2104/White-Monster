@@ -59,7 +59,7 @@ export function PriceList({
           transition={{
             delay: showAll ? 0 : index * 0.06,
             duration: 0.35,
-            ease: 'easeOut',
+            ease: [0.23, 1, 0.32, 1],
           }}
           role="listitem"
         >
@@ -75,9 +75,9 @@ export function PriceList({
 
       {hiddenCount > 0 && (
         <motion.div
-          initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: showAll ? 0 : INITIAL_DISPLAY_COUNT * 0.06, duration: 0.3 }}
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 8, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: showAll ? 0 : INITIAL_DISPLAY_COUNT * 0.06, duration: 0.35 }}
         >
           <button
             type="button"

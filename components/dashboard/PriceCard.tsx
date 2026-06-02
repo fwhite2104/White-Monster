@@ -57,10 +57,11 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover }: Pric
 
   return (
     <motion.div
-      initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
+      initial={shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.97 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={shouldReduceMotion ? {} : { scale: 1.01, y: -2 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
+      whileTap={shouldReduceMotion ? {} : { scale: 0.97 }}
+      transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
       onMouseEnter={onHover}
       className="relative"
     >
@@ -71,7 +72,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover }: Pric
             background: `linear-gradient(135deg, ${retailerColor}, oklch(0.7 0.25 145), ${retailerColor})`,
           }}
           animate={shouldReduceMotion ? {} : { opacity: [0.4, 0.8, 0.4] }}
-          transition={{ duration: 3, repeat: Infinity }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
         />
       )}
 
@@ -104,8 +105,8 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover }: Pric
                 )}
                 {isCheapest && (
                   <motion.div
-                    initial={shouldReduceMotion ? false : { scale: 0 }}
-                    animate={{ scale: 1 }}
+                    initial={shouldReduceMotion ? false : { scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                   >
                     <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5">
