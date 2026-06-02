@@ -181,11 +181,11 @@ def main():
         tesco_prices = []
 
     _log("--- SuperValu Ireland (Sports & Energy) ---")
+    supervalu_store = get_or_create_store(
+        supabase, "supervalu", "SuperValu Ireland (National)", 51.8985, -8.4756, "Cork City"
+    )
     try:
         supervalu_prices = SuperValuIEScraper().scrape()
-        supervalu_store = get_or_create_store(
-            supabase, "supervalu", "SuperValu Ireland (National)", 51.8985, -8.4756, "Cork City"
-        )
         push_prices(supabase, supervalu_prices, "supervalu", supervalu_store)
     except Exception as e:
         _log(f"  [WARN] SuperValu scraper failed: {e}")

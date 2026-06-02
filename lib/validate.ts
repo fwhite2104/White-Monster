@@ -1,6 +1,7 @@
 import { MIN_RADIUS_KM, MAX_RADIUS_KM } from './constants'
 
 export function validateLat(value: unknown, field = 'lat'): number {
+  if (value == null) throw new Error(`Invalid ${field}: must be a valid number`)
   const num = typeof value === 'string' ? parseFloat(value) : Number(value)
   if (!Number.isFinite(num)) throw new Error(`Invalid ${field}: must be a valid number`)
   if (num < -90 || num > 90) throw new Error(`Invalid ${field}: must be between -90 and 90`)
@@ -8,6 +9,7 @@ export function validateLat(value: unknown, field = 'lat'): number {
 }
 
 export function validateLng(value: unknown, field = 'lng'): number {
+  if (value == null) throw new Error(`Invalid ${field}: must be a valid number`)
   const num = typeof value === 'string' ? parseFloat(value) : Number(value)
   if (!Number.isFinite(num)) throw new Error(`Invalid ${field}: must be a valid number`)
   if (num < -180 || num > 180) throw new Error(`Invalid ${field}: must be between -180 and 180`)
@@ -15,6 +17,7 @@ export function validateLng(value: unknown, field = 'lng'): number {
 }
 
 export function validateRadius(value: unknown, field = 'radius'): number {
+  if (value == null) throw new Error(`Invalid ${field}: must be a valid number`)
   const num = typeof value === 'string' ? parseFloat(value) : Number(value)
   if (!Number.isFinite(num)) throw new Error(`Invalid ${field}: must be a valid number`)
   if (num < MIN_RADIUS_KM || num > MAX_RADIUS_KM) {

@@ -62,7 +62,8 @@ export default function Home() {
       setPrices(pricesData.prices || [])
       setStores(storesData.stores || [])
       if (pricesData.prices?.length > 0) {
-        setLastUpdated(pricesData.prices[0].scraped_at)
+        const scraped = pricesData.prices.find((p: { scraped_at: string | null }) => p.scraped_at != null)
+        setLastUpdated(scraped?.scraped_at ?? null)
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {

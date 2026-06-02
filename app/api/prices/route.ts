@@ -89,8 +89,8 @@ export async function GET(request: NextRequest) {
       .from('prices')
       .select(`
         id, store_id, product_id, price, source, scraped_at,
-        stores (id, name, retailer, address, suburb, lat, lng),
-        products (id, name, variant, size_ml, image_url, pack_size)
+        stores!inner (id, name, retailer, address, suburb, lat, lng),
+        products!inner (id, name, variant, size_ml, image_url, pack_size)
       `)
       .eq('products.variant', variant)
       .eq('stores.is_active', true)
@@ -100,7 +100,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    const typed = (prices ?? []) as unknown as PriceWithJoins[]
+    const allPrices = (prices ?? []) as unknown as PriceWithJoins[]
+    const typed = allPrices.filter((p) => p.stores != null && p.products != null)
 
     const radiusMeters = radiusKm * 1000
 

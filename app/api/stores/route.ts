@@ -57,14 +57,20 @@ export async function GET(request: NextRequest) {
     const physicalStores = typedStores.filter((s) => !s.name.includes('(National)'))
     const nationalStores = typedStores.filter((s) => s.name.includes('(National)'))
 
-    const physicalRetailers = new Set(physicalStores.map((s) => s.retailer))
-
-    const withDistance = [...physicalStores, ...nationalStores.filter((s) => !physicalRetailers.has(s.retailer))]
-      .map((s) => ({
-        ...s,
-        distance: calculateDistance(lat, lng, s.lat, s.lng),
-      }))
+    // Radius-first: National stores appear when no physical stores of that
+    // retailer are within the user's radius, not just absent from the DB.
+    const physicalStoresInRange = physicalStores
+      .map((s) => ({ ...s, distance: calculateDistance(lat, lng, s.lat, s.lng) }))
       .filter((s) => s.distance <= radiusMeters)
+
+    const physicalRetailersInRange = new Set(physicalStoresInRange.map((s) => s.retailer))
+
+    const nationalStoresInRange = nationalStores
+      .filter((s) => !physicalRetailersInRange.has(s.retailer))
+      .map((s) => ({ ...s, distance: calculateDistance(lat, lng, s.lat, s.lng) }))
+      .filter((s) => s.distance <= radiusMeters)
+
+    const withDistance = [...physicalStoresInRange, ...nationalStoresInRange]
       .sort((a, b) => a.distance - b.distance)
 
     return NextResponse.json({ stores: withDistance })
