@@ -39,8 +39,8 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
   const shouldReduceMotion = useReducedMotion()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-  const lat = userLat ?? CORK_CENTER.lat
-  const lng = userLng ?? CORK_CENTER.lng
+  const lat = Number.isFinite(userLat) ? (userLat as number) : CORK_CENTER.lat
+  const lng = Number.isFinite(userLng) ? (userLng as number) : CORK_CENTER.lng
   const store = price.stores ?? { name: 'Unknown', retailer: 'other', lat: 0, lng: 0, suburb: '', address: '' }
   const product = price.products ?? { name: 'Unknown Product', variant: 'unknown', pack_size: 'single' }
   const retailerColor = getRetailerColor(store.retailer)

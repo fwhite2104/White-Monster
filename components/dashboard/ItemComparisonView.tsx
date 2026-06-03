@@ -46,8 +46,8 @@ function PriceStoreCard({
   index: number
 }) {
   const shouldReduceMotion = useReducedMotion()
-  const lat = userLat ?? CORK_CENTER.lat
-  const lng = userLng ?? CORK_CENTER.lng
+  const lat = Number.isFinite(userLat) ? (userLat as number) : CORK_CENTER.lat
+  const lng = Number.isFinite(userLng) ? (userLng as number) : CORK_CENTER.lng
   const store = price.stores ?? { name: 'Unknown', retailer: 'other', lat: 0, lng: 0, suburb: '' }
   const retailerColor = getRetailerColor(store.retailer)
 

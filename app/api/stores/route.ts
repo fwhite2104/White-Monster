@@ -54,7 +54,10 @@ export async function GET(request: NextRequest) {
     }
 
     const radiusMeters = radiusKm * 1000
-    const typedStores = (stores ?? []) as Store[]
+    const typedStores = ((stores ?? []) as Store[])
+      .filter((s) => Number.isFinite(s.lat) && Number.isFinite(s.lng)
+        && s.lat >= -90 && s.lat <= 90
+        && s.lng >= -180 && s.lng <= 180)
 
     const physicalStores = typedStores.filter((s) => !s.name.includes('(National)'))
     const nationalStores = typedStores.filter((s) => s.name.includes('(National)'))

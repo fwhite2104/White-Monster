@@ -115,6 +115,7 @@ export async function GET(request: NextRequest) {
     const results: PriceEntry[] = []
 
     for (const p of physicalPrices) {
+      if (!Number.isFinite(p.stores.lat) || !Number.isFinite(p.stores.lng)) continue
       const dist = calculateDistance(lat, lng, p.stores.lat, p.stores.lng)
       if (dist <= radiusMeters) {
         results.push({ ...p, distance: dist })
@@ -133,8 +134,13 @@ export async function GET(request: NextRequest) {
         .eq('is_active', true)
 
       if (!storesError && allStores) {
-        const physicalStores = allStores.filter((s) => !s.name.includes('(National)'))
-        const nationalStores = allStores.filter((s) => s.name.includes('(National)'))
+        const validStores = allStores.filter(
+          (s) => Number.isFinite(s.lat) && Number.isFinite(s.lng)
+            && s.lat >= -90 && s.lat <= 90
+            && s.lng >= -180 && s.lng <= 180
+        )
+        const physicalStores = validStores.filter((s) => !s.name.includes('(National)'))
+        const nationalStores = validStores.filter((s) => s.name.includes('(National)'))
 
         const storeByRetailer = new Map<string, typeof physicalStores>()
         for (const s of physicalStores) {

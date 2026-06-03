@@ -70,16 +70,25 @@ interface StoreMapProps {
 function MapCenter({ center }: { center: [number, number] }) {
   const map = useMap()
   useEffect(() => {
+    if (!isValidCoord(center[0], center[1])) return
     map.flyTo(center, map.getZoom(), { duration: 0.8 })
   }, [center, map])
   return null
+}
+
+function isValidCoord(lat: number, lng: number): boolean {
+  return Number.isFinite(lat) && Number.isFinite(lng)
+    && lat >= -90 && lat <= 90
+    && lng >= -180 && lng <= 180
 }
 
 function FitBounds({ stores }: { stores: Store[] }) {
   const map = useMap()
   useEffect(() => {
     if (stores.length === 0) return
-    const bounds = L.latLngBounds(stores.map((s) => [s.lat, s.lng] as [number, number]))
+    const validStores = stores.filter((s) => isValidCoord(s.lat, s.lng))
+    if (validStores.length === 0) return
+    const bounds = L.latLngBounds(validStores.map((s) => [s.lat, s.lng] as [number, number]))
     map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 })
   }, [stores, map])
   return null
@@ -137,7 +146,7 @@ export default function StoreMap({ stores, userLocation, highlightedStoreId, onM
           </Marker>
         )}
 
-        {stores.map((store) => {
+        {stores.filter((s) => isValidCoord(s.lat, s.lng)).map((store) => {
           const isHighlighted = highlightedStoreId === store.id
           const isCheapest = false
           const icon = isHighlighted
