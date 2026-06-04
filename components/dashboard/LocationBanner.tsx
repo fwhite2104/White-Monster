@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { MapPin, Loader2, AlertTriangle, Navigation, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,8 @@ interface LocationBannerProps {
   onRetry: () => void
   onManualSearch: () => void
   onSelectLocation?: (lat: number, lng: number, label: string) => void
+  openManual?: boolean
+  onInputRef?: (ref: HTMLInputElement | null) => void
 }
 
 export function LocationBanner({
@@ -22,10 +24,24 @@ export function LocationBanner({
   onRetry,
   onManualSearch,
   onSelectLocation,
+  openManual,
+  onInputRef,
 }: LocationBannerProps) {
   const shouldReduceMotion = useReducedMotion()
   const [showManual, setShowManual] = useState(false)
   const [query, setQuery] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (openManual) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setShowManual(true)
+    }
+  }, [openManual])
+
+  useEffect(() => {
+    onInputRef?.(inputRef.current)
+  }, [onInputRef, showManual])
 
   const suggestions = useMemo(() => searchLocations(query), [query])
 
@@ -203,6 +219,7 @@ export function LocationBanner({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
+              ref={inputRef}
               type="text"
               placeholder="Search Cork areas..."
               value={query}

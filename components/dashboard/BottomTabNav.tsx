@@ -13,7 +13,6 @@ interface BottomTabNavProps {
   onTabChange: (tab: TabKey) => void
   onReportPrice: () => void
   onFilterToggle: () => void
-  onLocationRequest: () => void
   isLocating: boolean
   activeFilterCount: number
   locationLabel: string
@@ -35,7 +34,6 @@ export function BottomTabNav({
   onTabChange,
   onReportPrice,
   onFilterToggle,
-  onLocationRequest,
   isLocating,
   activeFilterCount,
 }: BottomTabNavProps) {
@@ -45,9 +43,6 @@ export function BottomTabNav({
     if (tab === 'list' && tab === activeTab) {
       onFilterToggle()
       return
-    }
-    if (tab === 'stores') {
-      onLocationRequest()
     }
     onTabChange(tab)
   }
