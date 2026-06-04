@@ -214,6 +214,15 @@ export function useGeolocation(): GeolocationResult {
   }, [])
 
   const setManualLocation = useCallback((lat: number, lng: number, label?: string) => {
+    if (!isValidCoordinate(lat, lng)) {
+      setState({
+        location: getDefaultLocation(),
+        status: 'unavailable',
+        error: 'Invalid location coordinates provided.',
+      })
+      return
+    }
+
     requestIdRef.current++
 
     setState({
