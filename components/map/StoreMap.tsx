@@ -143,9 +143,10 @@ export default function StoreMap({ stores, userLocation, highlightedStoreId, onM
     )
   }
 
-  const center: [number, number] = userLocation
-    ? [userLocation.lat, userLocation.lng]
-    : [CORK_CENTER.lat, CORK_CENTER.lng]
+  const center: [number, number] =
+    userLocation && isValidCoordinate(userLocation.lat, userLocation.lng)
+      ? [userLocation.lat, userLocation.lng]
+      : [CORK_CENTER.lat, CORK_CENTER.lng]
 
   return (
     <div className={cn('relative', className)}>
@@ -167,7 +168,7 @@ export default function StoreMap({ stores, userLocation, highlightedStoreId, onM
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
 
-        {userLocation && (
+        {userLocation && isValidCoordinate(userLocation.lat, userLocation.lng) && (
           <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
             <Popup>
               <div className="text-sm font-semibold">You are here</div>
