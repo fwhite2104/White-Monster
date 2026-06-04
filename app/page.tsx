@@ -67,8 +67,8 @@ export default function Home() {
     return () => mq.removeEventListener('change', handler)
   }, [])
 
-  const lat = location?.lat ?? CORK_CENTER.lat
-  const lng = location?.lng ?? CORK_CENTER.lng
+  const lat = Number.isFinite(location?.lat) ? location!.lat : CORK_CENTER.lat
+  const lng = Number.isFinite(location?.lng) ? location!.lng : CORK_CENTER.lng
 
   const fetchData = useCallback(async () => {
     setLoading(true)
