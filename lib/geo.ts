@@ -1,5 +1,36 @@
 import { getDistance, isPointWithinRadius, orderByDistance } from 'geolib'
 
+/**
+ * Validate that lat/lng are finite numbers within valid geographic ranges.
+ * Returns true if the coordinate can be safely used with Leaflet.
+ */
+export function isValidCoordinate(lat: number, lng: number): boolean {
+  return Number.isFinite(lat) && Number.isFinite(lng)
+    && lat >= -90 && lat <= 90
+    && lng >= -180 && lng <= 180
+}
+
+/**
+ * Validate lat/lng and return a sanitized coordinate (with optional fallback).
+ * If the coordinate is invalid, returns the fallback if provided, otherwise throws.
+ * Never returns NaN or infinite values.
+ */
+export function validateCoordinate(
+  lat: unknown,
+  lng: unknown,
+  fallback?: { lat: number; lng: number },
+): { lat: number; lng: number } {
+  const numLat = lat == null || (typeof lat === 'number' && !Number.isFinite(lat)) ? NaN : Number(lat)
+  const numLng = lng == null || (typeof lng === 'number' && !Number.isFinite(lng)) ? NaN : Number(lng)
+  if (isValidCoordinate(numLat, numLng)) {
+    return { lat: numLat, lng: numLng }
+  }
+  if (fallback && isValidCoordinate(fallback.lat, fallback.lng)) {
+    return { lat: fallback.lat, lng: fallback.lng }
+  }
+  throw new Error(`Invalid coordinates: lat=${lat}, lng=${lng}`)
+}
+
 export function calculateDistance(
   lat1: number,
   lng1: number,
