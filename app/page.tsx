@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useGeolocation } from '@/hooks/use-geolocation'
+import { useHasMapRealEstate } from '@/hooks/use-has-map-realestate'
 import { CORK_CENTER, DEFAULT_RADIUS_KM } from '@/lib/constants'
 import type { Price, Store } from '@/lib/types'
 import { Header } from '@/components/shared/Header'
@@ -17,7 +18,6 @@ import { LocationBanner } from '@/components/dashboard/LocationBanner'
 import { MapInfoCard } from '@/components/map/MapInfoCard'
 import { ReportPriceCard } from '@/components/dashboard/ReportPriceCard'
 import { BottomTabNav, type TabKey } from '@/components/dashboard/BottomTabNav'
-import { Button } from '@/components/ui/button'
 import { SavingsBar } from '@/components/dashboard/SavingsBar'
 import { FirstVisitScreen } from '@/components/dashboard/FirstVisitScreen'
 import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
@@ -29,6 +29,7 @@ import {
   ApiErrorState,
   StaleDataWarning,
 } from '@/components/dashboard/StateScreens'
+import { MapPin } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
 const StoreMap = dynamic(() => import('@/components/map/StoreMap'), {
@@ -56,16 +57,8 @@ export default function Home() {
   const [selectedStore, setSelectedStore] = useState<Store | null>(null)
   const [reportStoreName, setReportStoreName] = useState<string | undefined>(undefined)
   const [reportPromptShown, setReportPromptShown] = useState(false)
-  const [isDesktop, setIsDesktop] = useState(false)
 
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)')
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsDesktop(mq.matches)
-    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
+  const hasMapRealEstate = useHasMapRealEstate()
 
   const lat = Number.isFinite(location?.lat) ? location!.lat : CORK_CENTER.lat
   const lng = Number.isFinite(location?.lng) ? location!.lng : CORK_CENTER.lng
@@ -298,7 +291,7 @@ export default function Home() {
           />
         )}
 
-        {!loading && !error && stores.length > 0 && isDesktop && (
+        {!loading && !error && stores.length > 0 && hasMapRealEstate && (
           <>
             {/* Desktop: inline StoreMap with MapInfoCard pinned to bottom */}
             {/* Conditionally mounted on md+ only — prevents Leaflet crash display:none on mobile */}
@@ -324,6 +317,38 @@ export default function Home() {
               )}
             </div>
           </>
+        )}
+
+        {!loading && !error && stores.length > 0 && !hasMapRealEstate && (
+          <a
+            href={`https://www.google.com/maps?q=${lat},${lng}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-colors min-h-[56px]"
+            aria-label={`Open map showing location at ${lat.toFixed(4)}, ${lng.toFixed(4)}`}
+          >
+            <MapPin className="size-5 shrink-0 text-primary" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">Open in Maps</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {lat.toFixed(4)}, {lng.toFixed(4)}
+              </p>
+            </div>
+            <svg
+              className="size-4 shrink-0 text-muted-foreground"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+          </a>
         )}
 
         {!loading && !error && (
