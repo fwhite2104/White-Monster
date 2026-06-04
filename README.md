@@ -1,67 +1,93 @@
 # Monster Cork
 
-Find the cheapest White Monster in Cork, Ireland.
+Find the cheapest Monster Energy drinks near you in Cork, Ireland.
 
-Monster Cork is a price comparison web app that tracks Monster energy drink prices across Irish retailers. It shows you the nearest stores with the best prices, using your location and an interactive map.
+**Monster Cork** is a location-aware price comparison app that tracks energy drink prices across Irish retailers. Users can search by area, find nearby stores with the best deals, and contribute prices back to the community — all on a map-driven interface.
+
+**[View Live Demo](https://white-monster-tracker.vercel.app)**
+
+---
 
 ## Features
 
-- Price comparison across Tesco, SuperValu, Dunnes, Aldi, and Lidl
-- Geolocation-based store search with configurable radius
-- Interactive Leaflet map with store markers
-- Price reporting by users (crowdsourced submissions)
-- Automated daily price scraping via GitHub Actions
-- Filter by variant (Zero Sugar, Ultra White, Ultra Rosa, Ultra Paradise) and pack size (single, 4-pack)
-- Sort results by price, distance, or store name
-- Dark-only UI with smooth animations via framer-motion
-- Health endpoint with data freshness monitoring
+- **Location-based search** — uses device geolocation or manual area entry to find nearby prices within a configurable radius
+- **Live price comparisons** — prices across Tesco, Dunnes, SuperValu, Lidl, Aldi, Centra, and other retailers, updated daily
+- **Filter by variant & pack size** — Zero Sugar, Ultra White, Ultra Rosa, Ultra Paradise; single cans and 4-packs
+- **Interactive map** — Leaflet-based store locator with distance markers and price popups
+- **Community price reporting** — users can submit prices they spot in stores; submissions expire after 7 days
+- **Data freshness monitoring** — health endpoint tracks staleness and prevents Supabase free-tier pausing via scheduled pings
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+    User["User / Browser"] --> FE["Next.js Frontend<br/>React 19 + Tailwind CSS"]
+    FE --> API["API Routes<br/>/api/prices, /api/stores, /api/health"]
+    API --> DB[("Supabase / Postgres<br/>PostGIS")]
+    User -->|"Price Report"| API
+
+    subgraph Ingestion["Automated Data Ingestion"]
+        Python["Python Ingestion Scripts"] --> DB
+        GHA["GitHub Actions<br/>Daily Schedule"] --> Python
+    end
+
+    subgraph Community["Community Contributions"]
+        Upload["User Price Submissions<br/>(7-day expiry)"] --> API
+    end
+```
+
+The frontend is a Next.js App Router single-page application. API routes query Postgres with PostGIS extensions for geospatial radius filtering. Price data flows from two sources: automated ingestion jobs run daily via GitHub Actions, and community-reported prices submitted through the app.
+
+---
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
+|---|---|
 | Framework | Next.js 16 (App Router) |
 | UI | React 19, TypeScript (strict) |
 | Styling | Tailwind CSS v4, shadcn/ui v4 |
+| Animation | framer-motion |
 | Database | Supabase (Postgres + PostGIS) |
 | Maps | Leaflet, react-leaflet |
-| Animation | framer-motion |
-| Scrapers | Python 3.11, curl_cffi, BeautifulSoup |
+| Testing | Vitest, jsdom |
 | Package Manager | Bun |
-| Testing | Vitest |
-| Deployment | Vercel |
+| Data Ingestion | Python 3.11 |
+| CI/CD | GitHub Actions, Vercel |
 
-## Getting Started
+---
+
+## How It Works
+
+1. **Centralized pricing** — each retailer has a national price entry stored in the database. The API expands these to physical store locations at query time.
+2. **Spatial search** — users provide their location (browser geolocation or manual input). The API returns stores within a configurable radius, sorted by distance or price.
+3. **Automated collection** — Python scripts run daily via GitHub Actions, fetching current prices from retailer platforms and upserting them into the database.
+4. **Community contributions** — users can report prices they see in stores. Submitted prices are stored separately with a 7-day expiry and merged into query results alongside automated data.
+5. **Freshness tracking** — every price record carries a timestamp. The health endpoint classifies data as fresh, stale, or outdated, and a Vercel cron job prevents the free-tier database from pausing.
+
+---
+
+## Local Development
 
 ### Prerequisites
 
 - Node.js 18+
 - [Bun](https://bun.sh) (v1.2+)
-- Python 3.11+ (only needed to run scrapers locally)
-- A Supabase project
+- A Supabase project (free tier works)
 
-### Environment Variables
-
-Copy `.env.example` to `.env.local` and fill in your values:
-
-```
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
-
-For running scrapers locally, you also need:
-
-```
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_KEY=your-service-role-key
-```
-
-See `.env.example` for the full list of required variables.
-
-### Installation
+### Setup
 
 ```bash
 bun install
+```
+
+Copy `.env.example` to `.env.local` and configure your Supabase project credentials:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
 Start the development server:
@@ -70,122 +96,79 @@ Start the development server:
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Development
+### Commands
 
 | Command | Description |
-|---------|-------------|
-| `bun dev` | Start dev server with hot reload |
+|---|---|
+| `bun dev` | Development server with hot reload |
 | `bun run build` | Production build |
-| `bun run lint` | Run ESLint |
+| `bun run lint` | ESLint |
 | `bun test` | Run tests (Vitest) |
-| `bun test:watch` | Run tests in watch mode |
+| `bun test:watch` | Tests in watch mode |
+
+---
+
+## Environment Variables
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Public anon key (safe for client) |
+| `SUPABASE_URL` | Ingestion only | Supabase URL for ingestion scripts |
+| `SUPABASE_SERVICE_KEY` | Ingestion only | Service-role key (server-side only) |
+| `FIRECRAWL_API_KEY` | Optional | AI-powered scraping provider |
+
+**Security note:** Service-role credentials must never be exposed to the client. The web app uses only the anon key with Row Level Security policies. Ingestion scripts run server-side in GitHub Actions with restricted secrets.
+
+---
+
+## Data Ingestion
+
+Price data is collected through automated Python scripts that run daily via GitHub Actions. The ingestion pipeline is designed for reliability: each retailer runs independently, failures are non-fatal, and logs are captured as artifacts for debugging.
+
+Ingestion scripts are located in `scripts/scrapers/` and extend a common `BaseScraper` class that enforces rate-limiting, retry logic with exponential backoff, and output validation.
+
+---
 
 ## Project Structure
 
 ```
 monster-cork/
-├── app/                    # Next.js App Router
-│   ├── layout.tsx          # Root layout (dark theme, Inter font)
-│   ├── page.tsx            # Main dashboard (client component)
-│   ├── globals.css         # Tailwind v4 tokens, dark-only theme
-│   └── api/                # Route handlers
-│       ├── prices/         # GET/POST prices
-│       ├── stores/         # GET stores by distance
-│       └── health/         # Health + data freshness monitoring
+├── app/                      # Next.js App Router
+│   ├── page.tsx              # Main dashboard
+│   ├── layout.tsx            # Root layout
+│   ├── globals.css           # Tailwind v4 theme tokens
+│   └── api/                  # Route handlers (prices, stores, health)
 ├── components/
-│   ├── ui/                 # shadcn/ui components
-│   ├── dashboard/          # Filters, list, map, upload
-│   ├── shared/             # Header, Footer
-│   └── map/                # Leaflet map wrapper (dynamic import)
-├── hooks/                  # use-geolocation.ts
+│   ├── ui/                   # shadcn/ui primitives
+│   ├── dashboard/            # Price list, filters, map, forms
+│   ├── shared/               # Header, Footer
+│   └── map/                  # Leaflet wrapper (dynamic import)
+├── hooks/                    # use-geolocation
 ├── lib/
-│   ├── types.ts            # Store, Product, Price interfaces
-│   ├── constants.ts        # Cork center, retailers, variants
-│   ├── geo.ts              # Distance utilities (geolib)
-│   ├── utils.ts            # cn() helper
-│   └── supabase/           # Server + browser Supabase clients
-├── scripts/scrapers/       # Python price scrapers
-├── supabase/migrations/    # SQL schema + seed data
-└── .github/workflows/      # CI/CD (daily scraper)
+│   ├── types.ts              # Store, Product, Price interfaces
+│   ├── constants.ts          # Retailer definitions, variants, radius limits
+│   ├── geo.ts                # Distance utilities (geolib)
+│   └── supabase/             # Server + browser clients
+├── scripts/scrapers/         # Python data ingestion (runs in CI)
+├── supabase/migrations/      # SQL schema migrations
+└── .github/workflows/        # CI/CD workflows
 ```
 
-For detailed navigation guidance, see `AGENTS.md`.
+---
 
-## Scraper System
+## Roadmap
 
-The scrapers live in `scripts/scrapers/` and run as a separate Python runtime alongside the Next.js app.
+- Additional retailer coverage
+- Price history and trend charts
+- Email/notification alerts for price drops
+- Expanded geographic coverage beyond Cork
+- Mobile app wrapper
 
-### Available Scrapers
+---
 
-| Retailer | File | Method |
-|----------|------|--------|
-| Tesco | `tesco_ie.py` | curl_cffi + BeautifulSoup (Akamai bypass) |
-| SuperValu (Energy) | `supervalu_ie.py` | Mercatus API (direct) |
-| SuperValu (Soft Drinks) | `supervalu_softdrinks_ie.py` | Mercatus API (direct) |
-| Dunnes | `dunnes_ie.py` | curl_cffi + BeautifulSoup (Cloudflare bypass) |
-| Aldi | `aldi_ie.py` | Internal JSON API |
-| Lidl | `lidl_ie.py` | Internal JSON API |
+## Disclaimer
 
-All scrapers extend `BaseScraper` from `base.py`, which enforces a 2-second delay between requests and provides retry logic with exponential backoff.
-
-### Running Scrapers Locally
-
-```bash
-cd scripts/scrapers
-pip install -r requirements.txt
-SUPABASE_URL=<url> SUPABASE_SERVICE_KEY=<key> python run_scrapers.py
-```
-
-The orchestrator (`run_scrapers.py`) runs each scraper, matches products to the database by variant and pack size, then upserts prices using the Supabase service-role key.
-
-### GitHub Actions Schedule
-
-The `scrape-daily.yml` workflow runs at 06:00 UTC every day. It can also be triggered manually via `workflow_dispatch`. The workflow installs Playwright (for Aldi/Lidl browser-based fallback) and uploads logs as artifacts on failure.
-
-## Database Schema
-
-The database uses Postgres with the PostGIS extension for geospatial indexing.
-
-**stores** - Physical store locations with lat/lng coordinates, retailer name, and suburb. Indexed with a GIST spatial index for fast radius queries.
-
-**products** - Monster energy drink variants (Zero Sugar, Ultra White, Ultra Rosa, Ultra Paradise) with pack size (single, 4-pack) and size in ml.
-
-**prices** - Core data table linking stores to products with a price in EUR. Each row tracks its source (`scraper` or `user_upload`) and timestamp. Row Level Security allows public reads and public inserts on prices.
-
-## API Endpoints
-
-### GET /api/prices
-
-Returns prices filtered by location, variant, and pack size.
-
-Query parameters: `lat`, `lng`, `radius` (km), `variant`, `pack_size` (single/4_pack/all), `sort` (price/distance/name)
-
-### POST /api/prices
-
-Submit a user-reported price. Accepts JSON body with `storeName`, `retailer`, `price`, `variant`, `packSize`, `lat`, `lng`, and optional `notes` and `address`.
-
-### GET /api/stores
-
-Returns stores within radius, sorted by distance.
-
-Query parameters: `lat`, `lng`, `radius` (km), `retailer`
-
-### GET /api/health
-
-Returns service health status, data freshness (fresh/stale/outdated based on last scrape time), and record counts. A Vercel cron job pings this endpoint every 3 days to prevent Supabase free-tier pausing.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run `bun run lint` and `bun test` before committing
-5. Open a pull request
-
-For scraper contributions, extend `BaseScraper` in `scripts/scrapers/`, register your scraper in `run_scrapers.py`, and test locally before submitting.
-
-## License
-
-MIT
+Monster Cork is an independent, educational project. It is not affiliated with Monster Energy Corporation or any of the retailers listed. Product names, logos, and brands are the property of their respective owners. Prices are provided for informational purposes and may not reflect current in-store pricing. If you are a retailer and wish to have your data excluded, please open an issue.
