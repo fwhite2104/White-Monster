@@ -123,8 +123,8 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange,
       return
     }
 
-    const lat = location?.lat ?? CORK_CENTER.lat
-    const lng = location?.lng ?? CORK_CENTER.lng
+    const lat = location != null && Number.isFinite(location.lat) ? location.lat : CORK_CENTER.lat
+    const lng = location != null && Number.isFinite(location.lng) ? location.lng : CORK_CENTER.lng
 
     const variantLabel = MONSTER_VARIANTS.find(v => v.value === formData.variant)?.label ?? 'White Monster Zero Sugar'
     const suffix = formData.packSize === '4_pack' ? ' 4-Pack' : ''
