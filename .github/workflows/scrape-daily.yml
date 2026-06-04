@@ -2,8 +2,12 @@ name: Daily Price Scraper
 
 on:
   schedule:
-    - cron: '0 6 * * *'
+    - cron: '0 9 * * *'
   workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
 
 jobs:
   scrape:
@@ -18,13 +22,28 @@ jobs:
           python-version: '3.11'
       - run: pip install -r scripts/scrapers/requirements.txt
       - run: playwright install --with-deps chromium
-      - run: cd scripts/scrapers && python run_scrapers.py
+      - run: cd scripts/scrapers && python run_scrapers.py 2>&1 | tee scraper-output.log
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+      - name: Sanitize logs
+        if: failure()
+        run: |
+          if [ -f scripts/scrapers/scraper-output.log ]; then
+            sed -i \
+              -e "s|${SUPABASE_SERVICE_KEY}|REDACTED|g" \
+              -e "s|${SUPABASE_URL}|REDACTED|g" \
+              -e "s|${FIRECRAWL_API_KEY}|REDACTED|g" \
+              scripts/scrapers/scraper-output.log
+          fi
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
       - name: Upload logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: scraper-logs
-          path: scripts/scrapers/
+          path: scripts/scrapers/scraper-output.log

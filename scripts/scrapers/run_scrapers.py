@@ -14,6 +14,18 @@ from supervalu_softdrinks_ie import SuperValuSoftDrinksScraper
 from dunnes_ie import DunnesIEScraper
 from centra_ie import CentraIEScraper
 
+# Firecrawl-backed scraper — only active when FIRECRAWL_API_KEY is set.
+FirecrawlScraper: type | None = None
+FIRECRAWL_RETAILERS: dict = {}
+_HAS_FIRECRAWL = False
+try:
+    from firecrawl_ie import FirecrawlScraper as _FcScraper, FIRECRAWL_RETAILERS as _FcRetailers
+    FirecrawlScraper = _FcScraper
+    FIRECRAWL_RETAILERS = _FcRetailers
+    _HAS_FIRECRAWL = True
+except ImportError:
+    pass
+
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_SERVICE_KEY = os.environ["SUPABASE_SERVICE_KEY"]
 
@@ -221,6 +233,40 @@ def main():
         _log(f"  [WARN] Centra scraper failed: {e}")
         centra_prices = []
 
+    # ------------------------------------------------------------------
+    # Firecrawl-backed scrapers — for retailers without bespoke scrapers.
+    # Only runs when FIRECRAWL_API_KEY is set in the environment.
+    # ------------------------------------------------------------------
+    firecrawl_results: dict[str, list | str] = {}
+    fc_scraper_class = FirecrawlScraper
+    if _HAS_FIRECRAWL and FIRECRAWL_RETAILERS and fc_scraper_class is not None:
+        _log("--- Firecrawl-backed retailers ---")
+        for retailer_key, rc in FIRECRAWL_RETAILERS.items():
+            _log(f"--- {rc.retailer.title()} Ireland (Firecrawl) ---")
+            try:
+                scraper = fc_scraper_class(
+                    retailer=rc.retailer,
+                    search_url=rc.search_url,
+                    use_structured_extraction=rc.use_structured_extraction,
+                )
+                prices = scraper.scrape()
+                store_id = get_or_create_store(
+                    supabase,
+                    rc.retailer,
+                    f"{rc.retailer.title()} Ireland (National)",
+                    51.8985,
+                    -8.4756,
+                    "Cork City",
+                )
+                push_prices(supabase, prices, rc.retailer, store_id)
+                firecrawl_results[rc.retailer] = prices
+            except Exception as e:
+                _log(f"  [WARN] {rc.retailer} Firecrawl scraper failed: {e}")
+                firecrawl_results[rc.retailer] = "FAILED"
+    else:
+        _log("Firecrawl scrapers skipped (FIRECRAWL_API_KEY not set or firecrawl_ie not available)")
+
+    # Build results summary.
     results = {}
     for name, prices in [
         ("Lidl", lidl_prices),
@@ -237,7 +283,16 @@ def main():
     for name, count in results.items():
         status = f"{count} prices" if count != "FAILED" else "FAILED"
         print(f"  {name}: {status}")
+    # Append Firecrawl-backed retailer results.
+    if firecrawl_results:
+        for name, count in firecrawl_results.items():
+            if isinstance(count, list):
+                label = name.title()
+                print(f"  {label} (Firecrawl): {len(count)} prices")
+            else:
+                print(f"  {name.title()} (Firecrawl): FAILED")
     total = sum(v for v in results.values() if isinstance(v, int))
+    total += sum(len(v) for v in firecrawl_results.values() if isinstance(v, list))
     print(f"  Total: {total} prices")
 
 
