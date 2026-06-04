@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { CORK_CENTER, RETAILERS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
+import { isValidCoordinate } from '@/lib/geo'
 
 const BRAND_GREEN = 'oklch(0.72 0.22 145)'
 const MUTED_GRAY = 'oklch(0.55 0 0)'
@@ -67,30 +68,58 @@ interface StoreMapProps {
   className?: string
 }
 
-function MapCenter({ center }: { center: [number, number] }) {
-  const map = useMap()
+/** Guards a Leaflet map operation: requires the map to be ready and container to have non-zero size. */
+function useSafeMapEffect(
+  map: L.Map,
+  fn: () => void,
+  deps: React.DependencyList,
+): void {
+  const containerReady = useRef(false)
+
   useEffect(() => {
-    if (!isValidCoord(center[0], center[1])) return
-    map.flyTo(center, map.getZoom(), { duration: 0.8 })
-  }, [center, map])
-  return null
+    let cancelled = false
+
+    const run = () => {
+      if (cancelled) return
+      // Check container has non-zero size (prevents NaN from display:none containers)
+      if (map.getSize().x <= 0 || map.getSize().y <= 0) return
+      containerReady.current = true
+      fn()
+    }
+
+    if (map.whenReady) {
+      map.whenReady(() => {
+        if (!cancelled) run()
+      })
+    } else {
+      run()
+    }
+
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, ...deps])
 }
 
-function isValidCoord(lat: number, lng: number): boolean {
-  return Number.isFinite(lat) && Number.isFinite(lng)
-    && lat >= -90 && lat <= 90
-    && lng >= -180 && lng <= 180
+function MapCenter({ center }: { center: [number, number] }) {
+  const map = useMap()
+  useSafeMapEffect(map, () => {
+    if (!isValidCoordinate(center[0], center[1])) return
+    const zoom = map.getZoom()
+    if (typeof zoom !== 'number' || !Number.isFinite(zoom)) return
+    map.flyTo(center, zoom, { duration: 0.8 })
+  }, [center])
+  return null
 }
 
 function FitBounds({ stores }: { stores: Store[] }) {
   const map = useMap()
-  useEffect(() => {
+  useSafeMapEffect(map, () => {
     if (stores.length === 0) return
-    const validStores = stores.filter((s) => isValidCoord(s.lat, s.lng))
+    const validStores = stores.filter((s) => isValidCoordinate(s.lat, s.lng))
     if (validStores.length === 0) return
-    const bounds = L.latLngBounds(validStores.map((s) => [s.lat, s.lng] as [number, number]))
+    const bounds = L.latLngBounds(validStores.map((s) => [s.lat, s.lng]))
     map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 })
-  }, [stores, map])
+  }, [stores])
   return null
 }
 
@@ -146,7 +175,7 @@ export default function StoreMap({ stores, userLocation, highlightedStoreId, onM
           </Marker>
         )}
 
-        {stores.filter((s) => isValidCoord(s.lat, s.lng)).map((store) => {
+        {stores.filter((s) => isValidCoordinate(s.lat, s.lng)).map((store) => {
           const isHighlighted = highlightedStoreId === store.id
           const isCheapest = false
           const icon = isHighlighted
