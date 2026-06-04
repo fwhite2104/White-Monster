@@ -20,6 +20,7 @@ import { BottomTabNav, type TabKey } from '@/components/dashboard/BottomTabNav'
 import { Button } from '@/components/ui/button'
 import { SavingsBar } from '@/components/dashboard/SavingsBar'
 import { FirstVisitScreen } from '@/components/dashboard/FirstVisitScreen'
+import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
 import {
   LocationDeniedState,
   LocationTimeoutState,
@@ -55,6 +56,16 @@ export default function Home() {
   const [selectedStore, setSelectedStore] = useState<Store | null>(null)
   const [reportStoreName, setReportStoreName] = useState<string | undefined>(undefined)
   const [reportPromptShown, setReportPromptShown] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsDesktop(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   const lat = location?.lat ?? CORK_CENTER.lat
   const lng = location?.lng ?? CORK_CENTER.lng
@@ -287,16 +298,19 @@ export default function Home() {
           />
         )}
 
-        {!loading && !error && stores.length > 0 && (
+        {!loading && !error && stores.length > 0 && isDesktop && (
           <>
             {/* Desktop: inline StoreMap with MapInfoCard pinned to bottom */}
-            <div className="hidden md:block relative overflow-hidden rounded-lg" aria-label="Store map">
-              <StoreMap
-                stores={storesWithDistance}
-                userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
-                highlightedStoreId={highlightedStoreId}
-                onMarkerClick={handleMarkerClick}
-              />
+            {/* Conditionally mounted on md+ only — prevents Leaflet crash display:none on mobile */}
+            <div className="relative overflow-hidden rounded-lg" aria-label="Store map">
+              <MapErrorBoundary>
+                <StoreMap
+                  stores={storesWithDistance}
+                  userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
+                  highlightedStoreId={highlightedStoreId}
+                  onMarkerClick={handleMarkerClick}
+                />
+              </MapErrorBoundary>
               {selectedStore && (
                 <div className="absolute bottom-0 left-0 right-0 z-10">
                   <MapInfoCard

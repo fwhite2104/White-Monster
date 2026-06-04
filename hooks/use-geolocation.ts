@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react'
 import { CORK_CENTER } from '@/lib/constants'
+import { isValidCoordinate } from '@/lib/geo'
 
 export type LocationSource = 'gps' | 'manual' | 'cached' | 'default'
 export type LocationStatus = 'idle' | 'requesting' | 'success' | 'denied' | 'timeout' | 'unavailable' | 'error'
@@ -145,10 +146,23 @@ export function useGeolocation(): GeolocationResult {
       (position) => {
         if (requestIdRef.current !== currentRequestId) return
 
+        const rawLat = position.coords.latitude
+        const rawLng = position.coords.longitude
         const accuracy = position.coords.accuracy
+
+        // Validate GPS coordinates — fall back to Cork center if NaN or out of range
+        if (!isValidCoordinate(rawLat, rawLng)) {
+          setState({
+            location: getDefaultLocation(),
+            status: 'unavailable',
+            error: 'Received invalid coordinates from GPS. Using default location.',
+          })
+          return
+        }
+
         const location: LocationInfo = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
+          lat: rawLat,
+          lng: rawLng,
           accuracy,
           source: 'gps',
         }
