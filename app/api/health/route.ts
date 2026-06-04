@@ -1,10 +1,20 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { checkRateLimitDB, getClientIp } from '@/lib/rate-limit'
 
-export async function GET() {
+export async function GET(request: Request) {
   const startTime = Date.now()
 
   try {
+    const clientIp = getClientIp(request)
+    const rateLimit = await checkRateLimitDB(`health:${clientIp}`, 30, 60 * 1000)
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests.' },
+        { status: 429 }
+      )
+    }
+
     const supabase = await createClient()
 
     // Check database connectivity

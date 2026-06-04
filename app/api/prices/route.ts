@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import { checkRateLimitDB, getClientIp } from '@/lib/rate-limit'
 import { calculateDistance } from '@/lib/geo'
 import {
   CORK_CENTER,
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const clientIp = getClientIp(request)
-    const rateLimit = checkRateLimit(`price-fetch:${clientIp}`, 60, 60 * 1000)
+    const rateLimit = await checkRateLimitDB(`price-fetch:${clientIp}`, 60, 60 * 1000)
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: 'Too many requests. Please slow down.' },
@@ -214,6 +214,71 @@ export async function GET(request: NextRequest) {
         : Number(p.price),
     }))
 
+    // Fetch non-expired user-reported prices for the same variant
+    const { data: userPrices, error: userPricesError } = await supabase
+      .from('user_prices')
+      .select(`
+        id, store_id, product_id, price, uploaded_by_ip, notes, expires_at, created_at,
+        stores!inner (id, name, retailer, address, suburb, lat, lng),
+        products!inner (id, name, variant, size_ml, image_url, pack_size)
+      `)
+      .gte('expires_at', new Date().toISOString())
+      .eq('products.variant', variant)
+
+    if (!userPricesError && userPrices) {
+      const rawPrices = userPrices as unknown as Array<{
+        id: string
+        store_id: string
+        product_id: string
+        price: number
+        uploaded_by_ip: string | null
+        notes: string | null
+        expires_at: string
+        created_at: string
+        stores: { id: string; name: string; retailer: string; address: string; suburb: string; lat: number; lng: number }
+        products: { id: string; name: string; variant: string; size_ml: number; image_url: string; pack_size: string }
+      }>
+
+      // Filter by distance to user
+      const nearbyUserPrices = rawPrices.filter((up) => {
+        const s = up.stores
+        if (!s || !Number.isFinite(s.lat) || !Number.isFinite(s.lng)) return false
+        const dist = calculateDistance(lat, lng, s.lat, s.lng)
+        return dist <= radiusMeters
+      })
+
+      // Aggregate by (retailer, variant, pack_size): lowest price, most recent as tiebreaker
+      const bestByRetailer = new Map<string, typeof rawPrices[0]>()
+      for (const up of nearbyUserPrices) {
+        const key = `${up.stores.retailer}|${up.products.variant}|${up.products.pack_size}`
+        const existing = bestByRetailer.get(key)
+        if (
+          !existing ||
+          Number(up.price) < Number(existing.price) ||
+          (Number(up.price) === Number(existing.price) && new Date(up.created_at) > new Date(existing.created_at))
+        ) {
+          bestByRetailer.set(key, up)
+        }
+      }
+
+      // Add best user-reported prices as entries
+      for (const up of bestByRetailer.values()) {
+        const dist = calculateDistance(lat, lng, up.stores.lat, up.stores.lng)
+        const entry: PriceEntry = {
+          id: up.id,
+          store_id: up.store_id,
+          product_id: up.product_id,
+          price: Number(up.price),
+          source: 'user_reported',
+          scraped_at: up.created_at,
+          stores: up.stores,
+          products: up.products,
+          distance: dist,
+        }
+        results.push(entry)
+      }
+    }
+
     withPerCanPrice.sort((a, b) => {
       if (sort === 'price') return Number(a.per_can_price) - Number(b.per_can_price)
       if (sort === 'distance') return a.distance - b.distance
@@ -244,7 +309,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const clientIp = getClientIp(request)
-    const rateLimit = checkRateLimit(`price-submit:${clientIp}`, 5, 60 * 1000)
+    const rateLimit = await checkRateLimitDB(`price-submit:${clientIp}`, 5, 60 * 1000)
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: 'Too many submissions. Please wait a minute before trying again.' },
@@ -318,41 +383,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
-    const { error: priceError } = await supabase
-      .from('prices')
-      .upsert(
-        {
-          store_id: storeId,
-          product_id: product.id,
-          price,
-          source: 'user_upload',
-          notes,
-          scraped_at: null,
-        },
-        { onConflict: 'store_id,product_id,source' }
-      )
-
-    if (priceError) {
-      return NextResponse.json({ error: priceError.message }, { status: 500 })
-    }
-
-    const { data, error: fetchError } = await supabase
-      .from('prices')
+    const { data: userPrice, error: insertError } = await supabase
+      .from('user_prices')
+      .insert({
+        store_id: storeId,
+        product_id: product.id,
+        price,
+        uploaded_by_ip: clientIp,
+        notes,
+      })
       .select(`
-        id, store_id, product_id, price, source, scraped_at,
+        id, store_id, product_id, price, uploaded_by_ip, notes, expires_at, created_at,
         stores (id, name, retailer, address, suburb, lat, lng),
         products (id, name, variant, size_ml, image_url, pack_size)
       `)
-      .eq('store_id', storeId)
-      .eq('product_id', product.id)
-      .eq('source', 'user_upload')
       .single()
 
-    if (fetchError) {
-      return NextResponse.json({ error: fetchError.message }, { status: 500 })
+    if (insertError) {
+      return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
 
-    return NextResponse.json(data, { status: 201 })
+    return NextResponse.json(userPrice, { status: 201 })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal server error'
     return NextResponse.json({ error: message }, { status: 500 })

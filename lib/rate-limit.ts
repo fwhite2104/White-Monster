@@ -1,9 +1,4 @@
-/**
- * Simple in-memory rate limiter for API routes.
- * Uses a sliding window counter per IP address.
- * In production, this should be replaced with Redis or similar,
- * but for a small app this is sufficient.
- */
+import { createClient } from '@/lib/supabase/server'
 
 interface RateLimitEntry {
   count: number
@@ -12,7 +7,6 @@ interface RateLimitEntry {
 
 const limits = new Map<string, RateLimitEntry>()
 
-// Clean up expired entries every 10 minutes
 const CLEANUP_INTERVAL = 10 * 60 * 1000
 let lastCleanup = Date.now()
 
@@ -34,17 +28,12 @@ export interface RateLimitResult {
 }
 
 /**
- * Check if a request is within rate limits.
- *
- * @param key - Identifier for the client (IP address, etc.)
- * @param limit - Maximum number of requests in the window
- * @param windowMs - Time window in milliseconds
- * @returns RateLimitResult with allowed status and remaining count
+ * In-memory rate limiter — used as fallback when DB is unreachable.
  */
 export function checkRateLimit(
   key: string,
   limit: number = 10,
-  windowMs: number = 60 * 1000 // 1 minute
+  windowMs: number = 60 * 1000
 ): RateLimitResult {
   cleanup()
 
@@ -52,7 +41,6 @@ export function checkRateLimit(
   const entry = limits.get(key)
 
   if (!entry || now > entry.resetTime) {
-    // New window or expired
     limits.set(key, { count: 1, resetTime: now + windowMs })
     return { allowed: true, remaining: limit - 1, resetTime: now + windowMs }
   }
@@ -65,18 +53,69 @@ export function checkRateLimit(
   return { allowed: true, remaining: limit - entry.count, resetTime: entry.resetTime }
 }
 
-/**
- * Extract client IP from request headers.
- * Handles proxy headers like X-Forwarded-For and X-Real-IP.
- */
-export function getClientIp(request: Request): string {
-  const forwarded = request.headers.get('x-forwarded-for')
-  if (forwarded) {
-    return forwarded.split(',')[0].trim()
+function parseRateLimitKey(key: string): { ip: string; endpoint: string } {
+  const firstColon = key.indexOf(':')
+  if (firstColon === -1) return { ip: key, endpoint: 'unknown' }
+  return {
+    endpoint: key.substring(0, firstColon),
+    ip: key.substring(firstColon + 1),
   }
+}
+
+/**
+ * DB-backed rate limiter using the rate_limits table (migration 006).
+ * Falls back to in-memory if Supabase is unreachable.
+ */
+export async function checkRateLimitDB(
+  key: string,
+  limit: number = 10,
+  windowMs: number = 60 * 1000
+): Promise<RateLimitResult> {
+  try {
+    const supabase = await createClient()
+    const { ip, endpoint } = parseRateLimitKey(key)
+    const now = new Date()
+    const windowStart = new Date(now.getTime() - windowMs)
+
+    const { count, error } = await supabase
+      .from('rate_limits')
+      .select('id', { count: 'exact', head: true })
+      .eq('ip_address', ip)
+      .eq('endpoint', endpoint)
+      .gte('window_end', windowStart.toISOString())
+
+    if (error) throw error
+
+    if (count !== null && count >= limit) {
+      return { allowed: false, remaining: 0, resetTime: now.getTime() + windowMs }
+    }
+
+    await supabase.from('rate_limits').insert({
+      ip_address: ip,
+      endpoint,
+      request_count: 1,
+      window_start: now.toISOString(),
+      window_end: new Date(now.getTime() + windowMs).toISOString(),
+    })
+
+    return {
+      allowed: true,
+      remaining: limit - (count ?? 0) - 1,
+      resetTime: now.getTime() + windowMs,
+    }
+  } catch {
+    return checkRateLimit(key, limit, windowMs)
+  }
+}
+
+export function getClientIp(request: Request): string {
   const realIp = request.headers.get('x-real-ip')
   if (realIp) {
     return realIp.trim()
+  }
+  const forwarded = request.headers.get('x-forwarded-for')
+  if (forwarded) {
+    return forwarded.split(',')[0].trim()
   }
   return 'unknown'
 }

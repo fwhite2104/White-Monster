@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import { checkRateLimitDB, getClientIp } from '@/lib/rate-limit'
 import { calculateDistance } from '@/lib/geo'
 import {
   CORK_CENTER,
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const clientIp = getClientIp(request)
-    const rateLimit = checkRateLimit(`stores-fetch:${clientIp}`, 60, 60 * 1000)
+    const rateLimit = await checkRateLimitDB(`stores-fetch:${clientIp}`, 60, 60 * 1000)
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: 'Too many requests. Please slow down.' },

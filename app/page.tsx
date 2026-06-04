@@ -14,8 +14,6 @@ import { LoadingSkeleton } from '@/components/dashboard/LoadingSkeleton'
 import { LastUpdated } from '@/components/dashboard/LastUpdated'
 import { StoreUploadForm } from '@/components/dashboard/StoreUploadForm'
 import { LocationBanner } from '@/components/dashboard/LocationBanner'
-import { Map } from 'lucide-react'
-import { MapBottomSheet } from '@/components/map/MapBottomSheet'
 import { MapInfoCard } from '@/components/map/MapInfoCard'
 import { ReportPriceCard } from '@/components/dashboard/ReportPriceCard'
 import { BottomTabNav, type TabKey } from '@/components/dashboard/BottomTabNav'
@@ -49,7 +47,6 @@ export default function Home() {
   const [sort, setSort] = useState('price')
   const [variant, setVariant] = useState('zero_sugar')
   const [packSize, setPackSize] = useState('all')
-  const [showMap, setShowMap] = useState(false)
   const [showUploadForm, setShowUploadForm] = useState(false)
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
   const [highlightedStoreId, setHighlightedStoreId] = useState<string | null>(null)
@@ -292,45 +289,6 @@ export default function Home() {
 
         {!loading && !error && stores.length > 0 && (
           <>
-            {/* Mobile: trigger button + MapBottomSheet */}
-            <div className="md:hidden">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-11 px-4 w-full rounded-xl gap-2 text-sm font-medium"
-                onClick={() => setShowMap(true)}
-                aria-label={`View ${stores.length} store${stores.length !== 1 ? 's' : ''} on map`}
-              >
-                <Map className="h-4 w-4 shrink-0" />
-                <span className="flex-1 text-left">
-                  View {stores.length} store{stores.length !== 1 ? 's' : ''} on map
-                </span>
-              </Button>
-              <MapBottomSheet
-                isOpen={showMap}
-                onClose={() => setShowMap(false)}
-                title="Store Map"
-                footer={
-                  selectedStore ? (
-                    <MapInfoCard
-                      store={selectedStore}
-                      price={selectedStorePrice}
-                      isCheapest={isSelectedCheapest}
-                      onReportPrice={handleMapInfoReportPrice}
-                      onClose={() => setSelectedStore(null)}
-                    />
-                  ) : undefined
-                }
-              >
-                <StoreMap
-                  stores={storesWithDistance}
-                  userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
-                  highlightedStoreId={highlightedStoreId}
-                  onMarkerClick={handleMarkerClick}
-                />
-              </MapBottomSheet>
-            </div>
-
             {/* Desktop: inline StoreMap with MapInfoCard pinned to bottom */}
             <div className="hidden md:block relative overflow-hidden rounded-lg" aria-label="Store map">
               <StoreMap

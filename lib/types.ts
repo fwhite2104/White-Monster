@@ -47,3 +47,16 @@ export interface PriceWithDistance extends Price {
 export interface StoreWithDistance extends Store {
   distance: number
 }
+
+export interface UserPrice {
+  id: string
+  store_id: string
+  product_id: string
+  price: number
+  uploaded_by_ip?: string
+  notes?: string
+  expires_at: string
+  created_at: string
+  stores?: Store
+  products?: Product
+}

@@ -45,8 +45,9 @@ export function validateEnum(value: unknown, field: string, allowed: string[]): 
 export function validateOptionalString(value: unknown, field: string, max: number): string | undefined {
   if (value == null || value === '') return undefined
   if (typeof value !== 'string') throw new Error(`Invalid ${field}: must be a string`)
-  if (value.length > max) throw new Error(`Invalid ${field}: must be at most ${max} characters`)
-  return value
+  const trimmed = value.trim()
+  if (trimmed.length > max) throw new Error(`Invalid ${field}: must be at most ${max} characters`)
+  return trimmed
 }
 
 export function validatePrice(value: unknown, packSize: string = 'single', field = 'price'): number {
