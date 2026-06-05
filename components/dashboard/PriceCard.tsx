@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Clock, Share2, User, Bot, MoreHorizontal, CirclePlus } from 'lucide-react'
+import { MapPin, Clock, Share2, User, Bot, MoreHorizontal, CirclePlus, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { getDistance } from 'geolib'
 import { CORK_CENTER, getRetailerColor } from '@/lib/constants'
@@ -38,6 +38,7 @@ function formatPerCanPrice(price: Price): string | null {
 export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onReportPrice }: PriceCardProps) {
   const shouldReduceMotion = useReducedMotion()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [shareState, setShareState] = useState<'idle' | 'copied' | 'error'>('idle')
   const menuRef = useRef<HTMLDivElement>(null)
   const lat = Number.isFinite(userLat) ? (userLat as number) : CORK_CENTER.lat
   const lng = Number.isFinite(userLng) ? (userLng as number) : CORK_CENTER.lng
@@ -54,10 +55,33 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
   const variantLabel = getVariantLabel(product)
   const perCanDisplay = formatPerCanPrice(price)
 
-  const handleShare = useCallback(() => {
+  const handleShare = useCallback(async () => {
     const canPrice = perCanDisplay ? ` (€${perCanDisplay}/can)` : ''
     const text = `Found ${product.name} for €${Number(price.price).toFixed(2)}${canPrice} at ${store.name}!`
-    navigator.clipboard.writeText(`${text} ${window.location.href}`)
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ text, url: window.location.href })
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(`${text} ${window.location.href}`)
+        setShareState('copied')
+        setTimeout(() => setShareState('idle'), 2000)
+      } else {
+        const textarea = document.createElement('textarea')
+        textarea.value = `${text} ${window.location.href}`
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+        setShareState('copied')
+        setTimeout(() => setShareState('idle'), 2000)
+      }
+    } catch {
+      setShareState('error')
+      setTimeout(() => setShareState('idle'), 2000)
+    }
     setMenuOpen(false)
   }, [perCanDisplay, product.name, price.price, store.name])
 
@@ -203,8 +227,14 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
                         onClick={handleShare}
                         className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted text-left cursor-pointer"
                       >
-                        <Share2 className="h-4 w-4 shrink-0" />
-                        Share
+                        {shareState === 'copied' ? (
+                          <Check className="h-4 w-4 shrink-0 text-green-500" />
+                        ) : shareState === 'error' ? (
+                          <X className="h-4 w-4 shrink-0 text-red-500" />
+                        ) : (
+                          <Share2 className="h-4 w-4 shrink-0" />
+                        )}
+                        {shareState === 'copied' ? 'Copied!' : shareState === 'error' ? 'Failed' : 'Share'}
                       </button>
                       <button
                         type="button"
@@ -226,7 +256,13 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
                 onClick={handleShare}
                 aria-label="Share price"
               >
-                <Share2 className="h-4 w-4" />
+                {shareState === 'copied' ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : shareState === 'error' ? (
+                  <X className="h-4 w-4 text-red-500" />
+                ) : (
+                  <Share2 className="h-4 w-4" />
+                )}
               </Button>
             )}
           </div>

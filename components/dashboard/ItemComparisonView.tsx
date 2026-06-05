@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Sparkles, Tag } from 'lucide-react'
+import { MapPin, Sparkles, Tag, Share2 } from 'lucide-react'
 import { getDistance } from 'geolib'
 import { CORK_CENTER, getRetailerColor } from '@/lib/constants'
 import { formatDistance } from '@/lib/geo'
@@ -14,6 +14,8 @@ interface ItemComparisonViewProps {
   prices: Price[]
   userLat?: number
   userLng?: number
+  onStoreClick?: (storeId: string) => void
+  onShare?: (price: Price) => void
 }
 
 interface GroupedPrices {
@@ -38,12 +40,16 @@ function PriceStoreCard({
   userLat,
   userLng,
   index,
+  onStoreClick,
+  onShare,
 }: {
   price: Price
   isCheapest: boolean
   userLat?: number
   userLng?: number
   index: number
+  onStoreClick?: (storeId: string) => void
+  onShare?: (price: Price) => void
 }) {
   const shouldReduceMotion = useReducedMotion()
   const lat = Number.isFinite(userLat) ? (userLat as number) : CORK_CENTER.lat
@@ -67,6 +73,15 @@ function PriceStoreCard({
       className="shrink-0"
     >
       <Card
+        role={onStoreClick ? 'button' : undefined}
+        tabIndex={onStoreClick ? 0 : undefined}
+        onClick={onStoreClick ? () => onStoreClick(price.store_id) : undefined}
+        onKeyDown={onStoreClick ? (e: React.KeyboardEvent) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onStoreClick(price.store_id)
+          }
+        } : undefined}
         className={
           isCheapest
             ? 'w-44 md:w-52 bg-card ring-1 ring-primary/30 relative overflow-visible'
@@ -123,12 +138,27 @@ function PriceStoreCard({
               <MapPin className="h-3 w-3" />
               {formatDistance(distance)}
             </span>
-            {price.products?.pack_size && (
-              <Badge variant="outline" className="border-foreground/15 text-[10px] h-4 px-1.5">
-                <Tag className="h-2.5 w-2.5 mr-0.5" />
-                {price.products.pack_size === '4_pack' ? '4-pack' : 'Single'}
-              </Badge>
-            )}
+            <div className="flex items-center gap-1">
+              {price.products?.pack_size && (
+                <Badge variant="outline" className="border-foreground/15 text-[10px] h-4 px-1.5">
+                  <Tag className="h-2.5 w-2.5 mr-0.5" />
+                  {price.products.pack_size === '4_pack' ? '4-pack' : 'Single'}
+                </Badge>
+              )}
+              {onShare && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onShare(price)
+                  }}
+                  className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={`Share ${store.name} price`}
+                >
+                  <Share2 className="h-3 w-3" />
+                </button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -140,6 +170,8 @@ export function ItemComparisonView({
   prices,
   userLat,
   userLng,
+  onStoreClick,
+  onShare,
 }: ItemComparisonViewProps) {
   const shouldReduceMotion = useReducedMotion()
 
@@ -194,6 +226,8 @@ export function ItemComparisonView({
                 userLat={userLat}
                 userLng={userLng}
                 index={idx}
+                onStoreClick={onStoreClick}
+                onShare={onShare}
               />
             ))}
           </div>

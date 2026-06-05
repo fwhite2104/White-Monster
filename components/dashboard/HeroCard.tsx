@@ -16,6 +16,7 @@ interface HeroCardProps {
   userLat?: number
   userLng?: number
   onReportPrice?: () => void
+  onStoreClick?: (storeId: string) => void
 }
 
 function getVariantLabel(product: { variant?: string; pack_size?: string; size_ml?: number }): string {
@@ -28,7 +29,7 @@ function getVariantLabel(product: { variant?: string; pack_size?: string; size_m
   return [variantName, packLabel].filter(Boolean).join(' · ')
 }
 
-export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice }: HeroCardProps) {
+export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice, onStoreClick }: HeroCardProps) {
   const shouldReduceMotion = useReducedMotion()
 
   if (!bestPrice) {
@@ -118,9 +119,19 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
                   className="h-2.5 w-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: retailerColor }}
                 />
-                <p className="text-base font-medium text-foreground truncate">
-                  at {store.name}
-                </p>
+                {onStoreClick ? (
+                  <button
+                    type="button"
+                    onClick={() => onStoreClick(bestPrice.store_id)}
+                    className="text-base font-medium text-foreground truncate hover:underline"
+                  >
+                    at {store.name}
+                  </button>
+                ) : (
+                  <p className="text-base font-medium text-foreground truncate">
+                    at {store.name}
+                  </p>
+                )}
                 {store.suburb && (
                   <span className="text-sm text-muted-foreground hidden sm:inline">
                     · {store.suburb}

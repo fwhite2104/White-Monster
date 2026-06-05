@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { useHasMapRealEstate } from '@/hooks/use-has-map-realestate'
-import { CORK_CENTER, DEFAULT_RADIUS_KM } from '@/lib/constants'
+import { CORK_CENTER, DEFAULT_RADIUS_KM, getRetailerColor } from '@/lib/constants'
 import type { Price, Store } from '@/lib/types'
 import { Header } from '@/components/shared/Header'
 import { Footer } from '@/components/shared/Footer'
@@ -31,6 +31,7 @@ import {
   StaleDataWarning,
 } from '@/components/dashboard/StateScreens'
 import { MapPin } from 'lucide-react'
+import { formatDistance } from '@/lib/geo'
 import dynamic from 'next/dynamic'
 
 const StoreMap = dynamic(() => import('@/components/map/StoreMap'), {
@@ -184,6 +185,47 @@ export default function Home() {
     [storesWithDistance],
   )
 
+  const handleDealCardStoreClick = useCallback(
+    (storeId: string) => {
+      setHighlightedStoreId(storeId)
+      const store = storesWithDistance.find((s) => s.id === storeId)
+      if (store) {
+        setSelectedStore(store)
+        if (!hasMapRealEstate) {
+          setActiveTab('stores')
+        }
+      }
+    },
+    [storesWithDistance, hasMapRealEstate],
+  )
+
+  const handleSharePrice = useCallback(async (price: Price) => {
+    const storeName = price.stores?.name ?? 'Unknown Store'
+    const canPrice = price.products?.pack_size === '4_pack'
+      ? ` (€${Number(price.per_can_price ?? Number(price.price) / 4).toFixed(2)}/can)`
+      : ''
+    const text = `Found ${price.products?.name ?? 'Monster'} for €${Number(price.price).toFixed(2)}${canPrice} at ${storeName}!`
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ text, url: window.location.href })
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(`${text} ${window.location.href}`)
+      } else {
+        const textarea = document.createElement('textarea')
+        textarea.value = `${text} ${window.location.href}`
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+      }
+    } catch {
+      // User cancelled share or clipboard failed silently
+    }
+  }, [])
+
   const handleUploadFormOpenChange = useCallback((open: boolean) => {
     setShowUploadForm(open)
     if (!open) {
@@ -291,6 +333,7 @@ export default function Home() {
                   userLat={location?.lat}
                   userLng={location?.lng}
                   onReportPrice={() => setShowUploadForm(true)}
+                  onStoreClick={handleDealCardStoreClick}
                 />
               </>
             )}
@@ -342,24 +385,20 @@ export default function Home() {
 
         {activeTab === 'deals' && (
           <>
-            {!loading && !error && (
-              <>
-                {bestPrice && nextBestPrice && (Number(nextBestPrice.price) - Number(bestPrice.price)) > 0 && (
-                  <BestDealBanner
-                    bestPrice={bestPrice}
-                    nextBestPrice={nextBestPrice}
-                    totalPrices={prices.length}
-                  />
-                )}
-                <HeroCard
-                  bestPrice={bestPrice}
-                  nextBestPrice={nextBestPrice}
-                  totalResults={prices.length}
-                  userLat={location?.lat}
-                  userLng={location?.lng}
-                  onReportPrice={() => setShowUploadForm(true)}
-                />
-              </>
+            {!loading && !error && prices.length > 0 && (
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-primary/5 ring-1 ring-primary/20">
+                <div className="h-6 w-1 rounded-full bg-primary/60 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">
+                    {prices.length} deal{prices.length !== 1 ? 's' : ''} found
+                  </p>
+                  {bestPrice && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Best: €{Number(bestPrice.price).toFixed(2)} at {bestPrice.stores?.name ?? 'Unknown'}
+                    </p>
+                  )}
+                </div>
+              </div>
             )}
 
             {loading && (
@@ -378,6 +417,8 @@ export default function Home() {
                 prices={prices}
                 userLat={location?.lat}
                 userLng={location?.lng}
+                onStoreClick={handleDealCardStoreClick}
+                onShare={handleSharePrice}
               />
             )}
 
@@ -452,6 +493,55 @@ export default function Home() {
                   <line x1="10" y1="14" x2="21" y2="3" />
                 </svg>
               </a>
+            )}
+
+            {!loading && !error && storesWithDistance.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-foreground px-1">
+                  Stores ({storesWithDistance.length})
+                </h3>
+                <div className="space-y-1">
+                  {storesWithDistance.map((store) => {
+                    const price = prices.find((p) => p.store_id === store.id)
+                    const isHighlighted = highlightedStoreId === store.id
+                    return (
+                      <button
+                        key={store.id}
+                        type="button"
+                        onClick={() => handleMarkerClick(store.id)}
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
+                          isHighlighted
+                            ? 'bg-primary/10 ring-1 ring-primary/30'
+                            : 'bg-card/50 hover:bg-card/80 ring-1 ring-foreground/5'
+                        }`}
+                      >
+                        <span
+                          className="h-2.5 w-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: getRetailerColor(store.retailer) }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {store.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {store.suburb || store.retailer}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          {price && (
+                            <p className="text-sm font-semibold text-foreground">
+                              €{Number(price.price).toFixed(2)}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            {formatDistance(store.distance)}
+                          </p>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
             )}
 
             {loading && (
