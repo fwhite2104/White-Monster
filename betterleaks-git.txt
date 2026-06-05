@@ -1,0 +1,11 @@
+
+
+  ○
+  ○
+  ●
+  ○  betterleaks 1.4.0
+
+[90m1:09AM[0m [31mERR[0m [1mfailed to scan Git repository[0m [36merror=[0m[31m[1m"list commits: git rev-list: exit status 128"[0m[0m
+[90m1:09AM[0m [33mWRN[0m [1mscanned ~0 bytes (0)[0m
+[90m1:09AM[0m [33mWRN[0m [1mpartial scan completed in 365ms[0m
+[90m1:09AM[0m [33mWRN[0m [1mno leaks found in partial scan[0m

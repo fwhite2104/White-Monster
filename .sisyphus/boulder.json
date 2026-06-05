@@ -1,0 +1,89 @@
+{
+  "schema_version": 2,
+  "active_work_id": "location-auto-refresh-5d83e597",
+  "works": {
+    "location-auto-refresh-5d83e597": {
+      "work_id": "location-auto-refresh-5d83e597",
+      "active_plan": "/home/feilim/Projects/Monster-App/monster-cork/.sisyphus/plans/location-auto-refresh.md",
+      "plan_name": "location-auto-refresh",
+      "status": "active",
+      "started_at": "2026-06-05T09:56:45.245Z",
+      "updated_at": "2026-06-05T09:59:53.517Z",
+      "session_ids": [
+        "ses_168ce4ae1ffeiws9KgWi1Mvufy"
+      ],
+      "session_origins": {
+        "ses_168ce4ae1ffeiws9KgWi1Mvufy": "direct"
+      },
+      "agent": "atlas",
+      "task_sessions": {
+        "todo:1": {
+          "task_key": "todo:1",
+          "task_label": "1",
+          "task_title": "Add LOCATION_MAX_AGE_MS constant",
+          "session_id": "ses_168c85205ffeGplToR2xYe7I32",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "updated_at": "2026-06-05T09:58:19.547Z",
+          "started_at": "2026-06-05T09:58:02.489Z",
+          "status": "completed",
+          "ended_at": "2026-06-05T09:58:19.547Z",
+          "elapsed_ms": 17058
+        },
+        "todo:4": {
+          "task_key": "todo:4",
+          "task_label": "4",
+          "task_title": "Add auto-refresh useEffect",
+          "session_id": "ses_168c7943affegJzP6EOp1v8Uu8",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "updated_at": "2026-06-05T09:59:53.517Z",
+          "started_at": "2026-06-05T09:59:20.178Z",
+          "status": "completed",
+          "ended_at": "2026-06-05T09:59:53.517Z",
+          "elapsed_ms": 33339
+        }
+      }
+    }
+  },
+  "active_plan": "/home/feilim/Projects/Monster-App/monster-cork/.sisyphus/plans/location-auto-refresh.md",
+  "started_at": "2026-06-05T09:56:45.245Z",
+  "status": "active",
+  "updated_at": "2026-06-05T09:59:53.517Z",
+  "session_ids": [
+    "ses_168ce4ae1ffeiws9KgWi1Mvufy"
+  ],
+  "session_origins": {
+    "ses_168ce4ae1ffeiws9KgWi1Mvufy": "direct"
+  },
+  "plan_name": "location-auto-refresh",
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "Add LOCATION_MAX_AGE_MS constant",
+      "session_id": "ses_168c85205ffeGplToR2xYe7I32",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-06-05T09:58:19.547Z",
+      "started_at": "2026-06-05T09:58:02.489Z",
+      "status": "completed",
+      "ended_at": "2026-06-05T09:58:19.547Z",
+      "elapsed_ms": 17058
+    },
+    "todo:4": {
+      "task_key": "todo:4",
+      "task_label": "4",
+      "task_title": "Add auto-refresh useEffect",
+      "session_id": "ses_168c7943affegJzP6EOp1v8Uu8",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-06-05T09:59:53.517Z",
+      "started_at": "2026-06-05T09:59:20.178Z",
+      "status": "completed",
+      "ended_at": "2026-06-05T09:59:53.517Z",
+      "elapsed_ms": 33339
+    }
+  },
+  "agent": "atlas"
+}

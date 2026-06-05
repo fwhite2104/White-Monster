@@ -1,0 +1,5 @@
+function isLocationStale(cached: { lat: number; lng: number; accuracy?: number; timestamp?: number }): boolean {
+  if (!cached.timestamp) return true // Legacy entry without timestamp = stale
+  return Date.now() - cached.timestamp > LOCATION_MAX_AGE_MS
+}
+

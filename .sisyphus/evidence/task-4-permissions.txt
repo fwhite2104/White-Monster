@@ -1,0 +1,1 @@
+135:          const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName })

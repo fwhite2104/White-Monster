@@ -1,0 +1,1 @@
+30:const LOCATION_MAX_AGE_MS = 20 * 60 * 1000 // 20 minutes

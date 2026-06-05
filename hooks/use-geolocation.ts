@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { CORK_CENTER } from '@/lib/constants'
 import { isValidCoordinate } from '@/lib/geo'
 
@@ -27,6 +27,9 @@ export interface GeolocationResult {
 }
 
 const STORAGE_KEY = 'monster-cork-location'
+// 20 minutes — maximum age before cached location is considered stale
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const LOCATION_MAX_AGE_MS = 20 * 60 * 1000
 
 function isClient(): boolean {
   return typeof window !== 'undefined'
@@ -83,6 +86,7 @@ function saveLocationToStorage(location: LocationInfo): void {
         lat: location.lat,
         lng: location.lng,
         accuracy: location.accuracy,
+        timestamp: Date.now(),
       })
     )
   } catch {
@@ -114,6 +118,7 @@ export function useGeolocation(): GeolocationResult {
   })
 
   const requestIdRef = useRef(0)
+  const initialSourceRef = useRef(state.location.source)
 
   const requestLocation = useCallback(() => {
     if (!isClient()) {
@@ -246,6 +251,39 @@ export function useGeolocation(): GeolocationResult {
       error: null,
     })
   }, [])
+
+  // Auto-refresh location on mount — silent update when permission already granted
+  useEffect(() => {
+    if (!isClient()) return
+
+    // Don't auto-refresh if user has set manual location
+    if (initialSourceRef.current === 'manual') return
+
+    const checkAndRefresh = async () => {
+      try {
+        if ('permissions' in navigator) {
+          const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName })
+          if (result.state === 'granted') {
+            // Permission already granted — safe to auto-refresh silently
+            requestLocation()
+          } else {
+            // "prompt" or "denied" — don't auto-fire dialog
+            return
+          }
+        } else {
+          // Permissions API unavailable — only auto-refresh if prior cache exists (implies prior grant)
+          if (initialSourceRef.current !== 'cached') return
+          requestLocation()
+        }
+      } catch {
+        // Permissions API error — be conservative, don't auto-refresh
+      }
+    }
+
+    // Small delay to ensure hydration is complete
+    const timer = setTimeout(checkAndRefresh, 100)
+    return () => clearTimeout(timer)
+  }, [requestLocation])
 
   const locationLabel = getLocationLabel(state.location, state.status)
 
