@@ -63,8 +63,8 @@ export default function Home() {
   const hasMapRealEstate = useHasMapRealEstate()
   const showMap = hasMapRealEstate || activeTab === 'stores'
 
-  const lat = Number.isFinite(location?.lat) ? location!.lat : CORK_CENTER.lat
-  const lng = Number.isFinite(location?.lng) ? location!.lng : CORK_CENTER.lng
+  const lat = useMemo(() => Number.isFinite(location?.lat) ? location!.lat : CORK_CENTER.lat, [location?.lat])
+  const lng = useMemo(() => Number.isFinite(location?.lng) ? location!.lng : CORK_CENTER.lng, [location?.lng])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -111,13 +111,13 @@ export default function Home() {
     fetchData()
   }, [fetchData])
 
-  const storesWithDistance = stores.map((s) => {
+  const storesWithDistance = useMemo(() => stores.map((s) => {
     const price = prices.find((p) => p.store_id === s.id)
     return {
       ...s,
       distance: price?.distance ?? 0,
     }
-  })
+  }), [stores, prices])
 
   const bestPrice = prices.length > 0 ? prices[0] : null
   const nextBestPrice = prices.length > 1 ? prices[1] : null
@@ -319,6 +319,12 @@ export default function Home() {
               />
             )}
 
+            {!loading && !error && prices.length === 0 && status === 'idle' && (
+              <div className="text-center py-8 text-muted-foreground">
+                <p className="text-sm">Enable location or search manually to find prices near you.</p>
+              </div>
+            )}
+
             {!loading && !error && (
               <LastUpdated date={lastUpdated} />
             )}
@@ -399,12 +405,13 @@ export default function Home() {
         {activeTab === 'stores' && (
           <>
             {!loading && !error && stores.length > 0 && (
-              <div className="relative overflow-hidden rounded-lg" aria-label="Store map">
+              <div className="relative overflow-hidden rounded-lg h-[400px]" aria-label="Store map">
                 <MapErrorBoundary>
                   <StoreMap
                     stores={storesWithDistance}
                     userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
                     highlightedStoreId={highlightedStoreId}
+                    cheapestStoreId={bestPrice?.store_id ?? null}
                     onMarkerClick={handleMarkerClick}
                   />
                 </MapErrorBoundary>
@@ -456,7 +463,7 @@ export default function Home() {
 
             {loading && (
               <div className="space-y-4">
-                <LoadingSkeleton variant="hero" />
+                <div className="h-[400px] w-full rounded-lg bg-muted animate-pulse" />
                 <LoadingSkeleton variant="card" count={3} />
               </div>
             )}
@@ -468,12 +475,13 @@ export default function Home() {
         )}
 
         {!loading && !error && stores.length > 0 && hasMapRealEstate && activeTab !== 'stores' && (
-          <div className="relative overflow-hidden rounded-lg" aria-label="Store map">
+          <div className="relative overflow-hidden rounded-lg h-[400px]" aria-label="Store map">
             <MapErrorBoundary>
               <StoreMap
                 stores={storesWithDistance}
                 userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
                 highlightedStoreId={highlightedStoreId}
+                cheapestStoreId={bestPrice?.store_id ?? null}
                 onMarkerClick={handleMarkerClick}
               />
             </MapErrorBoundary>
@@ -524,7 +532,7 @@ export default function Home() {
         )}
       </main>
 
-      <SavingsBar prices={prices} />
+      {prices.length > 0 && <SavingsBar prices={prices} />}
 
       <Footer />
 
