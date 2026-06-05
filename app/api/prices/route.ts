@@ -160,11 +160,21 @@ export async function GET(request: NextRequest) {
           const retailerStores = (storeByRetailer.get(retailer) ?? [])
             .filter((s) => calculateDistance(lat, lng, s.lat, s.lng) <= radiusMeters)
 
-          if (retailerStores.length === 0) {
-            continue
+          let storesToUse = retailerStores
+
+          if (storesToUse.length === 0) {
+            const allRetailerStores = storeByRetailer.get(retailer) ?? []
+            if (allRetailerStores.length === 0) continue
+
+            const closest = allRetailerStores.reduce((best, s) => {
+              const d = calculateDistance(lat, lng, s.lat, s.lng)
+              const bd = calculateDistance(lat, lng, best.lat, best.lng)
+              return d < bd ? s : best
+            })
+            storesToUse = [closest]
           }
 
-          for (const store of retailerStores) {
+          for (const store of storesToUse) {
             for (const np of nPrices) {
               const key = `${store.id}|${np.product_id}`
               if (seenStoreProduct.has(key)) continue
