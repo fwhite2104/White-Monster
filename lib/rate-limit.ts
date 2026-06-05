@@ -98,12 +98,19 @@ export async function checkRateLimitDB(
       window_end: new Date(now.getTime() + windowMs).toISOString(),
     })
 
+    // Fire-and-forget: clean up expired rows to prevent unbounded table growth
+    void supabase
+      .from('rate_limits')
+      .delete()
+      .lt('window_end', new Date(Date.now() - windowMs * 2).toISOString())
+
     return {
       allowed: true,
       remaining: limit - (count ?? 0) - 1,
       resetTime: now.getTime() + windowMs,
     }
   } catch {
+    console.warn('[rate-limit] DB unreachable, falling back to in-memory limiter for key:', key)
     return checkRateLimit(key, limit, windowMs)
   }
 }

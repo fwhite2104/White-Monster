@@ -161,13 +161,6 @@ export async function GET(request: NextRequest) {
             .filter((s) => calculateDistance(lat, lng, s.lat, s.lng) <= radiusMeters)
 
           if (retailerStores.length === 0) {
-            const fallbackStore = nationalStores.find((s) => s.retailer === retailer)
-            if (fallbackStore) {
-              const dist = calculateDistance(lat, lng, fallbackStore.lat, fallbackStore.lng)
-              for (const np of nPrices) {
-                results.push({ ...np, distance: dist })
-              }
-            }
             continue
           }
 

@@ -436,21 +436,7 @@ export default function Home() {
           />
         )}
 
-        {!loading && !error && stores.length > 0 && !showMap && (
-          <StoreMapBlock
-            stores={storesWithDistance}
-            userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
-            highlightedStoreId={highlightedStoreId}
-            onMarkerClick={handleMarkerClick}
-            selectedStore={selectedStore}
-            selectedStorePrice={selectedStorePrice}
-            isSelectedCheapest={isSelectedCheapest}
-            onReportPrice={handleMapInfoReportPrice}
-            onClose={() => setSelectedStore(null)}
-            lat={lat}
-            lng={lng}
-          />
-        )}
+
       </main>
 
       <SavingsBar prices={prices} />

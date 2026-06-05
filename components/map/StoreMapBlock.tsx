@@ -38,6 +38,10 @@ export function StoreMapBlock({
   lat,
   lng,
 }: StoreMapBlockProps) {
+  const mapLat = selectedStore ? selectedStore.lat : lat
+  const mapLng = selectedStore ? selectedStore.lng : lng
+  const mapLabel = selectedStore ? selectedStore.name : `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+
   return (
     <>
       <div className="relative overflow-hidden rounded-lg" aria-label="Store map">
@@ -63,17 +67,17 @@ export function StoreMapBlock({
       </div>
 
       <a
-        href={`https://www.google.com/maps?q=${lat},${lng}`}
+        href={`https://www.google.com/maps?q=${mapLat},${mapLng}`}
         target="_blank"
         rel="noopener noreferrer"
         className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-colors min-h-[56px]"
-        aria-label={`Open map showing location at ${lat.toFixed(4)}, ${lng.toFixed(4)}`}
+        aria-label={`Open map showing ${mapLabel}`}
       >
         <MapPin className="size-5 shrink-0 text-primary" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Open in Maps</p>
           <p className="text-xs text-muted-foreground truncate">
-            {lat.toFixed(4)}, {lng.toFixed(4)}
+            {mapLabel}
           </p>
         </div>
         <svg

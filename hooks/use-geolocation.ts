@@ -27,8 +27,6 @@ export interface GeolocationResult {
 }
 
 const STORAGE_KEY = 'monster-cork-location'
-// 20 minutes — maximum age before cached location is considered stale
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const LOCATION_MAX_AGE_MS = 20 * 60 * 1000
 
 function isClient(): boolean {
@@ -64,8 +62,10 @@ function loadCachedLocation(): LocationInfo | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
-    const parsed = JSON.parse(raw) as { lat: number; lng: number; accuracy?: number }
+    const parsed = JSON.parse(raw) as { lat: number; lng: number; accuracy?: number; timestamp?: number }
     if (typeof parsed.lat !== 'number' || typeof parsed.lng !== 'number') return null
+    const timestamp = typeof parsed.timestamp === 'number' ? parsed.timestamp : 0
+    if (Date.now() - timestamp > LOCATION_MAX_AGE_MS) return null
     return {
       lat: parsed.lat,
       lng: parsed.lng,
