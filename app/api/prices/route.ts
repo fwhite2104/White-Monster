@@ -198,22 +198,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const packFiltered = packSize === 'all'
-      ? results
-      : results.filter((p) => {
-          const productPackSize = p.products?.pack_size ?? 'single'
-          if (packSize === '4_pack') return productPackSize === '4_pack'
-          if (packSize === 'single') return productPackSize === 'single'
-          return true
-        })
-
-    const withPerCanPrice = packFiltered.map((p) => ({
-      ...p,
-      per_can_price: p.products?.pack_size === '4_pack'
-        ? Number((Number(p.price) / 4).toFixed(2))
-        : Number(p.price),
-    }))
-
     // Fetch non-expired user-reported prices for the same variant
     const { data: userPrices, error: userPricesError } = await supabase
       .from('user_prices')
@@ -278,6 +262,22 @@ export async function GET(request: NextRequest) {
         results.push(entry)
       }
     }
+
+    const packFiltered = packSize === 'all'
+      ? results
+      : results.filter((p) => {
+          const productPackSize = p.products?.pack_size ?? 'single'
+          if (packSize === '4_pack') return productPackSize === '4_pack'
+          if (packSize === 'single') return productPackSize === 'single'
+          return true
+        })
+
+    const withPerCanPrice = packFiltered.map((p) => ({
+      ...p,
+      per_can_price: p.products?.pack_size === '4_pack'
+        ? Number((Number(p.price) / 4).toFixed(2))
+        : Number(p.price),
+    }))
 
     withPerCanPrice.sort((a, b) => {
       if (sort === 'price') return Number(a.per_can_price) - Number(b.per_can_price)

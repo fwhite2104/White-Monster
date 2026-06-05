@@ -104,6 +104,7 @@ export async function checkRateLimitDB(
       resetTime: now.getTime() + windowMs,
     }
   } catch {
+    console.warn(`[rate-limit] DB unreachable, falling back to in-memory limiter for key: ${key}`)
     return checkRateLimit(key, limit, windowMs)
   }
 }
