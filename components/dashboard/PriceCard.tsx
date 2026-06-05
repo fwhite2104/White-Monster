@@ -39,6 +39,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
   const shouldReduceMotion = useReducedMotion()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const lat = Number.isFinite(userLat) ? (userLat as number) : CORK_CENTER.lat
   const lng = Number.isFinite(userLng) ? (userLng as number) : CORK_CENTER.lng
   const store = price.stores ?? { name: 'Unknown', retailer: 'other', lat: 0, lng: 0, suburb: '', address: '' }
@@ -179,6 +180,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
             {onReportPrice ? (
               <div className="relative shrink-0 mt-0.5" ref={menuRef}>
                 <Button
+                  ref={triggerRef}
                   variant="ghost"
                   size="icon"
                   className="h-9 w-9 text-muted-foreground hover:text-foreground"
@@ -196,6 +198,14 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: -4, transition: { duration: 0.15, ease: [0.23, 1, 0.32, 1] } }}
                       transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          e.stopPropagation()
+                          setMenuOpen(false)
+                          triggerRef.current?.focus()
+                        }
+                      }}
+                      tabIndex={-1}
                       className="absolute right-0 top-full z-50 mt-1 bg-popover ring-1 ring-foreground/10 rounded-lg p-1 shadow-lg min-w-[180px]"
                     >
                       <button

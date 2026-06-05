@@ -112,13 +112,17 @@ export default function Home() {
     fetchData()
   }, [fetchData])
 
-  const storesWithDistance = stores.map((s) => {
-    const price = prices.find((p) => p.store_id === s.id)
-    return {
-      ...s,
-      distance: price?.distance ?? 0,
-    }
-  })
+  const storesWithDistance = useMemo(
+    () =>
+      stores.map((s) => {
+        const price = prices.find((p) => p.store_id === s.id)
+        return {
+          ...s,
+          distance: price?.distance ?? 0,
+        }
+      }),
+    [stores, prices],
+  )
 
   const bestPrice = prices.length > 0 ? prices[0] : null
   const nextBestPrice = prices.length > 1 ? prices[1] : null
@@ -192,12 +196,16 @@ export default function Home() {
     }
   }, [])
 
-  const activeFilterCount = [
-    sort !== 'price',
-    variant !== 'zero_sugar',
-    packSize !== 'all',
-    radius !== DEFAULT_RADIUS_KM,
-  ].filter(Boolean).length
+  const activeFilterCount = useMemo(
+    () =>
+      [
+        sort !== 'price',
+        variant !== 'zero_sugar',
+        packSize !== 'all',
+        radius !== DEFAULT_RADIUS_KM,
+      ].filter(Boolean).length,
+    [sort, variant, packSize, radius],
+  )
 
   if (status === 'idle' && location?.source === 'default') {
     return (
@@ -400,20 +408,22 @@ export default function Home() {
         {activeTab === 'stores' && (
           <>
             {!loading && !error && stores.length > 0 && (
-              <StoreMapBlock
-                stores={storesWithDistance}
-                userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
-                highlightedStoreId={highlightedStoreId}
-                onMarkerClick={handleMarkerClick}
-                selectedStore={selectedStore}
-                selectedStorePrice={selectedStorePrice}
-                isSelectedCheapest={isSelectedCheapest}
-                onReportPrice={handleMapInfoReportPrice}
-                onClose={() => setSelectedStore(null)}
-                lat={lat}
-                lng={lng}
-                cheapestStoreId={bestPrice?.store_id ?? null}
-              />
+              <MapErrorBoundary>
+                <StoreMapBlock
+                  stores={storesWithDistance}
+                  userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
+                  highlightedStoreId={highlightedStoreId}
+                  onMarkerClick={handleMarkerClick}
+                  selectedStore={selectedStore}
+                  selectedStorePrice={selectedStorePrice}
+                  isSelectedCheapest={isSelectedCheapest}
+                  onReportPrice={handleMapInfoReportPrice}
+                  onClose={() => setSelectedStore(null)}
+                  lat={lat}
+                  lng={lng}
+                  cheapestStoreId={bestPrice?.store_id ?? null}
+                />
+              </MapErrorBoundary>
             )}
 
             {!loading && !error && stores.length > 0 && (
@@ -462,20 +472,22 @@ export default function Home() {
         )}
 
         {!loading && !error && stores.length > 0 && hasMapRealEstate && activeTab !== 'stores' && (
-          <StoreMapBlock
-            stores={storesWithDistance}
-            userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
-            highlightedStoreId={highlightedStoreId}
-            onMarkerClick={handleMarkerClick}
-            selectedStore={selectedStore}
-            selectedStorePrice={selectedStorePrice}
-            isSelectedCheapest={isSelectedCheapest}
-            onReportPrice={handleMapInfoReportPrice}
-            onClose={() => setSelectedStore(null)}
-            lat={lat}
-            lng={lng}
-            cheapestStoreId={bestPrice?.store_id ?? null}
-          />
+          <MapErrorBoundary>
+            <StoreMapBlock
+              stores={storesWithDistance}
+              userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
+              highlightedStoreId={highlightedStoreId}
+              onMarkerClick={handleMarkerClick}
+              selectedStore={selectedStore}
+              selectedStorePrice={selectedStorePrice}
+              isSelectedCheapest={isSelectedCheapest}
+              onReportPrice={handleMapInfoReportPrice}
+              onClose={() => setSelectedStore(null)}
+              lat={lat}
+              lng={lng}
+              cheapestStoreId={bestPrice?.store_id ?? null}
+            />
+          </MapErrorBoundary>
         )}
 
         {!loading && !error && stores.length > 0 && !showMap && (

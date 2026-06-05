@@ -128,7 +128,7 @@ export function PriceList({
   })
 
   return (
-    <div className="space-y-2.5 sm:space-y-3" role="list" aria-label="Price results">
+    <div id="price-list" className="space-y-2.5 sm:space-y-3" role="list" aria-label="Price results">
       <AnimatePresence mode="popLayout">
         {items}
       </AnimatePresence>

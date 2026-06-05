@@ -60,3 +60,33 @@ export interface UserPrice {
   stores?: Store
   products?: Product
 }
+
+export interface StoreData {
+  id: string
+  name: string
+  retailer: string
+  address: string
+  suburb: string
+  lat: number
+  lng: number
+}
+
+export interface ProductData {
+  id: string
+  name: string
+  variant: string
+  size_ml: number
+  image_url: string
+  pack_size: string
+}
+
+export interface PriceWithJoins {
+  id: string
+  store_id: string
+  product_id: string
+  price: number
+  source: string
+  scraped_at: string
+  stores: StoreData
+  products: ProductData
+}

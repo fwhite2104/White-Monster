@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimitDB, getClientIp } from '@/lib/rate-limit'
-import { calculateDistance } from '@/lib/geo'
 import {
   CORK_CENTER,
   DEFAULT_RADIUS_KM,
@@ -17,38 +16,10 @@ import {
   validatePrice,
   validateOptionalString,
 } from '@/lib/validate'
+import type { PriceWithJoins } from '@/lib/types'
+import { expandNationalPrices, mergeUserPrices, type PriceEntry, type UserPriceRecord } from '@/lib/prices'
 
 export const dynamic = 'force-dynamic'
-
-interface StoreData {
-  id: string
-  name: string
-  retailer: string
-  address: string
-  suburb: string
-  lat: number
-  lng: number
-}
-
-interface ProductData {
-  id: string
-  name: string
-  variant: string
-  size_ml: number
-  image_url: string
-  pack_size: string
-}
-
-interface PriceWithJoins {
-  id: string
-  store_id: string
-  product_id: string
-  price: number
-  source: string
-  scraped_at: string
-  stores: StoreData
-  products: ProductData
-}
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -87,7 +58,73 @@ export async function GET(request: NextRequest) {
     const packSizeParam = searchParams.get('pack_size') ?? 'all'
     const packSize = validateEnum(packSizeParam, 'pack_size', ['all', 'single', '4_pack'])
 
-    const { data: prices, error } = await supabase
+    const radiusMeters = radiusKm * 1000
+
+    type RpcRow = {
+      id: string
+      store_id: string
+      product_id: string
+      price: number
+      source: string
+      scraped_at: string
+      distance_meters: number
+      per_can_price: number
+      store_name: string
+      store_retailer: string
+      store_address: string
+      store_suburb: string
+      store_lat: number
+      store_lng: number
+      product_name: string
+      product_variant: string
+      product_size_ml: number
+      product_image_url: string
+      product_pack_size: string
+    }
+
+    const { data: rpcRows, error } = await supabase
+      .rpc('nearby_prices', {
+        p_user_lat: lat,
+        p_user_lng: lng,
+        p_radius_meters: radiusMeters,
+        p_variant_filter: variant,
+        p_sort_by: sort,
+        p_pack_size_filter: packSize,
+      })
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    const results: PriceEntry[] = (rpcRows ?? []).map((row: RpcRow) => ({
+      id: row.id,
+      store_id: row.store_id,
+      product_id: row.product_id,
+      price: Number(row.price),
+      source: row.source,
+      scraped_at: row.scraped_at,
+      stores: {
+        id: row.store_id,
+        name: row.store_name,
+        retailer: row.store_retailer,
+        address: row.store_address,
+        suburb: row.store_suburb,
+        lat: Number(row.store_lat),
+        lng: Number(row.store_lng),
+      },
+      products: {
+        id: row.product_id,
+        name: row.product_name,
+        variant: row.product_variant,
+        size_ml: row.product_size_ml,
+        image_url: row.product_image_url,
+        pack_size: row.product_pack_size,
+      },
+      distance: row.distance_meters,
+      per_can_price: Number(row.per_can_price),
+    }))
+
+    const { data: nationalRows } = await supabase
       .from('prices')
       .select(`
         id, store_id, product_id, price, source, scraped_at,
@@ -95,37 +132,10 @@ export async function GET(request: NextRequest) {
         products!inner (id, name, variant, size_ml, image_url, pack_size)
       `)
       .eq('products.variant', variant)
-      .eq('stores.is_active', true)
+      .like('stores.name', '%(National)%')
       .order('scraped_at', { ascending: false })
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    const allPrices = (prices ?? []) as unknown as PriceWithJoins[]
-    const typed = allPrices.filter((p) => p.stores != null && p.products != null)
-
-    const radiusMeters = radiusKm * 1000
-
-    type PriceEntry = PriceWithJoins & { distance: number }
-
-    const nationalPrices = typed.filter((p) => p.stores.name.includes('(National)'))
-    const physicalPrices = typed.filter((p) => !p.stores.name.includes('(National)'))
-
-    const results: PriceEntry[] = []
-
-    for (const p of physicalPrices) {
-      if (!Number.isFinite(p.stores.lat) || !Number.isFinite(p.stores.lng)) continue
-      const dist = calculateDistance(lat, lng, p.stores.lat, p.stores.lng)
-      if (dist <= radiusMeters) {
-        results.push({ ...p, distance: dist })
-      }
-    }
-
-    const seenStoreProduct = new Set<string>()
-    for (const p of results) {
-      seenStoreProduct.add(`${p.stores.id}|${p.product_id}`)
-    }
+    const nationalPrices = (nationalRows ?? []) as unknown as PriceWithJoins[]
 
     if (nationalPrices.length > 0) {
       const { data: allStores, error: storesError } = await supabase
@@ -134,70 +144,29 @@ export async function GET(request: NextRequest) {
         .eq('is_active', true)
 
       if (!storesError && allStores) {
-        const validStores = allStores.filter(
-          (s) => Number.isFinite(s.lat) && Number.isFinite(s.lng)
-            && s.lat >= -90 && s.lat <= 90
-            && s.lng >= -180 && s.lng <= 180
-        )
-        const physicalStores = validStores.filter((s) => !s.name.includes('(National)'))
-        const nationalStores = validStores.filter((s) => s.name.includes('(National)'))
-
-        const storeByRetailer = new Map<string, typeof physicalStores>()
-        for (const s of physicalStores) {
-          const list = storeByRetailer.get(s.retailer) ?? []
-          list.push(s)
-          storeByRetailer.set(s.retailer, list)
-        }
-
-        const nationalByRetailer = new Map<string, PriceWithJoins[]>()
-        for (const p of nationalPrices) {
-          const list = nationalByRetailer.get(p.stores.retailer) ?? []
-          list.push(p)
-          nationalByRetailer.set(p.stores.retailer, list)
-        }
-
-        for (const [retailer, nPrices] of nationalByRetailer) {
-          const retailerStores = (storeByRetailer.get(retailer) ?? [])
-            .filter((s) => calculateDistance(lat, lng, s.lat, s.lng) <= radiusMeters)
-
-          if (retailerStores.length === 0) {
-            const fallbackStore = nationalStores.find((s) => s.retailer === retailer)
-            if (fallbackStore) {
-              const dist = calculateDistance(lat, lng, fallbackStore.lat, fallbackStore.lng)
-              for (const np of nPrices) {
-                results.push({ ...np, distance: dist })
-              }
-            }
-            continue
-          }
-
-          for (const store of retailerStores) {
-            for (const np of nPrices) {
-              const key = `${store.id}|${np.product_id}`
-              if (seenStoreProduct.has(key)) continue
-              seenStoreProduct.add(key)
-
-              const dist = calculateDistance(lat, lng, store.lat, store.lng)
-              results.push({
-                ...np,
-                store_id: store.id,
-                stores: {
-                  id: store.id,
-                  name: store.name,
-                  retailer: store.retailer,
-                  address: store.address ?? '',
-                  suburb: store.suburb ?? '',
-                  lat: store.lat,
-                  lng: store.lng,
-                },
-                distance: dist,
-              })
-            }
-          }
-        }
+        const expanded = expandNationalPrices(nationalPrices, allStores, lat, lng, radiusMeters, results)
+        results.push(...expanded)
       }
     }
 
+    // Fetch non-expired user-reported prices for the same variant
+    const { data: userPrices, error: userPricesError } = await supabase
+      .from('user_prices')
+      .select(`
+        id, store_id, product_id, price, notes, expires_at, created_at,
+        stores!inner (id, name, retailer, address, suburb, lat, lng),
+        products!inner (id, name, variant, size_ml, image_url, pack_size)
+      `)
+      .gte('expires_at', new Date().toISOString())
+      .eq('products.variant', variant)
+
+    if (!userPricesError && userPrices) {
+      const rawPrices = userPrices as unknown as UserPriceRecord[]
+      const merged = mergeUserPrices(rawPrices, lat, lng, radiusMeters)
+      results.push(...merged)
+    }
+
+    // Filter by pack size AFTER all sources are merged
     const packFiltered = packSize === 'all'
       ? results
       : results.filter((p) => {
@@ -213,71 +182,6 @@ export async function GET(request: NextRequest) {
         ? Number((Number(p.price) / 4).toFixed(2))
         : Number(p.price),
     }))
-
-    // Fetch non-expired user-reported prices for the same variant
-    const { data: userPrices, error: userPricesError } = await supabase
-      .from('user_prices')
-      .select(`
-        id, store_id, product_id, price, uploaded_by_ip, notes, expires_at, created_at,
-        stores!inner (id, name, retailer, address, suburb, lat, lng),
-        products!inner (id, name, variant, size_ml, image_url, pack_size)
-      `)
-      .gte('expires_at', new Date().toISOString())
-      .eq('products.variant', variant)
-
-    if (!userPricesError && userPrices) {
-      const rawPrices = userPrices as unknown as Array<{
-        id: string
-        store_id: string
-        product_id: string
-        price: number
-        uploaded_by_ip: string | null
-        notes: string | null
-        expires_at: string
-        created_at: string
-        stores: { id: string; name: string; retailer: string; address: string; suburb: string; lat: number; lng: number }
-        products: { id: string; name: string; variant: string; size_ml: number; image_url: string; pack_size: string }
-      }>
-
-      // Filter by distance to user
-      const nearbyUserPrices = rawPrices.filter((up) => {
-        const s = up.stores
-        if (!s || !Number.isFinite(s.lat) || !Number.isFinite(s.lng)) return false
-        const dist = calculateDistance(lat, lng, s.lat, s.lng)
-        return dist <= radiusMeters
-      })
-
-      // Aggregate by (retailer, variant, pack_size): lowest price, most recent as tiebreaker
-      const bestByRetailer = new Map<string, typeof rawPrices[0]>()
-      for (const up of nearbyUserPrices) {
-        const key = `${up.stores.retailer}|${up.products.variant}|${up.products.pack_size}`
-        const existing = bestByRetailer.get(key)
-        if (
-          !existing ||
-          Number(up.price) < Number(existing.price) ||
-          (Number(up.price) === Number(existing.price) && new Date(up.created_at) > new Date(existing.created_at))
-        ) {
-          bestByRetailer.set(key, up)
-        }
-      }
-
-      // Add best user-reported prices as entries
-      for (const up of bestByRetailer.values()) {
-        const dist = calculateDistance(lat, lng, up.stores.lat, up.stores.lng)
-        const entry: PriceEntry = {
-          id: up.id,
-          store_id: up.store_id,
-          product_id: up.product_id,
-          price: Number(up.price),
-          source: 'user_reported',
-          scraped_at: up.created_at,
-          stores: up.stores,
-          products: up.products,
-          distance: dist,
-        }
-        results.push(entry)
-      }
-    }
 
     withPerCanPrice.sort((a, b) => {
       if (sort === 'price') return Number(a.per_can_price) - Number(b.per_can_price)
@@ -393,7 +297,7 @@ export async function POST(request: NextRequest) {
         notes,
       })
       .select(`
-        id, store_id, product_id, price, uploaded_by_ip, notes, expires_at, created_at,
+        id, store_id, product_id, price, notes, expires_at, created_at,
         stores (id, name, retailer, address, suburb, lat, lng),
         products (id, name, variant, size_ml, image_url, pack_size)
       `)

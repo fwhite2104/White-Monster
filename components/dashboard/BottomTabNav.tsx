@@ -83,7 +83,7 @@ export function BottomTabNav({
         )}
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        <nav className="flex items-stretch justify-around px-1 pt-1 pb-1" aria-label="Main navigation">
+        <nav className="flex items-stretch justify-around px-1 pt-1 pb-1" role="tablist" aria-label="Main navigation">
           {tabs.map(({ key, icon: Icon, label }) => {
             const isActive = activeTab === key
 
@@ -101,8 +101,9 @@ export function BottomTabNav({
                     : 'text-muted-foreground',
                   key === 'stores' && isLocating && 'pointer-events-none opacity-50'
                 )}
+                role="tab"
                 aria-label={label}
-                aria-current={isActive ? 'page' : undefined}
+                aria-selected={isActive}
               >
                 {isActive && (
                   <motion.div
