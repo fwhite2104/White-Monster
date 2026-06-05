@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useGeolocation } from '@/hooks/use-geolocation'
 import { useHasMapRealEstate } from '@/hooks/use-has-map-realestate'
-import { CORK_CENTER, DEFAULT_RADIUS_KM } from '@/lib/constants'
+import { CORK_CENTER, DEFAULT_RADIUS_KM, getRetailerColor } from '@/lib/constants'
 import type { Price, Store } from '@/lib/types'
 import { Header } from '@/components/shared/Header'
 import { Footer } from '@/components/shared/Footer'
@@ -15,13 +15,12 @@ import { LoadingSkeleton } from '@/components/dashboard/LoadingSkeleton'
 import { LastUpdated } from '@/components/dashboard/LastUpdated'
 import { StoreUploadForm } from '@/components/dashboard/StoreUploadForm'
 import { LocationBanner } from '@/components/dashboard/LocationBanner'
-import { MapInfoCard } from '@/components/map/MapInfoCard'
 import { ReportPriceCard } from '@/components/dashboard/ReportPriceCard'
 import { ItemComparisonView } from '@/components/dashboard/ItemComparisonView'
 import { BottomTabNav, type TabKey } from '@/components/dashboard/BottomTabNav'
 import { SavingsBar } from '@/components/dashboard/SavingsBar'
 import { FirstVisitScreen } from '@/components/dashboard/FirstVisitScreen'
-import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
+import { StoreMapBlock } from '@/components/map/StoreMapBlock'
 import {
   LocationDeniedState,
   LocationTimeoutState,
@@ -30,13 +29,7 @@ import {
   ApiErrorState,
   StaleDataWarning,
 } from '@/components/dashboard/StateScreens'
-import { MapPin } from 'lucide-react'
-import dynamic from 'next/dynamic'
-
-const StoreMap = dynamic(() => import('@/components/map/StoreMap'), {
-  ssr: false,
-  loading: () => <div className="h-[300px] md:h-[400px] w-full bg-muted animate-pulse rounded-lg" />,
-})
+import { formatDistance } from '@/lib/geo'
 
 export default function Home() {
   const geo = useGeolocation()
@@ -107,7 +100,6 @@ export default function Home() {
   }, [lat, lng, radius, sort, variant, packSize])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData()
   }, [fetchData])
 
@@ -137,8 +129,8 @@ export default function Home() {
   }, [requestLocation])
 
   const handleOpenManualSearch = useCallback(() => {
-    requestLocation()
-  }, [requestLocation])
+    setActiveTab('search')
+  }, [])
 
   const handleSearchInputRef = useCallback((ref: HTMLInputElement | null) => {
     searchInputRef.current = ref
@@ -273,7 +265,7 @@ export default function Home() {
           </>
         )}
 
-        {activeTab === 'list' && (
+        {(activeTab === 'list' || activeTab === 'deals') && (
           <>
             {!loading && !error && (
               <>
@@ -295,7 +287,7 @@ export default function Home() {
               </>
             )}
 
-            {!loading && !error && prices.length > 0 && (
+            {activeTab === 'list' && !loading && !error && prices.length > 0 && (
               <ReportPriceCard onReportPrice={() => setShowUploadForm(true)} variant="desktop" />
             )}
 
@@ -323,7 +315,7 @@ export default function Home() {
               <LastUpdated date={lastUpdated} />
             )}
 
-            {!loading && !error && prices.length > 0 && (
+            {activeTab === 'list' && !loading && !error && prices.length > 0 && (
               <div aria-live="polite" aria-atomic="true" aria-label="Price results">
                 <PriceList
                   prices={prices}
@@ -337,61 +329,13 @@ export default function Home() {
                 />
               </div>
             )}
-          </>
-        )}
 
-        {activeTab === 'deals' && (
-          <>
-            {!loading && !error && (
-              <>
-                {bestPrice && nextBestPrice && (Number(nextBestPrice.price) - Number(bestPrice.price)) > 0 && (
-                  <BestDealBanner
-                    bestPrice={bestPrice}
-                    nextBestPrice={nextBestPrice}
-                    totalPrices={prices.length}
-                  />
-                )}
-                <HeroCard
-                  bestPrice={bestPrice}
-                  nextBestPrice={nextBestPrice}
-                  totalResults={prices.length}
-                  userLat={location?.lat}
-                  userLng={location?.lng}
-                  onReportPrice={() => setShowUploadForm(true)}
-                />
-              </>
-            )}
-
-            {loading && (
-              <div className="space-y-4">
-                <LoadingSkeleton variant="hero" />
-                <LoadingSkeleton variant="card" count={3} />
-              </div>
-            )}
-
-            {!loading && error && (
-              <ApiErrorState message={error} onRetry={fetchData} onReportPrice={() => setShowUploadForm(true)} />
-            )}
-
-            {!loading && !error && prices.length > 0 && (
+            {activeTab === 'deals' && !loading && !error && prices.length > 0 && (
               <ItemComparisonView
                 prices={prices}
                 userLat={location?.lat}
                 userLng={location?.lng}
               />
-            )}
-
-            {!loading && !error && prices.length === 0 && status === 'success' && (
-              <NoResultsState
-                filters={{ variant, packSize, radius }}
-                onResetFilters={handleResetFilters}
-                onExpandRadius={handleExpandRadius}
-                onReportPrice={() => setShowUploadForm(true)}
-              />
-            )}
-
-            {!loading && !error && (
-              <LastUpdated date={lastUpdated} />
             )}
           </>
         )}
@@ -399,59 +343,68 @@ export default function Home() {
         {activeTab === 'stores' && (
           <>
             {!loading && !error && stores.length > 0 && (
-              <div className="relative overflow-hidden rounded-lg" aria-label="Store map">
-                <MapErrorBoundary>
-                  <StoreMap
-                    stores={storesWithDistance}
-                    userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
-                    highlightedStoreId={highlightedStoreId}
-                    onMarkerClick={handleMarkerClick}
-                  />
-                </MapErrorBoundary>
-                {selectedStore && (
-                  <div className="absolute bottom-0 left-0 right-0 z-10">
-                    <MapInfoCard
-                      store={selectedStore}
-                      price={selectedStorePrice}
-                      isCheapest={isSelectedCheapest}
-                      onReportPrice={handleMapInfoReportPrice}
-                      onClose={() => setSelectedStore(null)}
-                    />
-                  </div>
-                )}
-              </div>
+              <StoreMapBlock
+                stores={storesWithDistance}
+                userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
+                highlightedStoreId={highlightedStoreId}
+                onMarkerClick={handleMarkerClick}
+                selectedStore={selectedStore}
+                selectedStorePrice={selectedStorePrice}
+                isSelectedCheapest={isSelectedCheapest}
+                onReportPrice={handleMapInfoReportPrice}
+                onClose={() => setSelectedStore(null)}
+                lat={lat}
+                lng={lng}
+              />
             )}
 
-            {!loading && !error && stores.length > 0 && (
-              <a
-                href={`https://www.google.com/maps?q=${lat},${lng}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-colors min-h-[56px]"
-                aria-label={`Open map showing location at ${lat.toFixed(4)}, ${lng.toFixed(4)}`}
-              >
-                <MapPin className="size-5 shrink-0 text-primary" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">Open in Maps</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {lat.toFixed(4)}, {lng.toFixed(4)}
-                  </p>
+            {!loading && !error && storesWithDistance.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-foreground px-1">
+                  Stores ({storesWithDistance.length})
+                </h3>
+                <div className="space-y-1">
+                  {storesWithDistance.map((store) => {
+                    const price = prices.find((p) => p.store_id === store.id)
+                    const isHighlighted = highlightedStoreId === store.id
+                    return (
+                      <button
+                        key={store.id}
+                        type="button"
+                        onClick={() => handleMarkerClick(store.id)}
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
+                          isHighlighted
+                            ? 'bg-primary/10 ring-1 ring-primary/30'
+                            : 'bg-card/50 hover:bg-card/80 ring-1 ring-foreground/5'
+                        }`}
+                      >
+                        <span
+                          className="h-2.5 w-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: getRetailerColor(store.retailer) }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {store.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {store.suburb || store.retailer}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          {price && (
+                            <p className="text-sm font-semibold text-foreground">
+                              €{Number(price.price).toFixed(2)}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            {formatDistance(store.distance)}
+                          </p>
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
-                <svg
-                  className="size-4 shrink-0 text-muted-foreground"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                  <polyline points="15 3 21 3 21 9" />
-                  <line x1="10" y1="14" x2="21" y2="3" />
-                </svg>
-              </a>
+              </div>
             )}
 
             {loading && (
@@ -468,59 +421,35 @@ export default function Home() {
         )}
 
         {!loading && !error && stores.length > 0 && hasMapRealEstate && activeTab !== 'stores' && (
-          <div className="relative overflow-hidden rounded-lg" aria-label="Store map">
-            <MapErrorBoundary>
-              <StoreMap
-                stores={storesWithDistance}
-                userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
-                highlightedStoreId={highlightedStoreId}
-                onMarkerClick={handleMarkerClick}
-              />
-            </MapErrorBoundary>
-            {selectedStore && (
-              <div className="absolute bottom-0 left-0 right-0 z-10">
-                <MapInfoCard
-                  store={selectedStore}
-                  price={selectedStorePrice}
-                  isCheapest={isSelectedCheapest}
-                  onReportPrice={handleMapInfoReportPrice}
-                  onClose={() => setSelectedStore(null)}
-                />
-              </div>
-            )}
-          </div>
+          <StoreMapBlock
+            stores={storesWithDistance}
+            userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
+            highlightedStoreId={highlightedStoreId}
+            onMarkerClick={handleMarkerClick}
+            selectedStore={selectedStore}
+            selectedStorePrice={selectedStorePrice}
+            isSelectedCheapest={isSelectedCheapest}
+            onReportPrice={handleMapInfoReportPrice}
+            onClose={() => setSelectedStore(null)}
+            lat={lat}
+            lng={lng}
+          />
         )}
 
         {!loading && !error && stores.length > 0 && !showMap && (
-          <a
-            href={`https://www.google.com/maps?q=${lat},${lng}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-colors min-h-[56px]"
-            aria-label={`Open map showing location at ${lat.toFixed(4)}, ${lng.toFixed(4)}`}
-          >
-            <MapPin className="size-5 shrink-0 text-primary" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium">Open in Maps</p>
-              <p className="text-xs text-muted-foreground truncate">
-                {lat.toFixed(4)}, {lng.toFixed(4)}
-              </p>
-            </div>
-            <svg
-              className="size-4 shrink-0 text-muted-foreground"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-              <polyline points="15 3 21 3 21 9" />
-              <line x1="10" y1="14" x2="21" y2="3" />
-            </svg>
-          </a>
+          <StoreMapBlock
+            stores={storesWithDistance}
+            userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
+            highlightedStoreId={highlightedStoreId}
+            onMarkerClick={handleMarkerClick}
+            selectedStore={selectedStore}
+            selectedStorePrice={selectedStorePrice}
+            isSelectedCheapest={isSelectedCheapest}
+            onReportPrice={handleMapInfoReportPrice}
+            onClose={() => setSelectedStore(null)}
+            lat={lat}
+            lng={lng}
+          />
         )}
       </main>
 

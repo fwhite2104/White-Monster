@@ -33,13 +33,14 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
 
   if (!bestPrice) {
     return (
-      <motion.div
-        initial={shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-      >
-        <Card className="bg-card ring-1 ring-foreground/10">
-          <CardContent className="p-6 text-center space-y-4">
+    <motion.div
+      initial={shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+      className="hero-animate"
+    >
+      <Card className="bg-card ring-1 ring-foreground/10">
+        <CardContent className="p-6 text-center space-y-4">
             <div className="mx-auto w-14 h-14 rounded-full bg-muted/50 flex items-center justify-center">
               <MapPin className="h-7 w-7 text-muted-foreground" />
             </div>
@@ -78,6 +79,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
       initial={shouldReduceMotion ? false : { opacity: 0, y: 16, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+      className="hero-animate"
     >
       <Card className="relative overflow-hidden bg-card ring-1 ring-primary/30">
         <div
