@@ -3,12 +3,10 @@
 import { useEffect, useState, useRef } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
 import { CORK_CENTER, RETAILERS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { isValidCoordinate } from '@/lib/geo'
 
-const BRAND_GREEN = 'oklch(0.72 0.22 145)'
 const MUTED_GRAY = 'oklch(0.55 0 0)'
 function createDivIcon(html: string, size: [number, number], anchor: [number, number]): L.DivIcon {
   return L.divIcon({
@@ -21,7 +19,7 @@ function createDivIcon(html: string, size: [number, number], anchor: [number, nu
 }
 
 const userIcon = createDivIcon(
-  `<div style="width:14px;height:14px;border-radius:50%;background:${BRAND_GREEN};border:2.5px solid white;box-shadow:0 0 10px ${BRAND_GREEN} / 0.5;"></div>`,
+  `<div style="width:14px;height:14px;border-radius:50%;background:#57c466;border:2.5px solid white;box-shadow:0 0 10px rgba(87,196,102,0.5);"></div>`,
   [14, 14],
   [7, 7],
 )
@@ -33,14 +31,14 @@ const defaultStoreIcon = createDivIcon(
 )
 
 const cheapestStoreIcon = createDivIcon(
-  `<div style="width:20px;height:20px;border-radius:50%;background:${BRAND_GREEN};border:2.5px solid white;box-shadow:0 0 8px ${BRAND_GREEN} / 0.5;"><div style="width:6px;height:6px;border-radius:50%;background:white;margin:5px auto 0;"></div></div>`,
+  `<div style="width:20px;height:20px;border-radius:50%;background:#57c466;border:2.5px solid white;box-shadow:0 0 8px rgba(87,196,102,0.5);"><div style="width:6px;height:6px;border-radius:50%;background:white;margin:5px auto 0;"></div></div>`,
   [20, 20],
   [10, 10],
 )
 
 const highlightedStoreIcon = createDivIcon(
-  `<div style="width:20px;height:20px;border-radius:50%;background:${BRAND_GREEN};border:2.5px solid white;box-shadow:0 0 8px ${BRAND_GREEN} / 0.5;animation:marker-pulse 2s ease-in-out infinite;"><div style="width:6px;height:6px;border-radius:50%;background:white;margin:5px auto 0;"></div></div>
-   <style>@keyframes marker-pulse{0%,100%{box-shadow:0 0 8px ${BRAND_GREEN} / 0.5}50%{box-shadow:0 0 16px ${BRAND_GREEN} / 0.8}}</style>`,
+  `<div style="width:20px;height:20px;border-radius:50%;background:#57c466;border:2.5px solid white;box-shadow:0 0 8px rgba(87,196,102,0.5);animation:marker-pulse 2s ease-in-out infinite;"><div style="width:6px;height:6px;border-radius:50%;background:white;margin:5px auto 0;"></div></div>
+   <style>@keyframes marker-pulse{0%,100%{box-shadow:0 0 8px rgba(87,196,102,0.5)}50%{box-shadow:0 0 16px rgba(87,196,102,0.8)}}</style>`,
   [20, 20],
   [10, 10],
 )
@@ -64,6 +62,7 @@ interface StoreMapProps {
   stores: Store[]
   userLocation?: { lat: number; lng: number } | null
   highlightedStoreId?: string | null
+  cheapestStoreId?: string | null
   onMarkerClick?: (storeId: string) => void
   className?: string
 }
@@ -123,7 +122,7 @@ function FitBounds({ stores }: { stores: Store[] }) {
   return null
 }
 
-export default function StoreMap({ stores, userLocation, highlightedStoreId, onMarkerClick, className }: StoreMapProps) {
+export default function StoreMap({ stores, userLocation, highlightedStoreId, cheapestStoreId, onMarkerClick, className }: StoreMapProps) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -178,7 +177,7 @@ export default function StoreMap({ stores, userLocation, highlightedStoreId, onM
 
         {stores.filter((s) => isValidCoordinate(s.lat, s.lng)).map((store) => {
           const isHighlighted = highlightedStoreId === store.id
-          const isCheapest = false
+          const isCheapest = cheapestStoreId === store.id
           const icon = isHighlighted
             ? highlightedStoreIcon
             : isCheapest
