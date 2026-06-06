@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimitDB, getClientIp } from '@/lib/rate-limit'
+import { calculateDistance } from '@/lib/geo'
 import {
   CORK_CENTER,
   DEFAULT_RADIUS_KM,
@@ -60,71 +61,7 @@ export async function GET(request: NextRequest) {
 
     const radiusMeters = radiusKm * 1000
 
-    type RpcRow = {
-      id: string
-      store_id: string
-      product_id: string
-      price: number
-      source: string
-      scraped_at: string
-      distance_meters: number
-      per_can_price: number
-      store_name: string
-      store_retailer: string
-      store_address: string
-      store_suburb: string
-      store_lat: number
-      store_lng: number
-      product_name: string
-      product_variant: string
-      product_size_ml: number
-      product_image_url: string
-      product_pack_size: string
-    }
-
-    const { data: rpcRows, error } = await supabase
-      .rpc('nearby_prices', {
-        p_user_lat: lat,
-        p_user_lng: lng,
-        p_radius_meters: radiusMeters,
-        p_variant_filter: variant,
-        p_sort_by: sort,
-        p_pack_size_filter: packSize,
-      })
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    const results: PriceEntry[] = (rpcRows ?? []).map((row: RpcRow) => ({
-      id: row.id,
-      store_id: row.store_id,
-      product_id: row.product_id,
-      price: Number(row.price),
-      source: row.source,
-      scraped_at: row.scraped_at,
-      stores: {
-        id: row.store_id,
-        name: row.store_name,
-        retailer: row.store_retailer,
-        address: row.store_address,
-        suburb: row.store_suburb,
-        lat: Number(row.store_lat),
-        lng: Number(row.store_lng),
-      },
-      products: {
-        id: row.product_id,
-        name: row.product_name,
-        variant: row.product_variant,
-        size_ml: row.product_size_ml,
-        image_url: row.product_image_url,
-        pack_size: row.product_pack_size,
-      },
-      distance: row.distance_meters,
-      per_can_price: Number(row.per_can_price),
-    }))
-
-    const { data: nationalRows } = await supabase
+    const { data: prices, error } = await supabase
       .from('prices')
       .select(`
         id, store_id, product_id, price, source, scraped_at,
@@ -132,10 +69,28 @@ export async function GET(request: NextRequest) {
         products!inner (id, name, variant, size_ml, image_url, pack_size)
       `)
       .eq('products.variant', variant)
-      .like('stores.name', '%(National)%')
+      .eq('stores.is_active', true)
       .order('scraped_at', { ascending: false })
 
-    const nationalPrices = (nationalRows ?? []) as unknown as PriceWithJoins[]
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    const allPrices = (prices ?? []) as unknown as PriceWithJoins[]
+    const typed = allPrices.filter((p) => p.stores != null && p.products != null)
+
+    const nationalPrices = typed.filter((p) => p.stores.name.includes('(National)'))
+    const physicalPrices = typed.filter((p) => !p.stores.name.includes('(National)'))
+
+    const results: PriceEntry[] = []
+
+    for (const p of physicalPrices) {
+      if (!Number.isFinite(p.stores.lat) || !Number.isFinite(p.stores.lng)) continue
+      const dist = calculateDistance(lat, lng, p.stores.lat, p.stores.lng)
+      if (dist <= radiusMeters) {
+        results.push({ ...p, distance: dist })
+      }
+    }
 
     if (nationalPrices.length > 0) {
       const { data: allStores, error: storesError } = await supabase
@@ -166,7 +121,6 @@ export async function GET(request: NextRequest) {
       results.push(...merged)
     }
 
-    // Filter by pack size AFTER all sources are merged
     const packFiltered = packSize === 'all'
       ? results
       : results.filter((p) => {
