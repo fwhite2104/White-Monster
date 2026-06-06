@@ -123,12 +123,7 @@ function FitBounds({ stores }: { stores: Store[] }) {
 }
 
 export default function StoreMap({ stores, userLocation, highlightedStoreId, cheapestStoreId, onMarkerClick, className }: StoreMapProps) {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setMounted(true)
-    }
-  }, [])
+  const [mounted] = useState(() => typeof window !== 'undefined')
 
   if (!mounted) {
     return (
