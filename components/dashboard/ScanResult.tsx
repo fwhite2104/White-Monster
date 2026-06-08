@@ -20,7 +20,7 @@ export function ScanResult({ product, prices, onClose }: ScanResultProps) {
     <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
       {/* Header */}
       <div className="sticky top-0 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close scan results">
+        <Button variant="ghost" size="icon-lg" onClick={onClose} aria-label="Close scan results">
           <X className="h-5 w-5" />
         </Button>
         <div className="flex-1 min-w-0">
@@ -118,8 +118,8 @@ export function ScanResult({ product, prices, onClose }: ScanResultProps) {
       )}
 
       {/* Bottom action */}
-      <div className="sticky bottom-0 bg-background/95 backdrop-blur border-t border-border px-4 py-3">
-        <Button onClick={onClose} className="w-full" variant="outline">
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur border-t border-border px-4 py-3 pb-safe">
+        <Button onClick={onClose} className="w-full h-11" variant="outline">
           Scan Another
         </Button>
       </div>

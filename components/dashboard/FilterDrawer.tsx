@@ -144,7 +144,7 @@ export function FilterDrawer({
               onClick={filter.apply}
               aria-pressed={active}
               className={cn(
-                'inline-flex items-center h-10 px-3.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 shrink-0',
+                'inline-flex items-center h-11 px-3.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 shrink-0',
                 active
                   ? 'bg-primary text-primary-foreground shadow-[0_2px_12px_oklch(0.72_0.22_145_/_0.25)]'
                   : 'bg-card ring-1 ring-foreground/8 text-foreground hover:ring-primary/30 hover:bg-primary/5'
@@ -161,7 +161,7 @@ export function FilterDrawer({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-10 px-3.5 shrink-0 rounded-full relative transition-all duration-200"
+                className="h-11 px-3.5 shrink-0 rounded-full relative transition-all duration-200"
               />
             }
           >
@@ -262,7 +262,7 @@ export function FilterDrawer({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-10"
+                className="h-11"
                 onClick={handleReset}
               >
                 <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
@@ -270,7 +270,7 @@ export function FilterDrawer({
               </Button>
               <Button
                 size="sm"
-                className="h-10"
+                className="h-11"
                 onClick={() => setOpen(false)}
               >
                 Apply

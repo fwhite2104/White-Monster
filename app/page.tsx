@@ -36,7 +36,6 @@ import { ScanButton } from '@/components/dashboard/ScanButton'
 import { ScanResult } from '@/components/dashboard/ScanResult'
 import { WeeklyDealsBanner } from '@/components/dashboard/WeeklyDealsBanner'
 
-import { AiAssistant } from '@/components/dashboard/AiAssistant'
 
 export default function Home() {
   const geo = useGeolocation()
@@ -474,7 +473,6 @@ export default function Home() {
         onTabChange={setActiveTab}
         onReportPrice={() => setShowUploadForm(true)}
         onFilterToggle={() => setFilterDrawerOpen(true)}
-        locationLabel={locationLabel}
         isLocating={status === 'requesting'}
         activeFilterCount={activeFilterCount}
       />
@@ -486,16 +484,15 @@ export default function Home() {
         prefillStoreName={reportStoreName}
       />
 
-      {/* Floating action button group — Scan + AI assistant */}
+      {/* Scan barcode floating action button */}
       {activeTab !== 'stores' && !scanResult && (
-        <div className="fixed bottom-24 left-4 z-40 flex flex-col gap-3 md:bottom-6 md:right-6 md:left-auto">
+        <div className="fixed bottom-24 left-4 z-50 md:bottom-6 md:right-6 md:left-auto">
           <ScanButton
-            onScanResult={(result) => setScanResult({ product: result.product as Product, prices: result.prices as Array<Price & { stores?: Store }> })}
+            onScanResult={(result) => setScanResult({ product: result.product, prices: result.prices })}
             userLat={lat}
             userLng={lng}
             radius={radius}
           />
-          <AiAssistant lat={lat} lng={lng} radius={radius} />
         </div>
       )}
 

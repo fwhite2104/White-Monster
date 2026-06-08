@@ -59,8 +59,8 @@ export function FavoriteButton({ productId, storeId, isFavorited = false, onTogg
   return (
     <Button
       variant="ghost"
-      size="icon"
-      className={cn('h-9 w-9 shrink-0 mt-0.5 text-muted-foreground hover:text-foreground', className)}
+      size="icon-lg"
+      className={cn('h-11 w-11 shrink-0 mt-0.5 text-muted-foreground hover:text-foreground', className)}
       onClick={handleToggle}
       disabled={loading}
       aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}

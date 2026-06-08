@@ -210,11 +210,12 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
                 <Button
                   ref={triggerRef}
                   variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                  size="icon-lg"
+                  className="h-11 w-11 text-muted-foreground hover:text-foreground"
                   onClick={() => setMenuOpen((prev) => !prev)}
                   aria-label="More actions"
                   aria-expanded={menuOpen}
+                  aria-haspopup="menu"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
@@ -234,28 +235,33 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
                         }
                       }}
                       tabIndex={-1}
+                      role="menu"
+                      aria-label="Price actions"
                       className="absolute right-0 top-full z-50 mt-1 bg-popover ring-1 ring-foreground/10 rounded-lg p-1 shadow-lg min-w-[180px]"
                     >
                       <button
                         type="button"
+                        role="menuitem"
                         onClick={handleShare}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted text-left cursor-pointer"
+                        className="flex items-center gap-2 w-full px-3 py-2.5 text-sm rounded-md hover:bg-muted text-left cursor-pointer min-h-[44px]"
                       >
                         <Share2 className="h-4 w-4 shrink-0" />
                         Share
                       </button>
                       <button
                         type="button"
+                        role="menuitem"
                         onClick={handleReport}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted text-left cursor-pointer"
+                        className="flex items-center gap-2 w-full px-3 py-2.5 text-sm rounded-md hover:bg-muted text-left cursor-pointer min-h-[44px]"
                       >
                         <CirclePlus className="h-4 w-4 shrink-0" />
                         Report better price
                       </button>
                       <button
                         type="button"
+                        role="menuitem"
                         onClick={() => { setAlertOpen(true); setMenuOpen(false) }}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted text-left cursor-pointer"
+                        className="flex items-center gap-2 w-full px-3 py-2.5 text-sm rounded-md hover:bg-muted text-left cursor-pointer min-h-[44px]"
                       >
                         <Bell className="h-4 w-4 shrink-0" />
                         Set price alert
@@ -267,8 +273,8 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
             ) : (
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-9 w-9 shrink-0 mt-0.5 text-muted-foreground hover:text-foreground"
+                size="icon-lg"
+                className="h-11 w-11 shrink-0 mt-0.5 text-muted-foreground hover:text-foreground"
                 onClick={handleShare}
                 aria-label="Share price"
               >

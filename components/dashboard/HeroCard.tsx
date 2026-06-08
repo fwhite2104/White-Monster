@@ -168,7 +168,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
               {totalResults} price{totalResults !== 1 ? 's' : ''} found nearby
             </p>
             {onReportPrice && (
-              <Button onClick={onReportPrice} variant="outline" size="sm" className="gap-1.5 text-xs h-7">
+              <Button onClick={onReportPrice} variant="outline" size="sm" className="gap-1.5 text-xs h-10 px-3">
                 <CirclePlus className="size-3.5" />
                 Report a Price
               </Button>

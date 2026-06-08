@@ -167,7 +167,7 @@ export function LocationBanner({
           <Button
             variant={isError ? 'outline' : 'default'}
             size="sm"
-            className="h-10 px-3 shrink-0 min-w-[44px]"
+            className="h-11 px-3 shrink-0 min-w-[44px]"
             onClick={config.ctaAction}
           >
             {config.ctaLabel}
@@ -178,7 +178,7 @@ export function LocationBanner({
           <Button
             variant="ghost"
             size="icon-sm"
-            className="h-10 w-10 shrink-0"
+            className="h-11 w-11 shrink-0"
             onClick={() => setShowManual((v) => !v)}
             aria-label="Search by area"
           >
@@ -190,7 +190,7 @@ export function LocationBanner({
           <Button
             variant="ghost"
             size="icon-sm"
-            className="h-10 w-10 shrink-0"
+            className="h-11 w-11 shrink-0"
             onClick={() => setShowManual((v) => !v)}
             aria-label="Search by area"
           >
@@ -230,7 +230,7 @@ export function LocationBanner({
             {query && (
               <button
                 onClick={() => setQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-md hover:bg-muted transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center rounded-md hover:bg-muted transition-colors"
                 aria-label="Clear search"
               >
                 <X className="h-3.5 w-3.5 text-muted-foreground" />
@@ -243,7 +243,7 @@ export function LocationBanner({
               <button
                 key={loc.label}
                 onClick={() => handleSuggestionClick(loc)}
-                className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg bg-card ring-1 ring-foreground/8 hover:ring-primary/30 hover:bg-primary/5 transition-all duration-200 text-sm text-foreground"
+                className="inline-flex items-center gap-1.5 h-11 px-3 rounded-lg bg-card ring-1 ring-foreground/8 hover:ring-primary/30 hover:bg-primary/5 transition-all duration-200 text-sm text-foreground"
               >
                 <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
                 {loc.suburb}

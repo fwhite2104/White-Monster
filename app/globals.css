@@ -68,6 +68,8 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --animate-scan-line: scan-line 2s ease-in-out infinite;
 }
 
 :root {
@@ -229,6 +231,30 @@
   }
 }
 
+@keyframes scan-line {
+  0% {
+    top: 0%;
+  }
+  50% {
+    top: 100%;
+  }
+  100% {
+    top: 0%;
+  }
+}
+
+/* Scanner tab indicator slide animation */
+@keyframes tab-indicator-slide {
+  from {
+    transform: scaleX(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
 .shimmer-bar {
   position: relative;
   overflow: hidden;
@@ -244,7 +270,7 @@
     oklch(0.35 0 0 / 0.4),
     transparent
   );
-  animation: shimmer 2s infinite;
+  animation: shimmer 2s var(--ease-in-out) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

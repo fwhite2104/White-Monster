@@ -15,7 +15,6 @@ interface BottomTabNavProps {
   onFilterToggle: () => void
   isLocating: boolean
   activeFilterCount: number
-  locationLabel: string
 }
 
 const tabs: {
@@ -51,7 +50,6 @@ export function BottomTabNav({
     <>
       <div
         className="fixed bottom-24 right-5 z-50 md:hidden"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         <motion.button
           initial={shouldReduceMotion ? false : { scale: 0.95, opacity: 0 }}
@@ -81,9 +79,12 @@ export function BottomTabNav({
           'bg-card/95 backdrop-blur-xl border-t border-border',
           'md:hidden'
         )}
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        <nav className="flex items-stretch justify-around px-1 pt-1 pb-1" role="tablist" aria-label="Main navigation">
+        <nav
+          className="flex items-stretch justify-around px-1 pt-1.5 pb-safe"
+          role="tablist"
+          aria-label="Main navigation"
+        >
           {tabs.map(({ key, icon: Icon, label }) => {
             const isActive = activeTab === key
 
@@ -92,8 +93,8 @@ export function BottomTabNav({
                 key={key}
                 onClick={() => handleTabClick(key)}
                 className={cn(
-                  'relative flex flex-col items-center justify-center gap-1',
-                  'w-16 min-h-[52px] px-1 py-1.5',
+                  'relative flex flex-col items-center justify-center gap-0.5',
+                  'flex-1 min-h-[56px] px-1 py-1.5',
                   'rounded-xl text-xs font-medium tracking-wide',
                   'transition-colors duration-200',
                   isActive
@@ -108,7 +109,7 @@ export function BottomTabNav({
                 {isActive && (
                   <motion.div
                     layoutId="activeTabBg"
-                    className="absolute inset-x-1 top-0.5 bottom-0.5 rounded-lg bg-primary/10"
+                    className="absolute inset-x-1 inset-y-0.5 rounded-lg bg-primary/10"
                     transition={{ type: 'spring', duration: 0.5, bounce: 0.15 }}
                   />
                 )}
