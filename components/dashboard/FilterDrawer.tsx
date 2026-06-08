@@ -132,7 +132,7 @@ export function FilterDrawer({
         ref={pillGroupRef}
         role="group"
         aria-label="Quick filters"
-        className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none"
+        className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]"
         onKeyDown={handlePillKeyDown}
       >
         {quickFilters.map((filter) => {
@@ -246,7 +246,7 @@ export function FilterDrawer({
                   className="w-full"
                   aria-label="Search radius in kilometers"
                 />
-                <div className="flex justify-between text-[10px] text-muted-foreground">
+                <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{MIN_RADIUS_KM} km</span>
                   <span>{MAX_RADIUS_KM} km</span>
                 </div>

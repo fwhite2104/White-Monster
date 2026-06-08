@@ -60,7 +60,7 @@ export function ScanButton({ onScanResult, userLat, userLng, radius }: ScanButto
       </Button>
 
       {showScanner && (
-        <div className="fixed inset-0 z-50">
+        <div className="fixed inset-0 z-[var(--z-overlay)]">
           {/* Lazy-loaded scanner */}
           <BarcodeScannerLoader
             onScan={handleScan}
@@ -71,7 +71,7 @@ export function ScanButton({ onScanResult, userLat, userLng, radius }: ScanButto
 
       {error && (
         <div
-          className="fixed bottom-4 left-4 right-4 z-50 bg-destructive/10 border border-destructive/20 text-destructive text-sm p-3 rounded-lg text-center"
+          className="fixed bottom-4 left-4 right-4 z-[var(--z-popover)] bg-destructive/10 border border-destructive/20 text-destructive text-sm p-3 rounded-lg text-center"
           role="alert"
           aria-live="assertive"
         >

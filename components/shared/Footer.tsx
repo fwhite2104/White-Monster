@@ -1,6 +1,6 @@
 export function Footer() {
   return (
-    <footer className="border-t py-6 pb-6 mt-auto">
+    <footer className="border-t py-6 pb-6 pb-safe mt-auto">
       <div className="max-w-6xl mx-auto px-4 text-center text-xs text-muted-foreground">
         <p>
           Monster Cork &mdash; Price comparison for educational purposes.

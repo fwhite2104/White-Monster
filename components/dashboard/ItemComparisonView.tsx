@@ -80,7 +80,7 @@ function PriceStoreCard({
             transition={{ type: 'spring', stiffness: 400, damping: 20, delay: index * 0.05 + 0.1 }}
             className="absolute -top-2 -right-2 z-10"
           >
-            <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 gap-1 shadow-lg shadow-primary/20">
+            <Badge className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 gap-1 shadow-lg shadow-primary/20">
               <Sparkles className="h-2.5 w-2.5" />
               Best Price
             </Badge>
@@ -102,7 +102,7 @@ function PriceStoreCard({
               €{Number(price.price).toFixed(2)}
             </span>
             {perCan !== null && (
-              <span className="text-[10px] md:text-xs text-muted-foreground">
+              <span className="text-xs md:text-xs text-muted-foreground">
                 (€{perCan.toFixed(2)}/can)
               </span>
             )}
@@ -119,12 +119,12 @@ function PriceStoreCard({
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <MapPin className="h-3 w-3" />
               {formatDistance(distance)}
             </span>
             {price.products?.pack_size && (
-              <Badge variant="outline" className="border-foreground/15 text-[10px] h-4 px-1.5">
+              <Badge variant="outline" className="border-foreground/15 text-xs h-4 px-1.5">
                 <Tag className="h-2.5 w-2.5 mr-0.5" />
                 {price.products.pack_size === '4_pack' ? '4-pack' : 'Single'}
               </Badge>
@@ -185,7 +185,7 @@ export function ItemComparisonView({
             </span>
           </div>
 
-          <div className="flex md:flex-wrap gap-3 overflow-x-auto pb-2 md:pb-0 scrollbar-none -mx-1 px-1 md:mx-0 md:px-0">
+          <div className="flex md:flex-wrap gap-3 overflow-x-auto pb-2 md:pb-0 scrollbar-none -mx-1 px-1 md:mx-0 md:px-0 [mask-image:linear-gradient(to_right,black_calc(100%-3rem),transparent)] md:[mask-image:none]">
             {group.prices.map((price, idx) => (
               <PriceStoreCard
                 key={price.id}

@@ -145,7 +145,7 @@ export default function StoreMap({ stores, userLocation, highlightedStoreId, che
   return (
     <div className={cn('relative', className)}>
       {!userLocation && stores.length > 0 && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 backdrop-blur-sm pointer-events-none whitespace-nowrap">
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[var(--z-over)] px-3 py-1.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 backdrop-blur-sm pointer-events-none whitespace-nowrap">
           Location access denied — showing default map view
         </div>
       )}

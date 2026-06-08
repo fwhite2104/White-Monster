@@ -13,7 +13,7 @@ export function DrsInfoDialog({ open, onClose }: DrsInfoDialogProps) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+    <div className="fixed inset-0 z-[var(--z-dialog)] flex items-center justify-center bg-black/60">
       <div className="w-full max-w-sm rounded-lg border border-border bg-card p-6 shadow-lg">
         <div className="flex items-center gap-2 mb-3">
           <Info className="h-5 w-5 text-green-400" />

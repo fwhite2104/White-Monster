@@ -10,7 +10,7 @@ interface HeaderProps {
 
 export function Header({ onReportPrice }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-[var(--z-header)] border-b border-border/40 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2 md:py-3">
         <div className="flex items-center gap-2.5">
           <motion.div

@@ -21,7 +21,7 @@ export function DealExpiryTimer({ validUntil, className }: DealExpiryTimerProps)
 
   if (hoursRemaining <= 0) {
     return (
-      <span className={`inline-flex items-center gap-1 text-[10px] text-red-400 font-medium ${className ?? ''}`}>
+      <span className={`inline-flex items-center gap-1 text-xs text-red-400 font-medium ${className ?? ''}`}>
         <Clock className="h-3 w-3" />
         Expired
       </span>
@@ -30,7 +30,7 @@ export function DealExpiryTimer({ validUntil, className }: DealExpiryTimerProps)
 
   if (hoursRemaining < 24) {
     return (
-      <span className={`inline-flex items-center gap-1 text-[10px] text-orange-400 font-medium ${className ?? ''}`}>
+      <span className={`inline-flex items-center gap-1 text-xs text-orange-400 font-medium ${className ?? ''}`}>
         <Clock className="h-3 w-3" />
         {hoursRemaining}h left
       </span>
@@ -39,7 +39,7 @@ export function DealExpiryTimer({ validUntil, className }: DealExpiryTimerProps)
 
   const days = Math.ceil(hoursRemaining / 24)
   return (
-    <span className={`inline-flex items-center gap-1 text-[10px] text-muted-foreground ${className ?? ''}`}>
+    <span className={`inline-flex items-center gap-1 text-xs text-muted-foreground ${className ?? ''}`}>
       <Clock className="h-3 w-3" />
       {days}d left
     </span>

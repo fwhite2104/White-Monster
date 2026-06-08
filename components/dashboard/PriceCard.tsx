@@ -1,11 +1,17 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { useState, useCallback } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { MapPin, Clock, Share2, User, Bot, MoreHorizontal, CirclePlus, Bell, Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu'
 import { getDistance } from 'geolib'
 import { CORK_CENTER, getRetailerColor } from '@/lib/constants'
 import { getTimeAgo } from '@/lib/geo'
@@ -41,10 +47,7 @@ function formatPerCanPrice(price: Price): string | null {
 
 export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onReportPrice }: PriceCardProps) {
   const shouldReduceMotion = useReducedMotion()
-  const [menuOpen, setMenuOpen] = useState(false)
   const [alertOpen, setAlertOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-  const triggerRef = useRef<HTMLButtonElement>(null)
   const lat = Number.isFinite(userLat) ? (userLat as number) : CORK_CENTER.lat
   const lng = Number.isFinite(userLng) ? (userLng as number) : CORK_CENTER.lng
   const store = price.stores ?? { name: 'Unknown', retailer: 'other', lat: 0, lng: 0, suburb: '', address: '' }
@@ -64,26 +67,11 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
     const canPrice = perCanDisplay ? ` (€${perCanDisplay}/can)` : ''
     const text = `Found ${product.name} for €${Number(price.price).toFixed(2)}${canPrice} at ${store.name}!`
     navigator.clipboard.writeText(`${text} ${window.location.href}`)
-    setMenuOpen(false)
   }, [perCanDisplay, product.name, price.price, store.name])
 
   const handleReport = useCallback(() => {
     onReportPrice?.(price.store_id)
-    setMenuOpen(false)
   }, [onReportPrice, price.store_id])
-
-  useEffect(() => {
-    if (!menuOpen) return
-
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [menuOpen])
 
   return (
     <motion.div
@@ -144,7 +132,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
                     <span className="text-xs text-muted-foreground line-through">
                       €{Number(price.price).toFixed(2)}
                     </span>
-                    <span className="text-[10px] text-blue-400">
+                    <span className="text-xs text-blue-400">
                       Save €{(Number(price.price) - Number(price.clubcard_price)).toFixed(2)}
                     </span>
                   </div>
@@ -155,7 +143,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
                   >
-                    <Badge variant="success" className="text-[10px] px-1.5 py-0 font-semibold">
+                    <Badge variant="success" className="text-xs px-1.5 py-0 font-semibold">
                       Best Price
                     </Badge>
                   </motion.div>
@@ -177,19 +165,19 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
 
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 {'store_type' in store && (store.store_type === 'convenience' || store.store_type === 'petrol_station') && (
-                  <Badge variant="info" className="text-[10px] h-5 gap-1 bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/20">
+                  <Badge variant="info" className="text-xs h-5 gap-1 bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/20">
                     <Store className="h-2.5 w-2.5" />
                     {store.store_type === 'petrol_station' ? 'Petrol Station' : 'Convenience Store'}
                   </Badge>
                 )}
                 {variantLabel && (
-                  <Badge variant="outline" className="border-foreground/15 text-[11px] h-5">
+                  <Badge variant="outline" className="border-foreground/15 text-xs h-5">
                     {variantLabel}
                   </Badge>
                 )}
                 <Badge
                   variant={isUserReported ? 'info' : 'outline'}
-                  className="text-[10px] h-5 gap-1"
+                  className="text-xs h-5 gap-1"
                 >
                   {isUserReported ? (
                     <User className="h-2.5 w-2.5" />
@@ -206,70 +194,34 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
             </div>
 
             {onReportPrice ? (
-              <div className="relative shrink-0 mt-0.5" ref={menuRef}>
-                <Button
-                  ref={triggerRef}
-                  variant="ghost"
-                  size="icon-lg"
-                  className="h-11 w-11 text-muted-foreground hover:text-foreground"
-                  onClick={() => setMenuOpen((prev) => !prev)}
-                  aria-label="More actions"
-                  aria-expanded={menuOpen}
-                  aria-haspopup="menu"
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon-lg"
+                      className="h-11 w-11 text-muted-foreground hover:text-foreground"
+                      aria-label="More actions"
+                    />
+                  }
                 >
                   <MoreHorizontal className="h-4 w-4" />
-                </Button>
-
-                <AnimatePresence>
-                  {menuOpen && (
-                    <motion.div
-                      initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.95, y: -4 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: -4, transition: { duration: 0.15, ease: [0.23, 1, 0.32, 1] } }}
-                      transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Escape') {
-                          e.stopPropagation()
-                          setMenuOpen(false)
-                          triggerRef.current?.focus()
-                        }
-                      }}
-                      tabIndex={-1}
-                      role="menu"
-                      aria-label="Price actions"
-                      className="absolute right-0 top-full z-50 mt-1 bg-popover ring-1 ring-foreground/10 rounded-lg p-1 shadow-lg min-w-[180px]"
-                    >
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={handleShare}
-                        className="flex items-center gap-2 w-full px-3 py-2.5 text-sm rounded-md hover:bg-muted text-left cursor-pointer min-h-[44px]"
-                      >
-                        <Share2 className="h-4 w-4 shrink-0" />
-                        Share
-                      </button>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={handleReport}
-                        className="flex items-center gap-2 w-full px-3 py-2.5 text-sm rounded-md hover:bg-muted text-left cursor-pointer min-h-[44px]"
-                      >
-                        <CirclePlus className="h-4 w-4 shrink-0" />
-                        Report better price
-                      </button>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => { setAlertOpen(true); setMenuOpen(false) }}
-                        className="flex items-center gap-2 w-full px-3 py-2.5 text-sm rounded-md hover:bg-muted text-left cursor-pointer min-h-[44px]"
-                      >
-                        <Bell className="h-4 w-4 shrink-0" />
-                        Set price alert
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" sideOffset={4}>
+                  <DropdownMenuItem onClick={handleShare}>
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleReport}>
+                    <CirclePlus className="h-4 w-4 mr-2" />
+                    Report better price
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setAlertOpen(true)}>
+                    <Bell className="h-4 w-4 mr-2" />
+                    Set price alert
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <Button
                 variant="ghost"

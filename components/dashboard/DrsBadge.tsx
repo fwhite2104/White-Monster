@@ -10,7 +10,7 @@ interface DrsBadgeProps {
 export function DrsBadge({ deposit, className }: DrsBadgeProps) {
   return (
     <span
-      className={`inline-flex items-center gap-1 text-[10px] text-green-400 font-medium ${className ?? ''}`}
+      className={`inline-flex items-center gap-1 text-xs text-green-400 font-medium ${className ?? ''}`}
       title={DRS_INFO.description}
     >
       <span>€{deposit.toFixed(2)} DRS refundable</span>

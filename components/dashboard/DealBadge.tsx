@@ -13,7 +13,7 @@ export function DealBadge({ dealType, className }: DealBadgeProps) {
   return (
     <Badge
       variant="outline"
-      className={`text-[10px] h-5 font-semibold ${DEAL_TYPE_COLORS[dealType] ?? 'bg-foreground/10 text-foreground'} ${className ?? ''}`}
+      className={`text-xs h-5 font-semibold ${DEAL_TYPE_COLORS[dealType] ?? 'bg-foreground/10 text-foreground'} ${className ?? ''}`}
     >
       {DEAL_TYPE_LABELS[dealType] ?? dealType}
     </Badge>
@@ -29,7 +29,7 @@ export function SavingBadge({ savingsPercent, className }: SavingBadgeProps) {
   return (
     <Badge
       variant="success"
-      className={`text-[10px] h-5 font-bold ${className ?? ''}`}
+      className={`text-xs h-5 font-bold ${className ?? ''}`}
     >
       {savingsPercent}% OFF
     </Badge>

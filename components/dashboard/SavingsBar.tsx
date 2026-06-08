@@ -41,14 +41,14 @@ export function SavingsBar({ prices }: SavingsBarProps) {
           exit={shouldReduceMotion ? undefined : { y: 64, opacity: 0, scale: 0.95, transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] } }}
           transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
           className={cn(
-            'fixed left-0 right-0 z-30',
+            'fixed left-0 right-0 z-[var(--z-bar)]',
             'bottom-20 md:bottom-0',
             'bg-primary/95',
             'backdrop-blur-md',
             'border-t border-primary-dark/30',
-            'shadow-[0_-4px_20px_oklch(0.72_0.22_145_/_0.2)]'
+            'shadow-[0_-4px_20px_oklch(0.72_0.22_145_/_0.2)]',
+            'pb-safe'
           )}
-          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
           role="status"
           aria-live="polite"
         >
@@ -62,7 +62,7 @@ export function SavingsBar({ prices }: SavingsBarProps) {
                   You could save{' '}
                   <span className="text-base">{'\u20AC'}{savings.amount.toFixed(2)}</span>
                 </p>
-                <p className="text-[11px] text-primary-foreground/70 leading-tight mt-0.5 flex items-center gap-1">
+                <p className="text-xs text-primary-foreground/70 leading-tight mt-0.5 flex items-center gap-1">
                   <MapPin className="h-3 w-3 shrink-0" />
                     <span className="truncate">
                       Best price at {savings.storeName} ({'\u20AC'}{savings.cheapestPrice.toFixed(2)})

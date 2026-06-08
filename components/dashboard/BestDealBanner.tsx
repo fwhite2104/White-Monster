@@ -45,19 +45,19 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, savings:
               <p className="text-xs font-semibold text-primary uppercase tracking-wider">
                 Best Deal Found
               </p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {totalPrices} price{totalPrices !== 1 ? 's' : ''} compared
               </p>
             </div>
           </div>
 
           {bestPrice.source === 'user_upload' || bestPrice.source === 'user_reported' ? (
-            <Badge variant="outline" className="border-primary/20 text-primary/80 gap-1 text-[10px]">
+            <Badge variant="outline" className="border-primary/20 text-primary/80 gap-1 text-xs">
               <Users className="h-3 w-3" />
               Community
             </Badge>
           ) : (
-            <Badge variant="outline" className="border-muted/20 text-muted-foreground gap-1 text-[10px]">
+            <Badge variant="outline" className="border-muted/20 text-muted-foreground gap-1 text-xs">
               <Database className="h-3 w-3" />
               Scraped
             </Badge>
@@ -108,7 +108,7 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, savings:
           <div className="flex items-center gap-4 md:flex-col md:items-end">
             {savings !== null && savings > 0 && (
               <div className="text-right">
-                <p className="text-[10px] sm:text-xs text-muted-foreground">You save up to</p>
+                <p className="text-xs sm:text-xs text-muted-foreground">You save up to</p>
                 <p className="text-lg sm:text-xl font-bold text-primary">
                   {'\u20AC'}{savings.toFixed(2)}
                 </p>

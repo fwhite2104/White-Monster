@@ -162,7 +162,7 @@ export default function Home() {
     <div className="min-h-full flex flex-col">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[var(--z-header)] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
       >
         Skip to content
       </a>
@@ -486,7 +486,7 @@ export default function Home() {
 
       {/* Scan barcode floating action button */}
       {activeTab !== 'stores' && !scanResult && (
-        <div className="fixed bottom-24 left-4 z-50 md:bottom-6 md:right-6 md:left-auto">
+        <div className="fixed bottom-24 left-4 z-[var(--z-fab)] md:bottom-6 md:right-6 md:left-auto">
           <ScanButton
             onScanResult={(result) => setScanResult({ product: result.product, prices: result.prices })}
             userLat={lat}

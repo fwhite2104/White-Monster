@@ -49,7 +49,7 @@ export function BottomTabNav({
   return (
     <>
       <div
-        className="fixed bottom-24 right-5 z-50 md:hidden"
+        className="fixed bottom-24 right-5 z-[var(--z-fab)] md:hidden"
       >
         <motion.button
           initial={shouldReduceMotion ? false : { scale: 0.95, opacity: 0 }}
@@ -66,7 +66,7 @@ export function BottomTabNav({
           aria-label="Report a price"
         >
           <CirclePlus className="size-7" />
-          <span className="text-[10px] font-medium uppercase tracking-wide">Report</span>
+          <span className="text-xs font-medium uppercase tracking-wide">Report</span>
         </motion.button>
       </div>
 
@@ -75,7 +75,7 @@ export function BottomTabNav({
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
         className={cn(
-          'fixed bottom-0 left-0 right-0 z-40',
+          'fixed bottom-0 left-0 right-0 z-[var(--z-chrome)]',
           'bg-card/95 backdrop-blur-xl border-t border-border',
           'md:hidden'
         )}

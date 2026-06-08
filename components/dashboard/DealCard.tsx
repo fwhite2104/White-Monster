@@ -51,7 +51,7 @@ export function DealCard({ deal }: DealCardProps) {
                   €{Number(deal.original_price).toFixed(2)}
                 </span>
                 {deal.min_quantity > 1 && (
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     (min {deal.min_quantity})
                   </span>
                 )}
@@ -69,12 +69,12 @@ export function DealCard({ deal }: DealCardProps) {
                 <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                   <Tag className="h-3 w-3 text-muted-foreground shrink-0" />
                   {deal.products.slice(0, 3).map((p) => (
-                    <Badge key={p.id} variant="outline" className="text-[10px] h-4 border-foreground/15">
+                    <Badge key={p.id} variant="outline" className="text-xs h-4 border-foreground/15">
                       {p.name}
                     </Badge>
                   ))}
                   {deal.products.length > 3 && (
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       +{deal.products.length - 3} more
                     </span>
                   )}

@@ -69,7 +69,7 @@ export function PriceAlertDialog({ variant, open, onClose, onCreated }: PriceAle
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+    <div className="fixed inset-0 z-[var(--z-dialog)] flex items-center justify-center bg-black/60">
       <div className="w-full max-w-sm rounded-lg border border-border bg-card p-6 shadow-lg">
         <h2 className="text-lg font-semibold mb-1">Set Price Alert</h2>
         <p className="text-sm text-muted-foreground mb-4">

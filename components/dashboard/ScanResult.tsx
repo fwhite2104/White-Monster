@@ -17,7 +17,7 @@ export function ScanResult({ product, prices, onClose }: ScanResultProps) {
   const best = sorted[0] ?? null
 
   return (
-    <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
+    <div className="fixed inset-0 z-[var(--z-overlay)] bg-background overflow-y-auto">
       {/* Header */}
       <div className="sticky top-0 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
         <Button variant="ghost" size="icon-lg" onClick={onClose} aria-label="Close scan results">
@@ -100,7 +100,7 @@ export function ScanResult({ product, prices, onClose }: ScanResultProps) {
                       €{Number(price.price).toFixed(2)}
                     </span>
                     {isBest && (
-                      <Badge variant="success" className="text-[10px] px-1.5 py-0">
+                      <Badge variant="success" className="text-xs px-1.5 py-0">
                         Best Price
                       </Badge>
                     )}

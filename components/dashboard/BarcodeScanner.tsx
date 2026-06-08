@@ -175,7 +175,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   }, [mode])
 
   return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+    <div className="fixed inset-0 z-[var(--z-overlay)] bg-black flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-black/80">
         <h2 className="text-white font-medium">Scan Barcode</h2>

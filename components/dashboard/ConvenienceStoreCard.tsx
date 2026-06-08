@@ -21,7 +21,7 @@ export function ConvenienceStoreCard({ store, onReportPrice }: ConvenienceStoreC
           <div className="flex items-center gap-2 mb-1">
             <h3 className="text-sm font-medium truncate">{store.name}</h3>
             {isConvenience && (
-              <span className="inline-flex items-center h-5 px-2 rounded-full text-[10px] font-medium bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/20 shrink-0">
+              <span className="inline-flex items-center h-5 px-2 rounded-full text-xs font-medium bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/20 shrink-0">
                 {getStoreTypeLabel(store)}
               </span>
             )}

@@ -24,7 +24,7 @@ export function FirstVisitScreen({
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <div className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden px-4 py-16">
+    <div className="relative min-h-dvh flex items-center justify-center overflow-hidden px-4 py-16">
       <div
         className="absolute inset-0 opacity-[0.04]"
         style={{
@@ -156,7 +156,7 @@ export function FirstVisitScreen({
             delay: staggerDelay(6),
             ease: EASE_OUT,
           }}
-          className="mt-7 flex items-center gap-3 text-[11px] text-muted-foreground/70"
+          className="mt-7 flex items-center gap-3 text-xs text-muted-foreground/70"
         >
           <span className="inline-flex items-center gap-1.5">
             <Scan className="h-3.5 w-3.5" />
