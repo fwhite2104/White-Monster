@@ -1,0 +1,38 @@
+{
+  "version": "2.1.0",
+  "source": "debug",
+  "timestamp": "2026-06-06T16:00:00+01:00",
+  "status": "COMPLETE",
+  "results_tsv": "autoresearch/debug-260606-1559/results.tsv",
+  "findings": [
+    {
+      "description": "MapInfoCard and StoreMap unused imports in page.tsx",
+      "severity": "high",
+      "file_line": "app/page.tsx:18,37-40"
+    },
+    {
+      "description": "LOCATION_MAX_AGE_MS unused constant in use-geolocation.ts",
+      "severity": "medium",
+      "file_line": "hooks/use-geolocation.ts:32"
+    },
+    {
+      "description": "fetchData() useEffect has no cleanup causing race conditions in React 19 strict mode",
+      "severity": "medium",
+      "file_line": "app/page.tsx:110-113"
+    },
+    {
+      "description": "Next.js 16 middleware.ts convention deprecated",
+      "severity": "low",
+      "file_line": "middleware.ts"
+    },
+    {
+      "description": "Firecrawl stub placeholder key",
+      "severity": "low",
+      "file_line": "scripts/scrapers/providers/firecrawl_provider.py:13"
+    }
+  ],
+  "config": {
+    "scope": null,
+    "symptom": null
+  }
+}

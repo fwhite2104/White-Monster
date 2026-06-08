@@ -41,6 +41,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
         setMode('manual')
       })
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time init based on BarcodeDetector availability
       setMode('manual')
     }
   }, [])

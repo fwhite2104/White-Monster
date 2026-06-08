@@ -1,6 +1,7 @@
 'use client'
 
 import { X, MapPin, Package } from 'lucide-react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { getRetailerColor } from '@/lib/constants'
@@ -43,10 +44,13 @@ export function ScanResult({ product, prices, onClose }: ScanResultProps) {
       <div className="px-4 py-4 border-b border-border">
         <div className="flex items-center gap-3">
           {product.image_url ? (
-            <img
+            <Image
               src={product.image_url}
               alt={product.name}
+              width={64}
+              height={64}
               className="w-16 h-16 rounded-lg object-cover bg-muted"
+              unoptimized
             />
           ) : (
             <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center">

@@ -104,7 +104,7 @@ export default function Home() {
     setVariant('zero_sugar')
     setPackSize('all')
     setRadius(DEFAULT_RADIUS_KM)
-  }, [])
+  }, [setSort, setVariant, setPackSize, setRadius])
 
   const handleMarkerClick = useCallback(
     (storeId: string) => {
