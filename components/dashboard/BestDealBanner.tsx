@@ -10,11 +10,12 @@ interface BestDealBannerProps {
   bestPrice: Price
   nextBestPrice?: Price | null
   totalPrices: number
+  maxSavings?: { amount: number; packSize: string } | null
   /** @deprecated Use nextBestPrice instead */
   savings?: number
 }
 
-export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, savings: legacySavings }: BestDealBannerProps) {
+export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, maxSavings, savings: legacySavings }: BestDealBannerProps) {
   const shouldReduceMotion = useReducedMotion()
   const store = bestPrice.stores ?? { name: 'Unknown Store', retailer: 'other', suburb: '' }
   const product = bestPrice.products ?? { name: 'Unknown Product' }
@@ -106,11 +107,16 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, savings:
           </div>
 
           <div className="flex items-center gap-4 md:flex-col md:items-end">
-            {savings !== null && savings > 0 && (
+            {maxSavings && maxSavings.amount > 0 && (
               <div className="text-right">
-                <p className="text-xs sm:text-xs text-muted-foreground">You save up to</p>
+                <p className="text-xs text-muted-foreground">
+                  You could save up to
+                </p>
                 <p className="text-lg sm:text-xl font-bold text-primary">
-                  {'\u20AC'}{savings.toFixed(2)}
+                  {'\u20AC'}{maxSavings.amount.toFixed(2)}
+                </p>
+                <p className="text-[11px] text-muted-foreground/70 mt-0.5">
+                  on {maxSavings.packSize === '4_pack' ? 'multipacks' : 'single cans'}
                 </p>
               </div>
             )}

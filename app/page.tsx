@@ -19,7 +19,7 @@ import { LocationBanner } from '@/components/dashboard/LocationBanner'
 import { ReportPriceCard } from '@/components/dashboard/ReportPriceCard'
 import { ItemComparisonView } from '@/components/dashboard/ItemComparisonView'
 import { BottomTabNav, type TabKey } from '@/components/dashboard/BottomTabNav'
-import { SavingsBar } from '@/components/dashboard/SavingsBar'
+
 import { FirstVisitScreen } from '@/components/dashboard/FirstVisitScreen'
 import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
 import {
@@ -47,8 +47,8 @@ export default function Home() {
   const {
     prices, stores, loading, error, lastUpdated,
     radius, setRadius, sort, setSort, variant, setVariant,
-    packSize, setPackSize, fetchData,
-    storesWithDistance, bestPrice, nextBestPrice,
+    packSize,     setPackSize, fetchData,
+    storesWithDistance, bestPrice, nextBestPrice, maxSavings,
   } = usePriceQuery({ lat, lng })
 
   const [showUploadForm, setShowUploadForm] = useState(false)
@@ -138,7 +138,7 @@ export default function Home() {
       [
         sort !== 'price',
         variant !== 'zero_sugar',
-        packSize !== 'all',
+        packSize !== '4_pack',
         radius !== DEFAULT_RADIUS_KM,
       ].filter(Boolean).length,
     [sort, variant, packSize, radius],
@@ -228,6 +228,7 @@ export default function Home() {
                     bestPrice={bestPrice}
                     nextBestPrice={nextBestPrice}
                     totalPrices={prices.length}
+                    maxSavings={maxSavings}
                   />
                 )}
                 <HeroCard
@@ -299,6 +300,7 @@ export default function Home() {
                     bestPrice={bestPrice}
                     nextBestPrice={nextBestPrice}
                     totalPrices={prices.length}
+                    maxSavings={maxSavings}
                   />
                 )}
                 <HeroCard
@@ -463,8 +465,6 @@ export default function Home() {
           </a>
         )}
       </main>
-
-      <SavingsBar prices={prices} />
 
       <Footer />
 

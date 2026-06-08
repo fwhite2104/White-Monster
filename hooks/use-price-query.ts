@@ -27,6 +27,7 @@ interface UsePriceQueryReturn {
   storesWithDistance: (Store & { distance: number })[]
   bestPrice: Price | null
   nextBestPrice: Price | null
+  maxSavings: { amount: number; packSize: string } | null
 }
 
 export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQueryReturn {
@@ -38,7 +39,7 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
   const [radius, setRadius] = useState(DEFAULT_RADIUS_KM)
   const [sort, setSort] = useState('price')
   const [variant, setVariant] = useState('zero_sugar')
-  const [packSize, setPackSize] = useState('all')
+  const [packSize, setPackSize] = useState('4_pack')
 
   const fetchData = useCallback(async (signal?: AbortSignal) => {
     const [pricesRes, storesRes] = await Promise.all([
@@ -112,6 +113,28 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
   const bestPrice = prices.length > 0 ? prices[0] : null
   const nextBestPrice = prices.length > 1 ? prices[1] : null
 
+  const maxSavings = useMemo(() => {
+    if (prices.length < 2) return null
+    const byPack = new Map<string, Price[]>()
+    for (const p of prices) {
+      const ps = p.products?.pack_size ?? 'single'
+      const list = byPack.get(ps) ?? []
+      list.push(p)
+      byPack.set(ps, list)
+    }
+    let best: { amount: number; packSize: string } | null = null
+    for (const [ps, list] of byPack) {
+      if (list.length < 2) continue
+      const cheapest = Number(list[0].price)
+      const mostExpensive = Number(list[list.length - 1].price)
+      const diff = mostExpensive - cheapest
+      if (diff > 0 && (!best || diff > best.amount)) {
+        best = { amount: diff, packSize: ps }
+      }
+    }
+    return best
+  }, [prices])
+
   return {
     prices,
     stores,
@@ -130,5 +153,6 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
     storesWithDistance,
     bestPrice,
     nextBestPrice,
+    maxSavings,
   }
 }
