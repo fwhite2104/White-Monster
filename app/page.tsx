@@ -35,7 +35,7 @@ import { StoreMapBlock } from '@/components/map/StoreMapBlock'
 import { ScanButton } from '@/components/dashboard/ScanButton'
 import { ScanResult } from '@/components/dashboard/ScanResult'
 import { WeeklyDealsBanner } from '@/components/dashboard/WeeklyDealsBanner'
-import { BasketOptimizer } from '@/components/dashboard/BasketOptimizer'
+
 import { AiAssistant } from '@/components/dashboard/AiAssistant'
 
 export default function Home() {
@@ -493,10 +493,6 @@ export default function Home() {
           userLng={lng}
           radius={radius}
         />
-      )}
-
-      {activeTab !== 'stores' && !scanResult && (
-        <BasketOptimizer userLat={lat} userLng={lng} />
       )}
 
       {activeTab !== 'stores' && !scanResult && (
