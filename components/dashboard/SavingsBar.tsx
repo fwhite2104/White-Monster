@@ -42,7 +42,7 @@ export function SavingsBar({ prices }: SavingsBarProps) {
           transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
           className={cn(
             'fixed left-0 right-0 z-30',
-            'bottom-[68px] md:bottom-0',
+            'bottom-20 md:bottom-0',
             'bg-primary/95',
             'backdrop-blur-md',
             'border-t border-primary-dark/30',
@@ -52,7 +52,7 @@ export function SavingsBar({ prices }: SavingsBarProps) {
           role="status"
           aria-live="polite"
         >
-          <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
+          <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="flex items-center justify-center size-7 rounded-full bg-primary-foreground/15 shrink-0">
                 <TrendingDown className="h-3.5 w-3.5 text-primary-foreground" />

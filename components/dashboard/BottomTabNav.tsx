@@ -94,7 +94,7 @@ export function BottomTabNav({
                 className={cn(
                   'relative flex flex-col items-center justify-center gap-1',
                   'w-16 min-h-[52px] px-1 py-1.5',
-                  'rounded-xl text-[10px] font-medium tracking-wide',
+                  'rounded-xl text-xs font-medium tracking-wide',
                   'transition-colors duration-200',
                   isActive
                     ? 'text-primary'

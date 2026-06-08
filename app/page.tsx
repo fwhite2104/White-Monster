@@ -170,7 +170,7 @@ export default function Home() {
 
       <Header onReportPrice={() => setShowUploadForm(true)} />
 
-      <main id="main-content" className="flex-1 max-w-6xl mx-auto w-full px-4 pt-4 pb-24 md:pb-6 md:pt-6 space-y-4 md:space-y-6">
+      <main id="main-content" className="flex-1 max-w-7xl mx-auto w-full px-4 pt-4 pb-24 md:pb-6 md:pt-6 space-y-4 md:space-y-6">
         <LocationBanner
           status={status}
           locationLabel={locationLabel}

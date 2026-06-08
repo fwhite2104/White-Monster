@@ -89,11 +89,11 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
           style={{ background: `linear-gradient(135deg, ${retailerColor}40, transparent 60%)` }}
         />
 
-        <CardContent className="relative p-4 sm:p-5">
+        <CardContent className="relative p-3 sm:p-5">
           <div className="flex flex-col md:flex-row md:items-center md:gap-6">
-            <div className="flex items-baseline gap-3 md:flex-col md:gap-1">
+            <div className="flex items-baseline gap-2 md:flex-col md:gap-1">
               <motion.p
-                className="text-4xl sm:text-5xl font-bold text-primary tracking-tight"
+                className="text-3xl sm:text-5xl font-bold text-primary tracking-tight"
                 initial={shouldReduceMotion ? false : { scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', duration: 0.5, bounce: 0.2, delay: 0.1 }}
@@ -112,7 +112,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
 
             <div className="hidden md:block w-px h-16 bg-foreground/10" />
 
-            <div className="flex-1 space-y-2 mt-3 md:mt-0">
+            <div className="flex-1 space-y-1.5 mt-2 md:mt-0 md:space-y-2">
               <div className="flex items-center gap-2">
                 <span
                   className="h-2.5 w-2.5 rounded-full shrink-0"
@@ -163,7 +163,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
             )}
           </div>
 
-          <div className="mt-3 pt-3 border-t border-foreground/10 flex items-center justify-between">
+          <div className="mt-2 pt-2 sm:mt-3 sm:pt-3 border-t border-foreground/10 flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
               {totalResults} price{totalResults !== 1 ? 's' : ''} found nearby
             </p>
