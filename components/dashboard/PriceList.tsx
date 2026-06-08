@@ -86,13 +86,14 @@ export function PriceList({
           ref={reportCardRef}
           initial={shouldReduceMotion ? false : { scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-            transition={{
-              delay: showAll ? 0 : REPORT_PROMPT_INSERT_INDEX * 0.05,
-              duration: 0.3,
-              ease: [0.23, 1, 0.32, 1],
-            }}
+          transition={{
+            delay: showAll ? 0 : REPORT_PROMPT_INSERT_INDEX * 0.05,
+            duration: 0.3,
+            ease: [0.23, 1, 0.32, 1],
+          }}
           layout
           role="listitem"
+          className="sm:col-span-2"
         >
           <ReportPriceCard
             onReportPrice={onReportPrice}
@@ -128,23 +129,27 @@ export function PriceList({
   })
 
   return (
-    <div id="price-list" className="space-y-2.5 sm:space-y-3" role="list" aria-label="Price results">
-      <AnimatePresence mode="popLayout">
-        {items}
-      </AnimatePresence>
+    <div id="price-list" className="space-y-3" role="list" aria-label="Price results">
+      {/* 2-column grid on sm+ screens, single column on mobile */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <AnimatePresence mode="popLayout">
+          {items}
+        </AnimatePresence>
+      </div>
 
       {hiddenCount > 0 && (
         <motion.div
-          initial={shouldReduceMotion ? false : { opacity: 0, y: 8, scale: 0.97 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: showAll ? 0 : INITIAL_DISPLAY_COUNT * 0.05, duration: 0.3 }}
+          className="sm:col-span-2"
         >
           <button
             type="button"
             onClick={() => setShowAll((prev) => !prev)}
             aria-expanded={showAll}
             aria-controls="price-list"
-            className="group w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-border bg-muted/30 hover:bg-muted/50 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer"
+            className="group w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-foreground/10 bg-card hover:bg-card/80 text-sm font-medium text-muted-foreground hover:text-foreground transition-all duration-200 cursor-pointer hover:border-foreground/20"
           >
             {showAll ? (
               <>

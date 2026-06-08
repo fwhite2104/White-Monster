@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Camera, CameraOff, X, Flashlight, FlashlightOff, ScanLine, Keyboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 
 interface BarcodeScannerProps {
   onScan: (barcode: string) => void
@@ -15,6 +16,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   const animFrameRef = useRef<number>(0)
   const scanLoopRef = useRef<(() => void) | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const html5QrCodeRef = useRef<Html5Qrcode | null>(null)
 
   const [mode, setMode] = useState<'camera' | 'manual'>('camera')
   const [status, setStatus] = useState<'requesting' | 'scanning' | 'error'>('requesting')
@@ -35,14 +37,14 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
           setDetector(det)
           setMode('camera')
         } else {
-          setMode('manual')
+          setMode('camera')
         }
       }).catch(() => {
-        setMode('manual')
+        setMode('camera')
       })
     } else {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time init based on BarcodeDetector availability
-      setMode('manual')
+      setMode('camera')
     }
   }, [])
 
@@ -54,6 +56,10 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop())
       streamRef.current = null
+    }
+    if (html5QrCodeRef.current) {
+      html5QrCodeRef.current.stop().catch(() => {})
+      html5QrCodeRef.current = null
     }
   }, [])
 
@@ -90,36 +96,63 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
     let mounted = true
 
     async function start() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
-        })
+      if (detector) {
+        // BarcodeDetector path (Android Chrome)
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+          })
 
-        if (!mounted) {
-          stream.getTracks().forEach((t) => t.stop())
-          return
-        }
+          if (!mounted) {
+            stream.getTracks().forEach((t) => t.stop())
+            return
+          }
 
-        streamRef.current = stream
+          streamRef.current = stream
 
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-          await videoRef.current.play()
-        }
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream
+            await videoRef.current.play()
+          }
 
-        if (detector) {
           setStatus('scanning')
           animFrameRef.current = requestAnimationFrame(() => scanLoopRef.current?.())
-        } else {
-          setStatus('scanning')
+        } catch (err) {
+          if (!mounted) return
+          const msg = err instanceof DOMException && err.name === 'NotAllowedError'
+            ? 'Camera permission denied. Please allow camera access and try again.'
+            : 'Camera not available on this device.'
+          setErrorMsg(msg)
+          setStatus('error')
         }
-      } catch (err) {
-        if (!mounted) return
-        const msg = err instanceof DOMException && err.name === 'NotAllowedError'
-          ? 'Camera permission denied. Please allow camera access and try again.'
-          : 'Camera not available on this device.'
-        setErrorMsg(msg)
-        setStatus('error')
+      } else {
+        // html5-qrcode fallback (iOS Safari, Firefox, desktop)
+        try {
+          const html5QrCode = new Html5Qrcode('html5qr-container', {
+            verbose: false,
+            formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.UPC_E],
+          })
+          html5QrCodeRef.current = html5QrCode
+          await html5QrCode.start(
+            { facingMode: 'environment' },
+            { fps: 10 },
+            (decodedText: string) => {
+              onScan(decodedText)
+              html5QrCode.stop().catch(() => {})
+            },
+            () => {}
+          )
+          if (!mounted) {
+            html5QrCode.stop().catch(() => {})
+            return
+          }
+          setStatus('scanning')
+        } catch (err) {
+          if (!mounted) return
+          const msg = (err as Error)?.message || 'Camera not available on this device.'
+          setErrorMsg(msg)
+          setStatus('error')
+        }
       }
     }
 
@@ -229,12 +262,17 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
       <div className="flex-1 relative overflow-hidden">
         {mode === 'camera' ? (
           <>
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              playsInline
-              muted
-            />
+            {detector && (
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover"
+                playsInline
+                muted
+              />
+            )}
+            {!detector && (
+              <div id="html5qr-container" className="w-full h-full" />
+            )}
             <canvas ref={canvasRef} className="hidden" />
 
             {/* Scanning overlay */}
@@ -254,21 +292,6 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
                 <p className="absolute bottom-8 text-white/80 text-sm text-center px-8">
                   Point your camera at a Monster Energy barcode
                 </p>
-
-                {!detector && (
-                  <div className="absolute top-4 left-4 right-4 bg-destructive/20 border border-destructive/30 text-destructive-foreground text-sm p-3 rounded-lg text-center space-y-2">
-                    <p>Barcode detection is not supported in this browser.</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={switchToManual}
-                      className="text-white border-white/20 h-10"
-                    >
-                      <Keyboard className="h-4 w-4 mr-1.5" />
-                      Enter manually
-                    </Button>
-                  </div>
-                )}
               </div>
             )}
 

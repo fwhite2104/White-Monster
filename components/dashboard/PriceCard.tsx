@@ -73,6 +73,10 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
     onReportPrice?.(price.store_id)
   }, [onReportPrice, price.store_id])
 
+  const hasDrs = price.drs_deposit !== undefined && price.drs_deposit > 0
+  const hasClubcard = price.has_clubcard_pricing && price.clubcard_price != null
+  const isConvenienceStore = 'store_type' in store && (store.store_type === 'convenience' || store.store_type === 'petrol_station')
+
   return (
     <motion.div
       initial={shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.97 }}
@@ -82,60 +86,35 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
       onMouseEnter={onHover}
       className="relative"
     >
-      {isCheapest && (
-        <motion.div
-          className="absolute -inset-[1px] rounded-[calc(var(--radius-xl)+1px)] opacity-60"
-          style={{
-            background: `linear-gradient(135deg, ${retailerColor}, oklch(0.7 0.25 145), ${retailerColor})`,
-          }}
-          animate={shouldReduceMotion ? {} : { opacity: [0.4, 0.8, 0.4] }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      )}
-
       <Card
         className={
           isCheapest
-            ? 'relative bg-card ring-1 ring-primary/30'
-            : 'relative bg-card ring-1 ring-foreground/10 hover:ring-foreground/20'
+            ? 'relative bg-card ring-2 ring-primary/30 overflow-hidden'
+            : 'relative bg-card ring-1 ring-foreground/8 hover:ring-foreground/15 overflow-hidden transition-[ring-color] duration-200'
         }
       >
-        <CardContent className="p-0 min-h-[80px]">
-          <div
-            className="h-1 w-full rounded-t-[var(--radius)]"
-            style={{ backgroundColor: retailerColor }}
-          />
+        {/* Retailer color left border strip */}
+        <div
+          className="absolute inset-y-0 left-0 w-1.5 rounded-l-[var(--radius)]"
+          style={{ backgroundColor: retailerColor }}
+          aria-hidden="true"
+        />
 
-          <div className="px-4 py-3 flex items-start gap-3">
+        <CardContent className="ps-5 pe-4 py-4">
+          {/* Row 1: Price + Actions */}
+          <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <div className="flex items-baseline gap-2.5 flex-wrap">
+              <div className="flex items-baseline gap-2 flex-wrap">
                 <span
-                  className="text-[1.65rem] font-bold tracking-tight leading-none tabular-nums"
+                  className="text-[1.75rem] font-bold tracking-tight leading-none tabular-nums"
                   style={{ color: isCheapest ? 'oklch(0.72 0.22 145)' : undefined }}
                 >
                   €{Number(price.price).toFixed(2)}
                 </span>
                 {perCanDisplay && (
                   <span className="text-xs text-muted-foreground tabular-nums">
-                    (€{perCanDisplay}/can)
+                    €{perCanDisplay}/can
                   </span>
-                )}
-                {price.drs_deposit !== undefined && price.drs_deposit > 0 && (
-                  <DrsBreakdown totalPrice={Number(price.price)} packSize={product.pack_size} />
-                )}
-                {price.has_clubcard_pricing && price.clubcard_price != null && (
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <ClubcardBadge />
-                    <span className="text-sm font-semibold text-blue-400 tabular-nums">
-                      €{Number(price.clubcard_price).toFixed(2)}
-                    </span>
-                    <span className="text-xs text-muted-foreground line-through">
-                      €{Number(price.price).toFixed(2)}
-                    </span>
-                    <span className="text-xs text-blue-400">
-                      Save €{(Number(price.price) - Number(price.clubcard_price)).toFixed(2)}
-                    </span>
-                  </div>
                 )}
                 {isCheapest && (
                   <motion.div
@@ -143,97 +122,123 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
                   >
-                    <Badge variant="success" className="text-xs px-1.5 py-0 font-semibold">
+                    <Badge variant="success" className="text-[11px] px-1.5 py-0 font-semibold tracking-wide uppercase">
                       Best Price
                     </Badge>
                   </motion.div>
                 )}
               </div>
 
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <span className="text-sm font-medium truncate">{store.name}</span>
-                {store.suburb && (
-                  <span className="text-xs text-muted-foreground truncate hidden sm:inline">
-                    · {store.suburb}
-                  </span>
-                )}
-                <span className="text-xs text-muted-foreground ml-auto shrink-0 flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {(distance / 1000).toFixed(1)} km
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                {'store_type' in store && (store.store_type === 'convenience' || store.store_type === 'petrol_station') && (
-                  <Badge variant="info" className="text-xs h-5 gap-1 bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/20">
-                    <Store className="h-2.5 w-2.5" />
-                    {store.store_type === 'petrol_station' ? 'Petrol Station' : 'Convenience Store'}
-                  </Badge>
-                )}
-                {variantLabel && (
-                  <Badge variant="outline" className="border-foreground/15 text-xs h-5">
-                    {variantLabel}
-                  </Badge>
-                )}
-                <Badge
-                  variant={isUserReported ? 'info' : 'outline'}
-                  className="text-xs h-5 gap-1"
-                >
-                  {isUserReported ? (
-                    <User className="h-2.5 w-2.5" />
-                  ) : (
-                    <Bot className="h-2.5 w-2.5" />
-                  )}
-                  {isUserReported ? 'User reported' : 'Auto'}
-                </Badge>
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  {getTimeAgo(price.scraped_at)}
-                </span>
-              </div>
+              {/* DRS sub-line */}
+              {hasDrs && (
+                <DrsBreakdown totalPrice={Number(price.price)} packSize={product.pack_size} className="mt-1" />
+              )}
             </div>
 
-            {onReportPrice ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <Button
-                      variant="ghost"
-                      size="icon-lg"
-                      className="h-11 w-11 text-muted-foreground hover:text-foreground"
-                      aria-label="More actions"
-                    />
-                  }
+            {/* Action buttons */}
+            <div className="flex items-center gap-0.5 shrink-0 -mr-1">
+              {onReportPrice ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                        aria-label="More actions"
+                      />
+                    }
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" sideOffset={4}>
+                    <DropdownMenuItem onClick={handleShare}>
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Share
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleReport}>
+                      <CirclePlus className="h-4 w-4 mr-2" />
+                      Report better price
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setAlertOpen(true)}>
+                      <Bell className="h-4 w-4 mr-2" />
+                      Set price alert
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground"
+                  onClick={handleShare}
+                  aria-label="Share price"
                 >
-                  <MoreHorizontal className="h-4 w-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" sideOffset={4}>
-                  <DropdownMenuItem onClick={handleShare}>
-                    <Share2 className="h-4 w-4 mr-2" />
-                    Share
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleReport}>
-                    <CirclePlus className="h-4 w-4 mr-2" />
-                    Report better price
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setAlertOpen(true)}>
-                    <Bell className="h-4 w-4 mr-2" />
-                    Set price alert
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button
-                variant="ghost"
-                size="icon-lg"
-                className="h-11 w-11 shrink-0 mt-0.5 text-muted-foreground hover:text-foreground"
-                onClick={handleShare}
-                aria-label="Share price"
-              >
-                <Share2 className="h-4 w-4" />
-              </Button>
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              )}
+              <FavoriteButton productId={price.product_id} storeId={price.store_id} className="h-9 w-9 mt-0" />
+            </div>
+          </div>
+
+          {/* Row 2: Store name + location */}
+          <div className="flex items-center gap-1.5 mt-2.5">
+            <span className="text-sm font-medium truncate">{store.name}</span>
+            {store.suburb && (
+              <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+                · {store.suburb}
+              </span>
             )}
-            <FavoriteButton productId={price.product_id} storeId={price.store_id} />
+            <span className="text-xs text-muted-foreground ml-auto shrink-0 flex items-center gap-1 tabular-nums">
+              <MapPin className="h-3 w-3" />
+              {(distance / 1000).toFixed(1)} km
+            </span>
+          </div>
+
+          {/* Row 3: Clubcard pricing (if applicable) */}
+          {hasClubcard && (
+            <div className="mt-2.5 flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-blue-500/8 border border-blue-500/15">
+              <ClubcardBadge />
+              <span className="text-sm font-semibold text-blue-400 tabular-nums">
+                €{Number(price.clubcard_price).toFixed(2)}
+              </span>
+              <span className="text-xs text-muted-foreground line-through">
+                €{Number(price.price).toFixed(2)}
+              </span>
+              <span className="text-xs text-blue-400/80 ml-auto">
+                Save €{(Number(price.price) - Number(price.clubcard_price)).toFixed(2)}
+              </span>
+            </div>
+          )}
+
+          {/* Row 4: Metadata badges + timestamp */}
+          <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+            {isConvenienceStore && (
+              <Badge variant="info" className="text-[11px] h-5 gap-1 bg-amber-500/12 text-amber-400 ring-1 ring-amber-500/15">
+                <Store className="h-2.5 w-2.5" />
+                {store.store_type === 'petrol_station' ? 'Petrol Station' : 'Convenience'}
+              </Badge>
+            )}
+            {variantLabel && (
+              <Badge variant="outline" className="border-foreground/10 text-[11px] h-5 font-normal">
+                {variantLabel}
+              </Badge>
+            )}
+            <Badge
+              variant={isUserReported ? 'info' : 'outline'}
+              className="text-[11px] h-5 gap-1 font-normal"
+            >
+              {isUserReported ? (
+                <User className="h-2.5 w-2.5" />
+              ) : (
+                <Bot className="h-2.5 w-2.5" />
+              )}
+              {isUserReported ? 'User' : 'Auto'}
+            </Badge>
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground ml-auto tabular-nums">
+              <Clock className="h-3 w-3" />
+              {getTimeAgo(price.scraped_at)}
+            </span>
           </div>
         </CardContent>
       </Card>
