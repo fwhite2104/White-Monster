@@ -486,17 +486,17 @@ export default function Home() {
         prefillStoreName={reportStoreName}
       />
 
+      {/* Floating action button group — Scan + AI assistant */}
       {activeTab !== 'stores' && !scanResult && (
-        <ScanButton
-          onScanResult={(result) => setScanResult({ product: result.product as Product, prices: result.prices as Array<Price & { stores?: Store }> })}
-          userLat={lat}
-          userLng={lng}
-          radius={radius}
-        />
-      )}
-
-      {activeTab !== 'stores' && !scanResult && (
-        <AiAssistant lat={lat} lng={lng} radius={radius} />
+        <div className="fixed bottom-24 left-4 z-40 flex flex-col gap-3 md:bottom-6 md:right-6 md:left-auto">
+          <ScanButton
+            onScanResult={(result) => setScanResult({ product: result.product as Product, prices: result.prices as Array<Price & { stores?: Store }> })}
+            userLat={lat}
+            userLng={lng}
+            radius={radius}
+          />
+          <AiAssistant lat={lat} lng={lng} radius={radius} />
+        </div>
       )}
 
       {scanResult && (

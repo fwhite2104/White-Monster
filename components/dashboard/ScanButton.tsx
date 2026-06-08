@@ -51,11 +51,11 @@ export function ScanButton({ onScanResult, userLat, userLng, radius }: ScanButto
       <Button
         onClick={openScanner}
         size="icon"
-        className="fixed bottom-24 right-4 z-40 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 md:static md:h-9 md:w-9 md:rounded-md md:bottom-auto md:right-auto"
+        className="h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90"
         aria-label="Scan barcode"
         disabled={loading}
       >
-        <ScanLine className="h-6 w-6 md:h-4 md:w-4" />
+        <ScanLine className="h-6 w-6" />
       </Button>
 
       {showScanner && (

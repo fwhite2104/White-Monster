@@ -17,6 +17,8 @@ import {
   validatePrice,
   validateOptionalString,
 } from '@/lib/validate'
+import { expandNationalPrices, mergeUserPrices, type PriceEntry, type UserPriceRecord } from '@/lib/prices'
+import type { PriceWithJoins, StoreData } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -114,10 +116,147 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    const { data: allStoresData, error: allStoresError } = await supabase
+      .from('stores')
+      .select('id, name, retailer, address, suburb, lat, lng')
+      .eq('is_active', true)
+
+    if (allStoresError) {
+      return NextResponse.json({ error: allStoresError.message }, { status: 500 })
+    }
+
+    let nationalQuery = supabase
+      .from('prices')
+      .select(`
+        id, store_id, product_id, price, source, scraped_at, clubcard_price,
+        stores!inner(id, name, retailer, address, suburb, lat, lng),
+        products!inner(id, name, variant, size_ml, image_url, pack_size)
+      `)
+      .like('stores.name', '%(National)%')
+      .eq('products.variant', variant)
+
+    if (packSize !== 'all') {
+      nationalQuery = nationalQuery.eq('products.pack_size', packSize)
+    }
+
+    const { data: nationalPricesData, error: nationalError } = await nationalQuery
+
+    if (nationalError) {
+      return NextResponse.json({ error: nationalError.message }, { status: 500 })
+    }
+
+    let userQuery = supabase
+      .from('user_prices')
+      .select(`
+        id, store_id, product_id, price, notes, expires_at, created_at,
+        stores!inner(id, name, retailer, address, suburb, lat, lng),
+        products!inner(id, name, variant, size_ml, image_url, pack_size)
+      `)
+      .gt('expires_at', new Date().toISOString())
+      .eq('products.is_active', true)
+      .eq('products.variant', variant)
+
+    if (packSize !== 'all') {
+      userQuery = userQuery.eq('products.pack_size', packSize)
+    }
+
+    const { data: userPricesData, error: userError } = await userQuery
+
+    if (userError) {
+      return NextResponse.json({ error: userError.message }, { status: 500 })
+    }
+
+    const nationalPricesTyped = ((nationalPricesData ?? []) as unknown) as PriceWithJoins[]
+    const allStoresTyped = ((allStoresData ?? []) as unknown) as StoreData[]
+    const userPricesTyped = ((userPricesData ?? []) as unknown) as UserPriceRecord[]
+
+    const expandedNational = expandNationalPrices(
+      nationalPricesTyped,
+      allStoresTyped,
+      lat,
+      lng,
+      radiusMeters,
+      prices as PriceEntry[],
+    )
+
+    const mappedNational = expandedNational.map((row) => {
+      const rowPackSize = row.products.pack_size
+      const totalPrice = Number(row.price)
+      const { base_price, drs_deposit } = splitPrice(totalPrice, rowPackSize)
+      const perCanPrice = rowPackSize === '4_pack' ? totalPrice / 4 : totalPrice
+      const storeRetailer = row.stores.retailer
+      const clubcardPrice = (row as unknown as Record<string, unknown>).clubcard_price !== undefined
+        ? (row as unknown as Record<string, unknown>).clubcard_price
+        : null
+      const hasClubcardPricing = storeRetailer === 'tesco' && clubcardPrice !== null
+
+      return {
+        id: row.id,
+        store_id: row.store_id,
+        product_id: row.product_id,
+        price: row.price,
+        source: row.source,
+        scraped_at: row.scraped_at,
+        distance: row.distance,
+        per_can_price: perCanPrice,
+        base_price,
+        drs_deposit,
+        clubcard_price: clubcardPrice,
+        has_clubcard_pricing: hasClubcardPricing,
+        stores: row.stores,
+        products: row.products,
+      }
+    })
+
+    const userMerged = mergeUserPrices(
+      userPricesTyped,
+      lat,
+      lng,
+      radiusMeters,
+    )
+
+    const mappedUser = userMerged.map((row) => {
+      const rowPackSize = row.products.pack_size
+      const totalPrice = Number(row.price)
+      const { base_price, drs_deposit } = splitPrice(totalPrice, rowPackSize)
+      const perCanPrice = rowPackSize === '4_pack' ? totalPrice / 4 : totalPrice
+
+      return {
+        id: row.id,
+        store_id: row.store_id,
+        product_id: row.product_id,
+        price: row.price,
+        source: row.source,
+        scraped_at: row.scraped_at,
+        distance: row.distance,
+        per_can_price: perCanPrice,
+        base_price,
+        drs_deposit,
+        clubcard_price: null,
+        has_clubcard_pricing: false,
+        stores: row.stores,
+        products: row.products,
+      }
+    })
+
+    const allPrices = [...prices, ...mappedNational, ...mappedUser]
+
+    const bestPriceByStoreProduct = new Map<string, typeof prices[0]>()
+    for (const p of allPrices) {
+      const key = `${p.store_id}|${p.product_id}`
+      const existing = bestPriceByStoreProduct.get(key)
+      if (!existing || Number(p.price) < Number(existing.price)) {
+        bestPriceByStoreProduct.set(key, p)
+      }
+    }
+
+    const deduped = Array.from(bestPriceByStoreProduct.values())
+    deduped.sort((a, b) => Number(a.price) - Number(b.price))
+
     return NextResponse.json({
-      prices,
+      prices: deduped,
       meta: {
-        total: prices.length,
+        total: deduped.length,
         radius: radiusKm,
         variant,
         pack_size: packSize,

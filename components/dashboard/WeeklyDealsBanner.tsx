@@ -5,6 +5,22 @@ import { DealCard } from '@/components/dashboard/DealCard'
 import { Flame } from 'lucide-react'
 import { motion, useReducedMotion } from 'framer-motion'
 
+const gridVariants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.06 },
+  },
+}
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 8 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.3, ease: [0.23, 1, 0.32, 1] as const },
+  },
+}
+
 export function WeeklyDealsBanner() {
   const { deals, loading } = useDeals()
   const shouldReduceMotion = useReducedMotion()
@@ -24,13 +40,21 @@ export function WeeklyDealsBanner() {
         <span className="text-xs text-muted-foreground">{deals.length} active</span>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none -mx-1 px-1">
-        {deals.slice(0, 5).map((deal) => (
-          <div key={deal.id} className="min-w-[260px] max-w-[300px] shrink-0">
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4"
+        variants={shouldReduceMotion ? undefined : gridVariants}
+        initial={shouldReduceMotion ? false : 'hidden'}
+        animate={shouldReduceMotion ? false : 'show'}
+      >
+        {deals.slice(0, 9).map((deal) => (
+          <motion.div
+            key={deal.id}
+            variants={shouldReduceMotion ? undefined : cardVariants}
+          >
             <DealCard deal={deal} />
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </motion.section>
   )
 }
