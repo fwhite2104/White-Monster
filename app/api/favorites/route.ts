@@ -37,17 +37,36 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  let existingQuery = supabase
+    .from('user_favorites')
+    .select('*')
+    .eq('session_id', session_id)
+    .eq('product_id', product_id)
+
+  if (store_id == null) {
+    existingQuery = existingQuery.is('store_id', null)
+  } else {
+    existingQuery = existingQuery.eq('store_id', store_id)
+  }
+
+  const { data: existing, error: existingError } = await existingQuery.single()
+
+  if (existingError && existingError.code !== 'PGRST116') {
+    return NextResponse.json({ error: existingError.message }, { status: 500 })
+  }
+
+  if (existing) {
+    return NextResponse.json({ favorite: existing }, { status: 200 })
+  }
+
   const { data, error } = await supabase
     .from('user_favorites')
-    .upsert(
-      {
-        session_id,
-        product_id,
-        store_id: store_id ?? null,
-        notes: notes ?? null,
-      },
-      { onConflict: 'session_id,product_id,store_id' }
-    )
+    .insert({
+      session_id,
+      product_id,
+      store_id: store_id ?? null,
+      notes: notes ?? null,
+    })
     .select()
     .single()
 
