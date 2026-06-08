@@ -1,0 +1,30 @@
+-- Expand product variants from 4 to 17
+-- Each variant gets both a single-can and 4-pack product row
+
+INSERT INTO products (name, variant, size_ml, pack_size) VALUES
+  ('Monster Lando Norris Zero Sugar', 'lando_norris', 250, 'single'),
+  ('Monster Lando Norris Zero Sugar 4-Pack', 'lando_norris', 250, '4_pack'),
+  ('Monster Viking Berry', 'viking_berry', 250, 'single'),
+  ('Monster Viking Berry 4-Pack', 'viking_berry', 250, '4_pack'),
+  ('Monster Mango Loco', 'mango_loco', 500, 'single'),
+  ('Monster Mango Loco 4-Pack', 'mango_loco', 500, '4_pack'),
+  ('Monster Pipeline Punch', 'pipeline_punch', 500, 'single'),
+  ('Monster Pipeline Punch 4-Pack', 'pipeline_punch', 500, '4_pack'),
+  ('Monster Hydro Watermelon', 'hydro_watermelon', 550, 'single'),
+  ('Monster Hydro Watermelon 4-Pack', 'hydro_watermelon', 550, '4_pack'),
+  ('Monster Assault', 'assault', 500, 'single'),
+  ('Monster Assault 4-Pack', 'assault', 500, '4_pack'),
+  ('Monster Khaotic', 'khaotic', 500, 'single'),
+  ('Monster Khaotic 4-Pack', 'khaotic', 500, '4_pack'),
+  ('Monster Ultra Gold', 'ultra_gold', 250, 'single'),
+  ('Monster Ultra Gold 4-Pack', 'ultra_gold', 250, '4_pack'),
+  ('Monster Ultra Violet', 'ultra_violet', 250, 'single'),
+  ('Monster Ultra Violet 4-Pack', 'ultra_violet', 250, '4_pack'),
+  ('Monster Ultra Peachy Keen', 'ultra_peachy_keen', 250, 'single'),
+  ('Monster Ultra Peachy Keen 4-Pack', 'ultra_peachy_keen', 250, '4_pack'),
+  ('Monster Juice Monster Apple', 'juice_monster_apple', 500, 'single'),
+  ('Monster Juice Monster Apple 4-Pack', 'juice_monster_apple', 500, '4_pack'),
+  ('Monster Rehab Lemon Tea', 'rehab_lemon_tea', 500, 'single'),
+  ('Monster Rehab Lemon Tea 4-Pack', 'rehab_lemon_tea', 500, '4_pack'),
+  ('Monster Rehab Green Tea', 'rehab_green_tea', 500, 'single'),
+  ('Monster Rehab Green Tea 4-Pack', 'rehab_green_tea', 500, '4_pack');

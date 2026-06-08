@@ -2,7 +2,9 @@ import requests
 import time
 import re
 from abc import ABC, abstractmethod
-from typing import List, Dict
+from typing import List, Dict, Callable, TypeVar
+
+T = TypeVar('T')
 
 
 class BaseScraper(ABC):
@@ -11,7 +13,6 @@ class BaseScraper(ABC):
         self.delay = delay
         self.timeout = timeout
         self.session = requests.Session()
-        self.session.timeout = self.timeout
         self.session.headers.update({
             "User-Agent": "MonsterCork/1.0 (Price Comparison Bot; +https://monster-cork.vercel.app)",
             "Accept-Language": "en-IE,en;q=0.9",
@@ -35,8 +36,8 @@ class BaseScraper(ABC):
         except Exception as e:
             self._log(f"  Failed to save debug screenshot: {e}")
 
-    def _retry_request(self, fn, max_retries=3, base_delay=2.0):
-        last_err = None
+    def _retry_request(self, fn: Callable[[], T], max_retries: int = 3, base_delay: float = 2.0) -> T:
+        last_err: Exception | None = None
         for attempt in range(max_retries + 1):
             try:
                 result = fn()
@@ -51,7 +52,7 @@ class BaseScraper(ABC):
                     time.sleep(delay)
                 else:
                     self._log(f"  All {max_retries + 1} attempts failed. Last error: {e}")
-        raise last_err
+        raise last_err  # type: ignore[misc]
 
     @staticmethod
     def _validate_product(product: dict) -> bool:
@@ -69,6 +70,34 @@ class BaseScraper(ABC):
         if currency and currency != 'EUR':
             return False
         return True
+
+    @staticmethod
+    def _validate_monster_product(product_name: str) -> bool:
+        """Strict validation that a product is actually a Monster Energy drink.
+
+        Prevents false positives from products that merely contain 'monster'
+        in their description (e.g., 'Monster Mash Board Game', 'Monster Truck').
+        """
+        lowered = product_name.lower()
+
+        if 'monster' not in lowered:
+            return False
+
+        known_monster_patterns = [
+            'ultra white', 'ultra rosa', 'ultra paradise', 'ultra gold',
+            'ultra violet', 'ultra peachy', 'zero sugar', 'white zero',
+            'lando norris', 'viking berry', 'mango loco', 'pipeline punch',
+            'assault', 'khaotic', 'hydro', 'rehab', 'juice monster',
+            'monster energy', 'monster papillon', 'monster java',
+        ]
+
+        if any(pattern in lowered for pattern in known_monster_patterns):
+            return True
+
+        if 'monster' in lowered and ('energy' in lowered or 'drink' in lowered or 'can' in lowered or 'ml' in lowered):
+            return True
+
+        return False
 
     @staticmethod
     def _detect_pack_size(product_name: str) -> str:

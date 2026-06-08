@@ -27,9 +27,6 @@ export interface GeolocationResult {
 }
 
 const STORAGE_KEY = 'monster-cork-location'
-// 20 minutes — maximum age before cached location is considered stale
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const LOCATION_MAX_AGE_MS = 20 * 60 * 1000
 
 function isClient(): boolean {
   return typeof window !== 'undefined'

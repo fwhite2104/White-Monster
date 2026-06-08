@@ -4,11 +4,15 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Clock, Share2, User, Bot, MoreHorizontal, CirclePlus } from 'lucide-react'
+import { MapPin, Clock, Share2, User, Bot, MoreHorizontal, CirclePlus, Bell, Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { getDistance } from 'geolib'
 import { CORK_CENTER, getRetailerColor } from '@/lib/constants'
 import { getTimeAgo } from '@/lib/geo'
+import { PriceAlertDialog } from '@/components/dashboard/PriceAlertDialog'
+import { FavoriteButton } from '@/components/dashboard/FavoriteButton'
+import { DrsBreakdown } from '@/components/dashboard/DrsBreakdown'
+import { ClubcardBadge } from '@/components/dashboard/ClubcardBadge'
 import type { Price } from '@/lib/types'
 
 interface PriceCardProps {
@@ -38,6 +42,7 @@ function formatPerCanPrice(price: Price): string | null {
 export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onReportPrice }: PriceCardProps) {
   const shouldReduceMotion = useReducedMotion()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [alertOpen, setAlertOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const lat = Number.isFinite(userLat) ? (userLat as number) : CORK_CENTER.lat
@@ -45,7 +50,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
   const store = price.stores ?? { name: 'Unknown', retailer: 'other', lat: 0, lng: 0, suburb: '', address: '' }
   const product = price.products ?? { name: 'Unknown Product', variant: 'unknown', pack_size: 'single' }
   const retailerColor = getRetailerColor(store.retailer)
-  const isUserReported = price.source === 'user_upload'
+  const isUserReported = price.source === 'user_upload' || price.source === 'user_reported'
 
   const distance = getDistance(
     { latitude: lat, longitude: lng },
@@ -127,6 +132,23 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
                     (€{perCanDisplay}/can)
                   </span>
                 )}
+                {price.drs_deposit !== undefined && price.drs_deposit > 0 && (
+                  <DrsBreakdown totalPrice={Number(price.price)} packSize={product.pack_size} />
+                )}
+                {price.has_clubcard_pricing && price.clubcard_price != null && (
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <ClubcardBadge />
+                    <span className="text-sm font-semibold text-blue-400 tabular-nums">
+                      €{Number(price.clubcard_price).toFixed(2)}
+                    </span>
+                    <span className="text-xs text-muted-foreground line-through">
+                      €{Number(price.price).toFixed(2)}
+                    </span>
+                    <span className="text-[10px] text-blue-400">
+                      Save €{(Number(price.price) - Number(price.clubcard_price)).toFixed(2)}
+                    </span>
+                  </div>
+                )}
                 {isCheapest && (
                   <motion.div
                     initial={shouldReduceMotion ? false : { scale: 0.95, opacity: 0 }}
@@ -154,6 +176,12 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
               </div>
 
               <div className="flex items-center gap-2 mt-2 flex-wrap">
+                {'store_type' in store && (store.store_type === 'convenience' || store.store_type === 'petrol_station') && (
+                  <Badge variant="info" className="text-[10px] h-5 gap-1 bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/20">
+                    <Store className="h-2.5 w-2.5" />
+                    {store.store_type === 'petrol_station' ? 'Petrol Station' : 'Convenience Store'}
+                  </Badge>
+                )}
                 {variantLabel && (
                   <Badge variant="outline" className="border-foreground/15 text-[11px] h-5">
                     {variantLabel}
@@ -224,6 +252,14 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
                         <CirclePlus className="h-4 w-4 shrink-0" />
                         Report better price
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => { setAlertOpen(true); setMenuOpen(false) }}
+                        className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted text-left cursor-pointer"
+                      >
+                        <Bell className="h-4 w-4 shrink-0" />
+                        Set price alert
+                      </button>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -239,9 +275,17 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
                 <Share2 className="h-4 w-4" />
               </Button>
             )}
+            <FavoriteButton productId={price.product_id} storeId={price.store_id} />
           </div>
         </CardContent>
       </Card>
+
+      <PriceAlertDialog
+        open={alertOpen}
+        onClose={() => setAlertOpen(false)}
+        onCreated={() => setAlertOpen(false)}
+        variant={product.variant}
+      />
     </motion.div>
   )
 }

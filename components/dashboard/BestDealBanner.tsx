@@ -51,7 +51,7 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, savings:
             </div>
           </div>
 
-          {bestPrice.source === 'user_upload' ? (
+          {bestPrice.source === 'user_upload' || bestPrice.source === 'user_reported' ? (
             <Badge variant="outline" className="border-primary/20 text-primary/80 gap-1 text-[10px]">
               <Users className="h-3 w-3" />
               Community

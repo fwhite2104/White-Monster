@@ -15,10 +15,23 @@ export const RETAILERS = [
 ]
 
 export const MONSTER_VARIANTS = [
-  { value: 'zero_sugar', label: 'White Monster Zero Sugar', size: 250 },
-  { value: 'ultra_white', label: 'Monster Ultra White', size: 250 },
-  { value: 'ultra_rosa', label: 'Monster Ultra Rosa', size: 250 },
-  { value: 'ultra_paradise', label: 'Monster Ultra Paradise', size: 250 },
+  { value: 'zero_sugar', label: 'White Monster Zero Sugar', size: 250, category: 'zero_sugar' },
+  { value: 'ultra_white', label: 'Monster Ultra White', size: 250, category: 'zero_sugar' },
+  { value: 'ultra_rosa', label: 'Monster Ultra Rosa', size: 250, category: 'zero_sugar' },
+  { value: 'ultra_paradise', label: 'Monster Ultra Paradise', size: 250, category: 'zero_sugar' },
+  { value: 'ultra_gold', label: 'Monster Ultra Gold', size: 250, category: 'zero_sugar' },
+  { value: 'ultra_violet', label: 'Monster Ultra Violet', size: 250, category: 'zero_sugar' },
+  { value: 'ultra_peachy_keen', label: 'Monster Ultra Peachy Keen', size: 250, category: 'zero_sugar' },
+  { value: 'lando_norris', label: 'Monster Lando Norris Zero Sugar', size: 250, category: 'zero_sugar' },
+  { value: 'mango_loco', label: 'Monster Mango Loco', size: 500, category: 'full_sugar' },
+  { value: 'pipeline_punch', label: 'Monster Pipeline Punch', size: 500, category: 'full_sugar' },
+  { value: 'assault', label: 'Monster Assault', size: 500, category: 'full_sugar' },
+  { value: 'khaotic', label: 'Monster Khaotic', size: 500, category: 'full_sugar' },
+  { value: 'viking_berry', label: 'Monster Viking Berry', size: 250, category: 'full_sugar' },
+  { value: 'juice_monster_apple', label: 'Monster Juice Monster Apple', size: 500, category: 'full_sugar' },
+  { value: 'hydro_watermelon', label: 'Monster Hydro Watermelon', size: 550, category: 'hydro_rehab' },
+  { value: 'rehab_lemon_tea', label: 'Monster Rehab Lemon Tea', size: 500, category: 'hydro_rehab' },
+  { value: 'rehab_green_tea', label: 'Monster Rehab Green Tea', size: 500, category: 'hydro_rehab' },
 ]
 
 export const DEFAULT_RADIUS_KM = 10

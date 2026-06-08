@@ -12,6 +12,7 @@ Cloudflare. Search for "monster" (not "monster white").
 from curl_cffi import requests as curl_requests
 import re
 import json
+import time
 from typing import List, Dict
 from base import BaseScraper
 
@@ -46,7 +47,9 @@ class DunnesIEScraper(BaseScraper):
         url = self.SEARCH_URL.format(query=query)
 
         try:
-            response = self.session.get(url, timeout=self.timeout)
+            response = self._retry_request(
+                lambda: self.session.get(url, timeout=self.timeout)
+            )
 
             if not response.ok:
                 self._log(f"Non-200 status: {response.status_code}")
@@ -62,7 +65,7 @@ class DunnesIEScraper(BaseScraper):
             return filtered
 
         except Exception as e:
-            self._log(f"Error: {e}")
+            self._log(f"Error after retries: {e}")
             return []
 
     def _extract_products(self, html: str) -> List[Dict]:
@@ -131,7 +134,7 @@ class DunnesIEScraper(BaseScraper):
 
         name = product.get("name", "")
         brand = product.get("brand", "")
-        if "monster" not in name.lower() and "monster" not in brand.lower():
+        if not self._validate_monster_product(name):
             return None
 
         price_data = product.get("price", {})
@@ -146,6 +149,9 @@ class DunnesIEScraper(BaseScraper):
         try:
             price = float(price_match.group(1))
         except ValueError:
+            return None
+
+        if price <= 0 or price > 100:
             return None
 
         return {

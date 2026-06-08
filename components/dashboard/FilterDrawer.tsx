@@ -24,6 +24,7 @@ import {
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { MONSTER_VARIANTS, MIN_RADIUS_KM, MAX_RADIUS_KM } from '@/lib/constants'
+import { ClubcardToggle } from '@/components/dashboard/ClubcardToggle'
 
 interface FilterDrawerProps {
   sort: string
@@ -249,6 +250,11 @@ export function FilterDrawer({
                   <span>{MIN_RADIUS_KM} km</span>
                   <span>{MAX_RADIUS_KM} km</span>
                 </div>
+              </div>
+
+              <div className="pt-2 border-t border-foreground/10">
+                <Label className="mb-2 block">Preferences</Label>
+                <ClubcardToggle />
               </div>
             </div>
 

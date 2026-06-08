@@ -122,6 +122,39 @@ pip install -r requirements.txt
 SUPABASE_URL=<url> SUPABASE_SERVICE_KEY=<key> python run_scrapers.py
 ```
 
+## SHARED MEMORY LAYER
+
+This project uses an Obsidian vault as a shared memory layer at `/home/feilim/Feilims Vault/`.
+
+### Session Start (MANDATORY)
+Before starting work, read these files:
+1. `Context/you.md` — User preferences and style
+2. `Context/active-tasks.md` — What we're working on
+3. `Context/recent-decisions.md` — Past decisions to avoid re-litigating
+
+### During Work
+- Query `wiki/` for existing knowledge before implementing
+- Note decisions in `Context/recent-decisions.md`
+- Capture patterns in `Patterns/` (bug fixes, design decisions, workflows)
+
+### Session End (MANDATORY)
+Update these files before finishing:
+1. `Context/active-tasks.md` — Mark completed tasks, add new ones
+2. `Context/recent-decisions.md` — Log decisions made (keep last 10)
+3. `Patterns/` — Capture any patterns found
+4. `AI Log/` — Log session learnings if significant
+
+### Vault Structure
+```
+/home/feilim/Feilims Vault/
+├── Context/          # Quick-load session context
+├── Patterns/         # Behaviors to reproduce
+├── Projects/         # Project tracking
+├── AI Log/           # Session transcripts
+├── wiki/             # Processed knowledge
+└── CLAUDE.md         # Full vault schema
+```
+
 ## NOTES
 - Supabase free tier pauses after 7 days of inactivity; Vercel cron prevents this by pinging `/api/health` every 3 days
 - Scrapers run via GitHub Actions (`scrape-daily.yml`) at 06:00 UTC daily

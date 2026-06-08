@@ -42,26 +42,67 @@ def _extract_variant(product_name: str) -> str:
         product_name: The scraped product name (e.g., 'Monster Ultra White')
 
     Returns:
-        One of: 'zero_sugar', 'ultra_white', 'ultra_rosa', 'ultra_paradise'
+        One of the 17 supported variant slugs.
         Falls back to 'zero_sugar' (most common variant).
     """
     lowered = product_name.lower()
 
-    # "zero sugar" or "white zero" -> zero_sugar
-    if "zero sugar" in lowered or "white zero" in lowered:
-        return "zero_sugar"
+    # Lando Norris (check before ultra/zero to avoid misclassification)
+    if "lando norris" in lowered:
+        return "lando_norris"
 
-    # "ultra white" -> ultra_white (but NOT if "ultra rosa" or "ultra paradise" present)
-    if "ultra white" in lowered and "ultra rosa" not in lowered and "ultra paradise" not in lowered:
-        return "ultra_white"
+    # Viking Berry (check before other fruit variants)
+    if "viking berry" in lowered:
+        return "viking_berry"
 
-    # "ultra rosa" or just "rosa" -> ultra_rosa
-    if "ultra rosa" in lowered or "rosa" in lowered:
-        return "ultra_rosa"
+    # Mango Loco
+    if "mango loco" in lowered:
+        return "mango_loco"
 
-    # "ultra paradise" or just "paradise" -> ultra_paradise
+    # Pipeline Punch
+    if "pipeline punch" in lowered:
+        return "pipeline_punch"
+
+    # Hydro Watermelon
+    if "hydro" in lowered and "watermelon" in lowered:
+        return "hydro_watermelon"
+
+    # Assault
+    if "assault" in lowered:
+        return "assault"
+
+    # Khaotic
+    if "khaotic" in lowered:
+        return "khaotic"
+
+    # Juice Monster Apple
+    if "juice" in lowered and "apple" in lowered:
+        return "juice_monster_apple"
+
+    # Rehab variants
+    if "rehab" in lowered:
+        if "lemon" in lowered:
+            return "rehab_lemon_tea"
+        if "green" in lowered:
+            return "rehab_green_tea"
+
+    # Ultra variants
+    if "ultra gold" in lowered or ("ultra" in lowered and "gold" in lowered):
+        return "ultra_gold"
+    if "ultra violet" in lowered or ("ultra" in lowered and "violet" in lowered):
+        return "ultra_violet"
+    if "ultra peachy" in lowered or "peachy keen" in lowered:
+        return "ultra_peachy_keen"
     if "ultra paradise" in lowered or "paradise" in lowered:
         return "ultra_paradise"
+    if "ultra rosa" in lowered or "rosa" in lowered:
+        return "ultra_rosa"
+    if "ultra white" in lowered:
+        return "ultra_white"
+
+    # Zero Sugar
+    if "zero sugar" in lowered or "white zero" in lowered:
+        return "zero_sugar"
 
     # Fallback: most common variant
     return "zero_sugar"

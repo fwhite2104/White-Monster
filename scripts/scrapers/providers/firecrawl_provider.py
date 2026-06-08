@@ -10,7 +10,7 @@ stack) without changing any consumer code.
 Usage:
     from providers.firecrawl_provider import FirecrawlProvider
 
-    provider = FirecrawlProvider(api_key="fc-...")
+    # provider = FirecrawlProvider(api_key="fc-your-key")  # Uncomment and set your key
     doc = provider.scrape(ScrapeConfig(url="https://example.com"))
     result = provider.crawl(CrawlConfig(url="https://example.com", max_pages=50))
 
