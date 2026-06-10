@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useAnimatedNumber } from '@/hooks/use-animated-number'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -77,28 +78,26 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
   const hasClubcard = price.has_clubcard_pricing && price.clubcard_price != null
   const isConvenienceStore = 'store_type' in store && (store.store_type === 'convenience' || store.store_type === 'petrol_station')
 
+  const animatedPrice = useAnimatedNumber(Number(price.price))
+
   return (
     <motion.div
       initial={shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       whileTap={shouldReduceMotion ? {} : { scale: 0.97 }}
-      transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+      whileHover={shouldReduceMotion ? {} : { y: -1, boxShadow: 'var(--shadow-md)' }}
+      transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
       onMouseEnter={onHover}
       className="relative"
     >
       <Card
         className={
           isCheapest
-            ? 'relative bg-card ring-2 ring-primary/30 overflow-hidden'
-            : 'relative bg-card ring-1 ring-foreground/8 hover:ring-foreground/15 overflow-hidden transition-[ring-color] duration-200'
+            ? 'relative bg-card ring-2 ring-primary/30 overflow-hidden border-l-[3px]'
+            : 'relative bg-card ring-1 ring-foreground/8 hover:ring-foreground/15 overflow-hidden transition-[ring-color] duration-200 border-l-[3px]'
         }
+        style={{ borderLeftColor: `${retailerColor}99` }}
       >
-        {/* Retailer color left border strip */}
-        <div
-          className="absolute inset-y-0 left-0 w-1.5 rounded-l-[var(--radius)]"
-          style={{ backgroundColor: retailerColor }}
-          aria-hidden="true"
-        />
 
         <CardContent className="ps-5 pe-4 py-4">
           {/* Row 1: Price + Actions */}
@@ -106,10 +105,10 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2 flex-wrap">
                 <span
-                  className="text-[1.75rem] font-bold tracking-tight leading-none tabular-nums"
+                  className="text-xl font-bold tracking-tight leading-none tabular-nums [font-family:var(--font-display)] [font-variant-numeric:slashed-zero]"
                   style={{ color: isCheapest ? 'oklch(0.72 0.22 145)' : undefined }}
                 >
-                  €{Number(price.price).toFixed(2)}
+                  €{animatedPrice}
                 </span>
                 {perCanDisplay && (
                   <span className="text-xs text-muted-foreground tabular-nums">
@@ -122,7 +121,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
                   >
-                    <Badge variant="success" className="text-[11px] px-1.5 py-0 font-semibold tracking-wide uppercase">
+                    <Badge variant="success" className="text-xs px-1.5 py-0 font-semibold tracking-wide uppercase">
                       Best Price
                     </Badge>
                   </motion.div>
@@ -189,7 +188,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
                 · {store.suburb}
               </span>
             )}
-            <span className="text-xs text-muted-foreground ml-auto shrink-0 flex items-center gap-1 tabular-nums">
+            <span className="ml-auto shrink-0 inline-flex items-center gap-1 text-xs tabular-nums px-2 py-0.5 rounded-full bg-muted/60 text-muted-foreground">
               <MapPin className="h-3 w-3" />
               {(distance / 1000).toFixed(1)} km
             </span>
@@ -214,19 +213,19 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
           {/* Row 4: Metadata badges + timestamp */}
           <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
             {isConvenienceStore && (
-              <Badge variant="info" className="text-[11px] h-5 gap-1 bg-amber-500/12 text-amber-400 ring-1 ring-amber-500/15">
+              <Badge variant="info" className="text-xs h-5 gap-1 bg-amber-500/12 text-amber-400 ring-1 ring-amber-500/15">
                 <Store className="h-2.5 w-2.5" />
                 {store.store_type === 'petrol_station' ? 'Petrol Station' : 'Convenience'}
               </Badge>
             )}
             {variantLabel && (
-              <Badge variant="outline" className="border-foreground/10 text-[11px] h-5 font-normal">
+              <Badge variant="outline" className="border-foreground/10 text-xs h-5 font-normal">
                 {variantLabel}
               </Badge>
             )}
             <Badge
               variant={isUserReported ? 'info' : 'outline'}
-              className="text-[11px] h-5 gap-1 font-normal"
+              className="text-xs h-5 gap-1 font-normal"
             >
               {isUserReported ? (
                 <User className="h-2.5 w-2.5" />
@@ -235,7 +234,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
               )}
               {isUserReported ? 'User' : 'Auto'}
             </Badge>
-            <span className="flex items-center gap-1 text-[11px] text-muted-foreground ml-auto tabular-nums">
+            <span className="flex items-center gap-1 text-xs text-muted-foreground ml-auto tabular-nums">
               <Clock className="h-3 w-3" />
               {getTimeAgo(price.scraped_at)}
             </span>

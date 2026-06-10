@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimitDB, getClientIp } from '@/lib/rate-limit'
 import { calculateDistance } from '@/lib/geo'
@@ -13,10 +13,10 @@ import type { Store } from '@/lib/types'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient()
   const searchParams = request.nextUrl.searchParams
 
   try {
+    const supabase = await createServerClient()
     const clientIp = getClientIp(request)
     const rateLimit = await checkRateLimitDB(`stores-fetch:${clientIp}`, 60, 60 * 1000)
     if (!rateLimit.allowed) {
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Invalid input'
-    return NextResponse.json({ error: message }, { status: 400 })
+    const message = err instanceof Error ? err.message : 'Internal server error'
+    return NextResponse.json({ error: message, code: 'INTERNAL_ERROR' }, { status: 500 })
   }
 }

@@ -95,7 +95,7 @@ export function BottomTabNav({
                 className={cn(
                   'relative flex flex-col items-center justify-center gap-0.5',
                   'flex-1 min-h-[56px] px-1 py-1.5',
-                  'rounded-xl text-xs font-medium tracking-wide',
+                  'rounded-xl text-xs tracking-wide font-normal',
                   'transition-colors duration-200',
                   isActive
                     ? 'text-primary'
@@ -123,13 +123,13 @@ export function BottomTabNav({
                   {key === 'list' && activeFilterCount > 0 && (
                     <Badge
                       variant="default"
-                      className="absolute -top-1.5 -right-2 size-3.5 min-w-3.5 px-0 text-[8px] leading-none rounded-full flex items-center justify-center"
+                      className="absolute -top-1.5 -right-2 size-3.5 min-w-3.5 px-0 text-xs leading-none rounded-full flex items-center justify-center"
                     >
                       {activeFilterCount}
                     </Badge>
                   )}
                 </div>
-                <span className="relative z-10 truncate max-w-[56px]">{label}</span>
+                <span className={`relative z-10 truncate max-w-[56px] ${isActive ? 'font-medium' : 'font-normal'}`}>{label}</span>
               </button>
             )
           })}

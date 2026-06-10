@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { SlidersHorizontal, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -45,7 +45,7 @@ interface QuickFilter {
   apply: () => void
 }
 
-const DEFAULTS = { sort: 'price', variant: 'zero_sugar', packSize: 'all', radius: 10 }
+const DEFAULTS = { sort: 'price', variant: 'zero_sugar', packSize: '4_pack', radius: 10 }
 
 export function FilterDrawer({
   sort,
@@ -144,13 +144,25 @@ export function FilterDrawer({
               onClick={filter.apply}
               aria-pressed={active}
               className={cn(
-                'inline-flex items-center h-11 px-3.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 shrink-0',
+                'relative inline-flex items-center h-11 px-3.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 shrink-0',
                 active
                   ? 'bg-primary text-primary-foreground shadow-[0_2px_12px_oklch(0.72_0.22_145_/_0.25)]'
                   : 'bg-card ring-1 ring-foreground/8 text-foreground hover:ring-primary/30 hover:bg-primary/5'
               )}
             >
               {filter.label}
+              <AnimatePresence>
+                {active && (
+                  <motion.span
+                    initial={shouldReduceMotion ? { opacity: 0 } : { scaleX: 0, opacity: 0 }}
+                    animate={{ scaleX: 1, opacity: 1 }}
+                    exit={shouldReduceMotion ? { opacity: 0 } : { scaleX: 0, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                    className="absolute bottom-1.5 left-1/2 -translate-x-1/2 h-[2px] w-4 rounded-full bg-primary-foreground/60"
+                    aria-hidden="true"
+                  />
+                )}
+              </AnimatePresence>
             </motion.button>
           )
         })}
@@ -170,7 +182,7 @@ export function FilterDrawer({
             {activeFilterCount > 0 && (
               <Badge
                 variant="default"
-                className="ml-1.5 h-4 min-w-4 px-1 text-[9px]"
+                className="ml-1.5 h-4 min-w-4 px-1 text-xs"
               >
                 {activeFilterCount}
               </Badge>

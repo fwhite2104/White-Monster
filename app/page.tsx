@@ -102,7 +102,7 @@ export default function Home() {
   const handleResetFilters = useCallback(() => {
     setSort('price')
     setVariant('zero_sugar')
-    setPackSize('all')
+    setPackSize('4_pack')
     setRadius(DEFAULT_RADIUS_KM)
   }, [setSort, setVariant, setPackSize, setRadius])
 
@@ -283,6 +283,7 @@ export default function Home() {
                   highlightedStoreId={highlightedStoreId}
                   onStoreHover={setHighlightedStoreId}
                   onReportPrice={() => setShowUploadForm(true)}
+                  onWidenRadius={handleExpandRadius}
                   reportPromptShown={reportPromptShown}
                   onReportPromptSeen={() => setReportPromptShown(true)}
                 />

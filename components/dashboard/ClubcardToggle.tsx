@@ -22,7 +22,7 @@ export function ClubcardToggle() {
       <CreditCard className="h-3 w-3" />
       Clubcard
       {isClubcardHolder && (
-        <Badge variant="info" className="text-[9px] px-1 py-0 ml-0.5">
+        <Badge variant="info" className="text-xs px-1 py-0 ml-0.5">
           ON
         </Badge>
       )}

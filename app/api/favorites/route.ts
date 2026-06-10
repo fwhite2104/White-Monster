@@ -1,10 +1,10 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
   const sessionId = request.nextUrl.searchParams.get('session_id')
 
   if (!sessionId) {
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
   const body = await request.json()
 
   const { session_id, product_id, store_id, notes } = body
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
   const id = request.nextUrl.searchParams.get('id')
   const sessionId = request.nextUrl.searchParams.get('session_id')
   const productId = request.nextUrl.searchParams.get('product_id')

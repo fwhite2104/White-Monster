@@ -85,3 +85,23 @@ export function getTimeAgo(dateStr: string): string {
   if (hours < 24) return `${hours}h ago`
   return `${Math.floor(hours / 24)}d ago`
 }
+
+export type FreshnessStatus = 'fresh' | 'yesterday' | 'stale'
+
+/**
+ * Returns a freshness label + status based on how old a price's scraped_at timestamp is.
+ *  < 24h  → "Updated today"     (fresh)
+ * 24–48h  → "Updated yesterday" (yesterday)
+ *  > 48h  → "Data may be stale" (stale)
+ */
+export function getFreshnessLabel(scrapedAt: string | null | undefined): {
+  label: string
+  status: FreshnessStatus
+} {
+  if (!scrapedAt) return { label: 'Last updated unknown', status: 'stale' }
+  const diff = Date.now() - new Date(scrapedAt).getTime()
+  const hours = diff / (1000 * 60 * 60)
+  if (hours < 24) return { label: 'Updated today', status: 'fresh' }
+  if (hours < 48) return { label: 'Updated yesterday', status: 'yesterday' }
+  return { label: 'Data may be stale', status: 'stale' }
+}

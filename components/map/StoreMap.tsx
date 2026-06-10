@@ -154,12 +154,15 @@ export default function StoreMap({ stores, userLocation, highlightedStoreId, che
         zoom={13}
         scrollWheelZoom={true}
         className="h-[400px] w-full rounded-lg z-0"
+        aria-label="Map showing Monster Energy drink prices near you"
       >
         <MapCenter center={center} />
         <FitBounds stores={stores} />
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          subdomains="abcd"
+          maxZoom={19}
         />
 
         {userLocation && isValidCoordinate(userLocation.lat, userLocation.lng) && (
@@ -191,18 +194,30 @@ export default function StoreMap({ stores, userLocation, highlightedStoreId, che
               }
             >
               <Popup>
-                <div className="text-sm">
-                  <p className="font-semibold">{store.name}</p>
-                  <p
-                    className="text-xs"
-                    style={{ color: getRetailerColor(store.retailer) }}
-                  >
-                    {store.retailer}
-                  </p>
-                  {store.address && <p className="text-muted-foreground text-xs">{store.address}</p>}
-                  {store.distance != null && (
-                    <p className="text-xs mt-1">{(store.distance / 1000).toFixed(1)} km away</p>
-                  )}
+                <div className="flex overflow-hidden rounded-[var(--radius)]" style={{ minWidth: '160px' }}>
+                  <div
+                    className="w-1 shrink-0"
+                    style={{ backgroundColor: `${getRetailerColor(store.retailer)}99` }}
+                  />
+                  <div className="flex-1 px-3 py-2 text-sm">
+                    <p className="font-semibold text-foreground">{store.name}</p>
+                    <p
+                      className="text-xs font-medium capitalize mt-0.5"
+                      style={{ color: getRetailerColor(store.retailer) }}
+                    >
+                      {store.retailer}
+                    </p>
+                    {store.address && (
+                      <p className="text-muted-foreground text-xs mt-0.5 truncate max-w-[180px]">
+                        {store.address}
+                      </p>
+                    )}
+                    {store.distance != null && (
+                      <p className="text-xs text-primary font-medium mt-1 tabular-nums">
+                        {(store.distance / 1000).toFixed(1)} km away
+                      </p>
+                    )}
+                  </div>
                 </div>
               </Popup>
             </Marker>

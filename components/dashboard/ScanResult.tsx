@@ -1,5 +1,6 @@
 'use client'
 
+import { motion } from 'framer-motion'
 import { X, MapPin, Package } from 'lucide-react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
@@ -18,7 +19,12 @@ export function ScanResult({ product, prices, onClose }: ScanResultProps) {
   const best = sorted[0] ?? null
 
   return (
-    <div className="fixed inset-0 z-[var(--z-overlay)] bg-background overflow-y-auto">
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+      className="fixed inset-0 z-[var(--z-overlay)] bg-background overflow-y-auto"
+    >
       {/* Header */}
       <div className="sticky top-0 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
         <Button variant="ghost" size="icon-lg" onClick={onClose} aria-label="Close scan results">
@@ -127,6 +133,6 @@ export function ScanResult({ product, prices, onClose }: ScanResultProps) {
           Scan Another
         </Button>
       </div>
-    </div>
+    </motion.div>
   )
 }

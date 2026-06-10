@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase/server'
 
 interface RateLimitEntry {
   count: number
@@ -72,7 +72,7 @@ export async function checkRateLimitDB(
   windowMs: number = 60 * 1000
 ): Promise<RateLimitResult> {
   try {
-    const supabase = await createClient()
+    const supabase = await createServerClient()
     const { ip, endpoint } = parseRateLimitKey(key)
     const now = new Date()
     const windowStart = new Date(now.getTime() - windowMs)

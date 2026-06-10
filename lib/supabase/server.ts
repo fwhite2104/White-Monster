@@ -1,7 +1,13 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient as _createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-export async function createClient() {
+/**
+ * Server-only Supabase client (uses Next.js cookies, respects RLS via session).
+ * Never import this in a Client Component — use `createBrowserClient` from
+ * `@/lib/supabase/client` instead. Importing the wrong client leaks server
+ * cookies into the browser bundle.
+ */
+export async function createServerClient() {
   const cookieStore = await cookies()
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -12,7 +18,7 @@ export async function createClient() {
     )
   }
 
-  return createServerClient(
+  return _createServerClient(
     url,
     key,
     {

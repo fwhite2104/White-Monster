@@ -6,7 +6,7 @@ import type { Store } from '@/lib/types'
 const StoreMap = dynamic(() => import('./StoreMap'), {
   ssr: false,
   loading: () => (
-    <div className="h-[400px] w-full rounded-lg bg-muted animate-pulse" />
+    <div className="h-[400px] w-full rounded-lg bg-muted shimmer-bar" />
   ),
 })
 

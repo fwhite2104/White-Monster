@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { motion, useReducedMotion, useInView, AnimatePresence } from 'framer-motion'
-import { SearchX, ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { PriceCard } from './PriceCard'
 import { ReportPriceCard } from '@/components/dashboard/ReportPriceCard'
 import type { Price } from '@/lib/types'
@@ -17,6 +18,7 @@ interface PriceListProps {
   highlightedStoreId?: string | null
   onStoreHover?: (storeId: string | null) => void
   onReportPrice?: () => void
+  onWidenRadius?: () => void
   reportPromptShown?: boolean
   onReportPromptSeen?: () => void
 }
@@ -27,6 +29,7 @@ export function PriceList({
   userLng,
   onStoreHover,
   onReportPrice,
+  onWidenRadius,
   reportPromptShown,
   onReportPromptSeen,
 }: PriceListProps) {
@@ -59,19 +62,57 @@ export function PriceList({
   if (prices.length === 0) {
     return (
       <motion.div
-        initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="text-center py-16 space-y-4"
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 16, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+        className="flex flex-col items-center justify-center text-center py-16 px-6 space-y-5"
       >
-        <div className="mx-auto w-14 h-14 rounded-2xl bg-muted/40 flex items-center justify-center">
-          <SearchX className="h-7 w-7 text-muted-foreground" />
-        </div>
-        <div>
-          <p className="text-base font-semibold text-foreground">No prices found</p>
-          <p className="text-sm text-muted-foreground mt-1.5 max-w-xs mx-auto">
-            Try increasing the radius or reporting a price.
+        {/* Monster can SVG */}
+        <motion.div
+          initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1], delay: 0.1 }}
+          aria-hidden="true"
+        >
+          <svg
+            width="56"
+            height="80"
+            viewBox="0 0 56 80"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="opacity-30"
+          >
+            {/* Can body */}
+            <rect x="6" y="12" width="44" height="56" rx="4" fill="currentColor" className="text-primary" />
+            {/* Can top ellipse */}
+            <ellipse cx="28" cy="12" rx="22" ry="6" fill="currentColor" className="text-primary/60" />
+            {/* Can bottom ellipse */}
+            <ellipse cx="28" cy="68" rx="22" ry="6" fill="currentColor" className="text-primary/40" />
+            {/* Tab */}
+            <ellipse cx="28" cy="10" rx="6" ry="2" fill="currentColor" className="text-foreground/40" />
+            <rect x="26" y="4" width="4" height="8" rx="2" fill="currentColor" className="text-foreground/40" />
+            {/* Monster M slash marks */}
+            <path d="M18 32 L22 48 L28 36 L34 48 L38 32" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-background" fill="none" />
+          </svg>
+        </motion.div>
+
+        <div className="space-y-1.5">
+          <p className="text-base font-semibold text-foreground">No prices found in this area</p>
+          <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+            No Monster deals spotted nearby. Try widening your search.
           </p>
         </div>
+
+        {onWidenRadius && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onWidenRadius}
+            className="gap-2"
+          >
+            Widen search radius
+          </Button>
+        )}
       </motion.div>
     )
   }

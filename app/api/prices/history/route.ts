@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { validateEnum } from '@/lib/validate'
 import { MONSTER_VARIANTS } from '@/lib/constants'
@@ -6,7 +6,7 @@ import { MONSTER_VARIANTS } from '@/lib/constants'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
   const searchParams = request.nextUrl.searchParams
 
   try {

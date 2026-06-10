@@ -9,6 +9,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   
@@ -126,6 +127,11 @@
   --brand-glow-strong: oklch(0.72 0.22 145 / 0.3);
   --brand-muted: oklch(0.72 0.22 145 / 0.08);
   --brand-surface: oklch(0.72 0.22 145 / 0.06);
+
+  /* Shadow scale */
+  --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.3), 0 1px 2px oklch(0 0 0 / 0.2);
+  --shadow-md: 0 4px 12px oklch(0 0 0 / 0.35), 0 2px 4px oklch(0 0 0 / 0.2);
+  --shadow-lg: 0 10px 24px oklch(0 0 0 / 0.4), 0 4px 8px oklch(0 0 0 / 0.25);
 
   /* Emil Kowalski custom easing curves */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -296,4 +302,31 @@
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
   }
+}
+
+/* Leaflet popup — dark theme overrides */
+.leaflet-popup-content-wrapper {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow-md) !important;
+  border: 1px solid var(--border) !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--card) !important;
+}
+
+.leaflet-popup-close-button {
+  color: var(--muted-foreground) !important;
+}
+
+.leaflet-popup-close-button:hover {
+  color: var(--foreground) !important;
 }

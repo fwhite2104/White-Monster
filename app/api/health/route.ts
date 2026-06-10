@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { checkRateLimitDB, getClientIp } from '@/lib/rate-limit'
 
@@ -15,7 +15,7 @@ export async function GET(request: Request) {
       )
     }
 
-    const supabase = await createClient()
+    const supabase = await createServerClient()
 
     // Check database connectivity
     const { error: dbError } = await supabase

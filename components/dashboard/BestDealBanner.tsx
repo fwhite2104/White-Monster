@@ -1,9 +1,10 @@
 'use client'
 
-import { motion, useReducedMotion } from 'framer-motion'
-import { TrendingDown, MapPin, Store, Database, Users } from 'lucide-react'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { TrendingDown, MapPin, Store, Database, Users, AlertTriangle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { getRetailerColor } from '@/lib/constants'
+import { getFreshnessLabel } from '@/lib/geo'
 import type { Price } from '@/lib/types'
 
 interface BestDealBannerProps {
@@ -26,17 +27,16 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, maxSavin
   const savings = nextBestPrice
     ? Number(nextBestPrice.price) - Number(bestPrice.price)
     : legacySavings ?? null
+  const freshness = getFreshnessLabel(bestPrice.scraped_at)
 
   return (
     <motion.div
       initial={shouldReduceMotion ? false : { opacity: 0, y: -12, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-      className="relative overflow-hidden rounded-xl ring-1 ring-primary/20"
+      className="relative overflow-hidden rounded-xl border border-[oklch(0.72_0.22_145/0.2)] bg-[oklch(0.72_0.22_145/0.04)]"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-primary/4 to-transparent" />
-
-      <div className="relative p-4 sm:p-5 md:p-6 space-y-3">
+      <div className="p-4 sm:p-5 md:p-6 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="flex items-center justify-center size-8 rounded-lg bg-primary/15">
@@ -67,16 +67,16 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, maxSavin
 
         <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4">
           <div className="flex-1 space-y-2 min-w-0">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">
-              <span className="text-primary">
-                {'\u20AC'}{Number(bestPrice.price).toFixed(2)}
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight [font-family:var(--font-display)]">
+              <span className="text-primary tabular-nums [font-variant-numeric:slashed-zero]">
+                {'€'}{Number(bestPrice.price).toFixed(2)}
               </span>
               {perCanPrice && (
-                <span className="text-muted-foreground text-sm sm:text-base md:text-lg font-normal ml-2">
-                  ({'\u20AC'}{perCanPrice}/can)
+                <span className="text-muted-foreground text-sm sm:text-base md:text-lg font-normal ml-2 [font-family:var(--font-sans)] tabular-nums">
+                  ({'€'}{perCanPrice}/can)
                 </span>
               )}
-              <span className="text-muted-foreground text-sm sm:text-base md:text-lg font-normal ml-2">
+              <span className="text-muted-foreground text-sm sm:text-base md:text-lg font-normal ml-2 [font-family:var(--font-sans)]">
                 for {product.name}
               </span>
             </h2>
@@ -104,32 +104,64 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, maxSavin
                 {store.retailer}
               </Badge>
             </div>
+
+            {/* Freshness indicator */}
+            <span
+              className={`inline-flex items-center gap-1 text-xs ${
+                freshness.status === 'stale'
+                  ? 'text-destructive/70'
+                  : freshness.status === 'yesterday'
+                    ? 'text-yellow-400/70'
+                    : 'text-muted-foreground'
+              }`}
+            >
+              {freshness.status === 'stale' && (
+                <AlertTriangle className="h-3 w-3 shrink-0" />
+              )}
+              {freshness.label}
+            </span>
           </div>
 
-          <div className="flex items-center gap-4 md:flex-col md:items-end">
+          {/* Animated savings figure */}
+          <AnimatePresence mode="wait">
             {maxSavings && maxSavings.amount > 0 && (
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">
-                  You could save up to
-                </p>
-                <p className="text-lg sm:text-xl font-bold text-primary">
-                  {'\u20AC'}{maxSavings.amount.toFixed(2)}
-                </p>
-                <p className="text-[11px] text-muted-foreground/70 mt-0.5">
-                  on {maxSavings.packSize === '4_pack' ? 'multipacks' : 'single cans'}
-                </p>
-              </div>
+              <motion.div
+                key={maxSavings.amount.toFixed(2)}
+                initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.85, y: 6 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.9 }}
+                transition={{ type: 'spring', duration: 0.4, bounce: 0.2 }}
+                className="flex items-center gap-4 md:flex-col md:items-end"
+              >
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">You could save up to</p>
+                  <p className="text-lg sm:text-xl font-bold text-primary tabular-nums [font-variant-numeric:slashed-zero]">
+                    {'€'}{maxSavings.amount.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground/70 mt-0.5">
+                    on {maxSavings.packSize === '4_pack' ? 'multipacks' : 'single cans'}
+                  </p>
+                </div>
+              </motion.div>
             )}
-          </div>
+            {savings !== null && savings > 0 && !maxSavings && (
+              <motion.div
+                key={savings.toFixed(2)}
+                initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.85, y: 6 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.9 }}
+                transition={{ type: 'spring', duration: 0.4, bounce: 0.2 }}
+              >
+                <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary rounded-lg px-3 py-2">
+                  <TrendingDown className="h-4 w-4" />
+                  <span className="text-sm font-medium tabular-nums">
+                    Save {'€'}{savings.toFixed(2)} vs next cheapest
+                  </span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-
-        <motion.div
-          className="absolute bottom-0 left-0 right-0 h-0.5"
-          style={{ background: `linear-gradient(90deg, transparent, ${retailerColor}, transparent)` }}
-          initial={shouldReduceMotion ? false : { scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ duration: 1, delay: 0.5, ease: [0.23, 1, 0.32, 1] }}
-        />
       </div>
     </motion.div>
   )

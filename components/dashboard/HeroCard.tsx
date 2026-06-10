@@ -1,12 +1,12 @@
 'use client'
 
-import { motion, useReducedMotion } from 'framer-motion'
-import { MapPin, Clock, TrendingDown, CirclePlus } from 'lucide-react'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { MapPin, TrendingDown, CirclePlus, AlertTriangle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { getRetailerColor } from '@/lib/constants'
-import { formatDistance, getTimeAgo } from '@/lib/geo'
+import { formatDistance, getFreshnessLabel } from '@/lib/geo'
 import type { Price } from '@/lib/types'
 
 interface HeroCardProps {
@@ -72,6 +72,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
     : null
   const savings = nextBestPrice ? Number(nextBestPrice.price) - Number(bestPrice.price) : null
   const variantLabel = getVariantLabel(product)
+  const freshness = getFreshnessLabel(bestPrice.scraped_at)
 
   return (
     <motion.div
@@ -79,21 +80,18 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
     >
-      <Card className="relative overflow-hidden bg-card ring-1 ring-primary/30">
+      <Card className="relative overflow-hidden bg-[oklch(0.72_0.22_145/0.04)] border border-[oklch(0.72_0.22_145/0.2)]">
         <div
-          className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl"
-          style={{ backgroundColor: retailerColor }}
-        />
-        <div
-          className="absolute inset-0 opacity-10 pointer-events-none"
-          style={{ background: `linear-gradient(135deg, ${retailerColor}40, transparent 60%)` }}
+          className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl"
+          style={{ backgroundColor: `${retailerColor}99` }}
+          aria-hidden="true"
         />
 
         <CardContent className="relative p-3 sm:p-5">
           <div className="flex flex-col md:flex-row md:items-center md:gap-6">
             <div className="flex items-baseline gap-2 md:flex-col md:gap-1">
               <motion.p
-                className="text-3xl sm:text-5xl font-bold text-primary tracking-tight"
+                className="text-3xl sm:text-5xl font-bold text-primary tracking-tight tabular-nums [font-variant-numeric:slashed-zero] [font-family:var(--font-display)]"
                 initial={shouldReduceMotion ? false : { scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', duration: 0.5, bounce: 0.2, delay: 0.1 }}
@@ -133,9 +131,19 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
                   <MapPin className="h-3.5 w-3.5 shrink-0" />
                   {formatDistance(distance)}
                 </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5 shrink-0" />
-                  {getTimeAgo(bestPrice.scraped_at)}
+                <span
+                  className={`flex items-center gap-1 text-xs ${
+                    freshness.status === 'stale'
+                      ? 'text-destructive/70'
+                      : freshness.status === 'yesterday'
+                        ? 'text-yellow-400/70'
+                        : 'text-muted-foreground'
+                  }`}
+                >
+                  {freshness.status === 'stale' && (
+                    <AlertTriangle className="h-3 w-3 shrink-0" />
+                  )}
+                  {freshness.label}
                 </span>
               </div>
 
@@ -146,21 +154,25 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
               )}
             </div>
 
-            {savings !== null && savings > 0 && (
-              <motion.div
-                initial={shouldReduceMotion ? false : { opacity: 0, x: 12, scale: 0.95 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                transition={{ delay: 0.2, duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                className="mt-3 md:mt-0"
-              >
-                <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary rounded-lg px-3 py-2">
-                  <TrendingDown className="h-4 w-4" />
-                  <span className="text-sm font-medium">
-                    Save €{savings.toFixed(2)} vs next cheapest
-                  </span>
-                </div>
-              </motion.div>
-            )}
+            <AnimatePresence mode="wait">
+              {savings !== null && savings > 0 && (
+                <motion.div
+                  key={savings.toFixed(2)}
+                  initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.9, y: 4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.9 }}
+                  transition={{ type: 'spring', duration: 0.4, bounce: 0.15, delay: 0.2 }}
+                  className="mt-3 md:mt-0"
+                >
+                  <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary rounded-lg px-3 py-2">
+                    <TrendingDown className="h-4 w-4" />
+                    <span className="text-sm font-medium tabular-nums">
+                      Save €{savings.toFixed(2)} vs next cheapest
+                    </span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <div className="mt-2 pt-2 sm:mt-3 sm:pt-3 border-t border-foreground/10 flex items-center justify-between">
