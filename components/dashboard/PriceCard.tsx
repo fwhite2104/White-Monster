@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { getDistance } from 'geolib'
 import { CORK_CENTER, getRetailerColor } from '@/lib/constants'
+import { cn } from '@/lib/utils'
 import { getTimeAgo } from '@/lib/geo'
 import { PriceAlertDialog } from '@/components/dashboard/PriceAlertDialog'
 import { FavoriteButton } from '@/components/dashboard/FavoriteButton'
@@ -84,8 +85,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
     <motion.div
       initial={shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      whileTap={shouldReduceMotion ? {} : { scale: 0.97 }}
-      whileHover={shouldReduceMotion ? {} : { y: -1, boxShadow: 'var(--shadow-md)' }}
+      whileHover={shouldReduceMotion ? {} : { boxShadow: 'var(--shadow-md)' }}
       transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
       onMouseEnter={onHover}
       className="relative"
@@ -105,8 +105,10 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2 flex-wrap">
                 <span
-                  className="text-xl font-bold tracking-tight leading-none tabular-nums [font-family:var(--font-display)] [font-variant-numeric:slashed-zero]"
-                  style={{ color: isCheapest ? 'oklch(0.72 0.22 145)' : undefined }}
+                  className={cn(
+                    'text-xl font-bold tracking-tight leading-none tabular-nums [font-family:var(--font-display)] [font-variant-numeric:slashed-zero]',
+                    isCheapest && 'text-primary',
+                  )}
                 >
                   €{animatedPrice}
                 </span>
@@ -143,7 +145,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                        className="h-11 w-11 text-muted-foreground hover:text-foreground"
                         aria-label="More actions"
                       />
                     }
@@ -169,14 +171,14 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground"
+                  className="h-11 w-11 shrink-0 text-muted-foreground hover:text-foreground"
                   onClick={handleShare}
                   aria-label="Share price"
                 >
                   <Share2 className="h-4 w-4" />
                 </Button>
               )}
-              <FavoriteButton productId={price.product_id} storeId={price.store_id} className="h-9 w-9 mt-0" />
+              <FavoriteButton productId={price.product_id} storeId={price.store_id} className="mt-0" />
             </div>
           </div>
 

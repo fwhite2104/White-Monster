@@ -216,12 +216,12 @@
     transition: transform var(--duration-press) var(--ease-out);
   }
 
-  /* Hover animations only on devices that support hover */
+  /* Hover: opacity shift only — scale transforms cause layout shift on cards with nested buttons */
   @media (hover: hover) and (pointer: fine) {
     button:hover:not(:disabled),
     a:hover:not(:disabled),
     [role="button"]:hover:not(:disabled) {
-      transform: scale(1.02);
+      opacity: 0.88;
     }
   }
 }

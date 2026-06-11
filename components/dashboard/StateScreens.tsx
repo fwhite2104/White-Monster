@@ -260,7 +260,7 @@ export function StaleDataWarning({
           variant="ghost"
           size="sm"
           onClick={onReportPrice}
-          className="h-7 text-xs text-primary gap-1 shrink-0"
+          className="h-11 text-xs text-primary gap-1 shrink-0"
         >
           <Plus className="h-3 w-3" />
           Report a fresh price

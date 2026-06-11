@@ -80,7 +80,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
     >
-      <Card className="relative overflow-hidden bg-[oklch(0.72_0.22_145/0.04)] border border-[oklch(0.72_0.22_145/0.2)]">
+      <Card className="relative overflow-hidden bg-brand-surface border border-primary/20">
         <div
           className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl"
           style={{ backgroundColor: `${retailerColor}99` }}
@@ -180,7 +180,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
               {totalResults} price{totalResults !== 1 ? 's' : ''} found nearby
             </p>
             {onReportPrice && (
-              <Button onClick={onReportPrice} variant="outline" size="sm" className="gap-1.5 text-xs h-10 px-3">
+              <Button onClick={onReportPrice} variant="outline" size="sm" className="gap-1.5 text-xs h-11 px-3">
                 <CirclePlus className="size-3.5" />
                 Report a Price
               </Button>

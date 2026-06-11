@@ -153,13 +153,12 @@ export function FilterDrawer({
           return (
             <motion.button
               key={filter.label}
-              whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
               onClick={filter.apply}
               aria-pressed={active}
               className={cn(
                 'relative inline-flex items-center h-11 px-3.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 shrink-0',
                 active
-                  ? 'bg-primary text-primary-foreground shadow-[0_2px_12px_oklch(0.72_0.22_145_/_0.25)]'
+                  ? 'bg-primary text-primary-foreground shadow-[0_2px_12px_var(--brand-glow-strong)]'
                   : 'bg-card ring-1 ring-foreground/8 text-foreground hover:ring-primary/30 hover:bg-primary/5'
               )}
             >

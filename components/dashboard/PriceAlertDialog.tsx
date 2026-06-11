@@ -101,14 +101,14 @@ export function PriceAlertDialog({ variant, open, onClose, onCreated }: PriceAle
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1.5 text-sm rounded-md border border-input hover:bg-muted"
+              className="px-4 min-h-[44px] text-sm rounded-md border border-input hover:bg-muted"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-3 py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              className="px-4 min-h-[44px] text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
               {loading ? 'Creating...' : 'Create Alert'}
             </button>

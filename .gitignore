@@ -43,3 +43,6 @@ next-env.d.ts
 # Debug screenshots from scrapers
 debug_*.png
 __pycache__/
+
+# UI audit screenshots
+audit-shots/

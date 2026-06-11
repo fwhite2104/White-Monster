@@ -175,13 +175,6 @@ export default function Home() {
 
   return (
     <div className="min-h-full flex flex-col">
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[var(--z-header)] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-      >
-        Skip to content
-      </a>
-
       <Header onReportPrice={() => setShowUploadForm(true)} />
 
       <main id="main-content" className="flex-1 max-w-7xl mx-auto w-full px-4 pt-4 pb-24 md:pb-6 md:pt-6 space-y-4 md:space-y-6">
