@@ -207,7 +207,7 @@ export default function Home() {
           <StaleDataWarning lastUpdated={lastUpdated} onReportPrice={() => setShowUploadForm(true)} />
         )}
 
-        {(activeTab === 'list' || activeTab === 'deals') && (
+        {(activeTab === 'list' || activeTab === 'deals') && prices.length === 0 && (
           <>
             {status === 'denied' && (
               <LocationDeniedState

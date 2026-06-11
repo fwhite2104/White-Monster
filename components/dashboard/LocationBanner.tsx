@@ -154,7 +154,7 @@ export function LocationBanner({
 
         <p
           className={cn(
-            'flex-1 text-sm font-medium truncate',
+            'flex-1 min-w-0 text-sm font-medium',
             isSuccess && 'text-foreground',
             isError && 'text-destructive',
             status === 'idle' && 'text-foreground',

@@ -106,7 +106,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
               <div className="flex items-baseline gap-2 flex-wrap">
                 <span
                   className={cn(
-                    'text-xl font-bold tracking-tight leading-none tabular-nums [font-family:var(--font-display)] [font-variant-numeric:slashed-zero]',
+                    'text-xl font-bold tracking-tight leading-none tabular-nums [font-variant-numeric:slashed-zero]',
                     isCheapest && 'text-primary',
                   )}
                 >

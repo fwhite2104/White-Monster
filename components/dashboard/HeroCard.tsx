@@ -91,7 +91,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
           <div className="flex flex-col md:flex-row md:items-center md:gap-6">
             <div className="flex items-baseline gap-2 md:flex-col md:gap-1">
               <motion.p
-                className="text-3xl sm:text-5xl font-bold text-primary tracking-tight tabular-nums [font-variant-numeric:slashed-zero] [font-family:var(--font-display)]"
+                className="text-3xl sm:text-5xl font-bold text-primary tracking-tight tabular-nums [font-variant-numeric:slashed-zero]"
                 initial={shouldReduceMotion ? false : { scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', duration: 0.5, bounce: 0.2, delay: 0.1 }}

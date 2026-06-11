@@ -67,16 +67,16 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, maxSavin
 
         <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4">
           <div className="flex-1 space-y-2 min-w-0">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight [font-family:var(--font-display)]">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">
               <span className="text-primary tabular-nums [font-variant-numeric:slashed-zero]">
                 {'€'}{Number(bestPrice.price).toFixed(2)}
               </span>
               {perCanPrice && (
-                <span className="text-muted-foreground text-sm sm:text-base md:text-lg font-normal ml-2 [font-family:var(--font-sans)] tabular-nums">
+                <span className="text-muted-foreground text-sm sm:text-base md:text-lg font-normal ml-2 tabular-nums">
                   ({'€'}{perCanPrice}/can)
                 </span>
               )}
-              <span className="text-muted-foreground text-sm sm:text-base md:text-lg font-normal ml-2 [font-family:var(--font-sans)]">
+              <span className="text-muted-foreground text-sm sm:text-base md:text-lg font-normal ml-2">
                 for {product.name}
               </span>
             </h2>

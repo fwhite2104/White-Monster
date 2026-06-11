@@ -24,7 +24,7 @@ export function FirstVisitScreen({
   const shouldReduceMotion = useReducedMotion()
 
   return (
-    <div className="relative min-h-dvh flex items-center justify-center overflow-hidden px-4 py-16">
+    <div className="relative min-h-[calc(100svh-4rem)] flex items-center justify-center overflow-hidden px-4 py-10">
       <div
         className="absolute inset-0 opacity-[0.04]"
         style={{
@@ -43,7 +43,7 @@ export function FirstVisitScreen({
         initial={shouldReduceMotion ? false : { opacity: 0, y: 30, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: DURATION_BASE, ease: EASE_OUT }}
-        className="relative z-10 flex flex-col items-center text-center max-w-lg"
+        className="relative z-10 flex flex-col items-center text-center max-w-lg lg:max-w-xl"
       >
         <motion.div
           initial={shouldReduceMotion ? false : { scaleX: 0, opacity: 0 }}
@@ -65,7 +65,7 @@ export function FirstVisitScreen({
             delay: staggerDelay(1),
             ease: EASE_OUT,
           }}
-          className="text-[2rem] sm:text-4xl md:text-5xl font-bold tracking-[-0.03em] text-foreground leading-[1.08]"
+          className="text-[2rem] sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-[-0.03em] text-foreground leading-[1.08]"
         >
           Find the cheapest{' '}
           <span className="text-primary">Monster</span>
@@ -81,7 +81,7 @@ export function FirstVisitScreen({
             delay: staggerDelay(2),
             ease: EASE_OUT,
           }}
-          className="mt-4 text-sm sm:text-base text-muted-foreground max-w-sm leading-relaxed"
+          className="mt-4 text-sm sm:text-base text-muted-foreground max-w-sm lg:max-w-md leading-relaxed"
         >
           Live prices from every Cork store — Tesco, Dunnes, SuperValu, Lidl, Aldi and more
         </motion.p>
@@ -94,7 +94,7 @@ export function FirstVisitScreen({
             delay: staggerDelay(3),
             ease: EASE_OUT,
           }}
-          className="mt-8 w-full sm:w-auto"
+          className="mt-8 w-full sm:w-auto sm:min-w-[260px]"
         >
           <Button
             size="lg"
@@ -134,7 +134,7 @@ export function FirstVisitScreen({
               delay: staggerDelay(5),
               ease: EASE_OUT,
             }}
-            className="mt-5 w-full sm:w-auto"
+            className="mt-5 w-full sm:w-auto md:hidden"
           >
             <Button
               variant="outline"
