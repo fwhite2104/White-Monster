@@ -47,6 +47,19 @@ interface QuickFilter {
 
 const DEFAULTS = { sort: 'price', variant: 'zero_sugar', packSize: '4_pack', radius: 10 }
 
+// Base UI's Select.Value renders the raw value unless Root gets an items map
+const SORT_ITEMS = {
+  price: 'Price (lowest first)',
+  distance: 'Distance (nearest first)',
+  name: 'Name (A-Z)',
+}
+const PACK_SIZE_ITEMS = {
+  all: 'All sizes',
+  single: 'Single can',
+  '4_pack': '4-Pack',
+}
+const VARIANT_ITEMS = Object.fromEntries(MONSTER_VARIANTS.map((v) => [v.value, v.label]))
+
 export function FilterDrawer({
   sort,
   onSortChange,
@@ -197,7 +210,7 @@ export function FilterDrawer({
             <div className="space-y-5">
               <div className="space-y-2">
                 <Label>Sort by</Label>
-                <Select value={sort} onValueChange={(val) => val && onSortChange(val)}>
+                <Select items={SORT_ITEMS} value={sort} onValueChange={(val) => val && onSortChange(val)}>
                   <SelectTrigger className="w-full h-11">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
@@ -211,7 +224,7 @@ export function FilterDrawer({
 
               <div className="space-y-2">
                 <Label>Variant</Label>
-                <Select value={variant} onValueChange={(val) => val && onVariantChange(val)}>
+                <Select items={VARIANT_ITEMS} value={variant} onValueChange={(val) => val && onVariantChange(val)}>
                   <SelectTrigger className="w-full h-11">
                     <SelectValue placeholder="Variant" />
                   </SelectTrigger>
@@ -227,7 +240,7 @@ export function FilterDrawer({
 
               <div className="space-y-2">
                 <Label>Pack size</Label>
-                <Select value={packSize} onValueChange={(val) => val && onPackSizeChange(val)}>
+                <Select items={PACK_SIZE_ITEMS} value={packSize} onValueChange={(val) => val && onPackSizeChange(val)}>
                   <SelectTrigger className="w-full h-11">
                     <SelectValue placeholder="Pack size" />
                   </SelectTrigger>

@@ -11,6 +11,13 @@ interface BarcodeScannerProps {
 }
 
 export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
+  // Keep latest onScan without retriggering the camera effect (restarting the
+  // stream mid-scan) when the parent re-renders with a new callback identity
+  const onScanRef = useRef(onScan)
+  useEffect(() => {
+    onScanRef.current = onScan
+  }, [onScan])
+
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animFrameRef = useRef<number>(0)
@@ -20,6 +27,8 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
   const [mode, setMode] = useState<'camera' | 'manual'>('camera')
   const [status, setStatus] = useState<'requesting' | 'scanning' | 'error'>('requesting')
+  // Bumped to restart the camera when re-selecting the Scan tab after an error
+  const [retryKey, setRetryKey] = useState(0)
   const [errorMsg, setErrorMsg] = useState('')
   const [torchOn, setTorchOn] = useState(false)
   const [detector, setDetector] = useState<BarcodeDetector | null>(null)
@@ -75,7 +84,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
       if (results.length > 0) {
         const raw = results[0].rawValue
         if (raw) {
-          onScan(raw)
+          onScanRef.current(raw)
           stopStream()
           return
         }
@@ -84,7 +93,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
     }).catch(() => {
       animFrameRef.current = requestAnimationFrame(() => scanLoopRef.current?.())
     })
-  }, [detector, onScan, stopStream])
+  }, [detector, stopStream])
 
   useEffect(() => {
     scanLoopRef.current = scanLoop
@@ -137,7 +146,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
             { facingMode: 'environment' },
             { fps: 10 },
             (decodedText: string) => {
-              onScan(decodedText)
+              onScanRef.current(decodedText)
               html5QrCode.stop().catch(() => {})
             },
             () => {}
@@ -162,7 +171,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
       mounted = false
       stopStream()
     }
-  }, [mode, detector, stopStream])
+  }, [mode, detector, stopStream, retryKey])
 
   const toggleTorch = useCallback(async () => {
     const track = streamRef.current?.getVideoTracks()[0]
@@ -229,7 +238,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
         <button
           role="tab"
           aria-selected={mode === 'camera'}
-          onClick={() => { setMode('camera'); setStatus('requesting'); setErrorMsg('') }}
+          onClick={() => { setMode('camera'); setStatus('requesting'); setErrorMsg(''); setRetryKey((k) => k + 1) }}
           className={`relative flex-1 flex items-center justify-center gap-2 min-h-[48px] px-4 text-sm font-medium transition-colors ${
             mode === 'camera' ? 'text-primary' : 'text-white/60 hover:text-white/80'
           }`}

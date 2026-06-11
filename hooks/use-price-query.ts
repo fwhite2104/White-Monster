@@ -24,6 +24,7 @@ interface UsePriceQueryReturn {
   packSize: string
   setPackSize: (p: string) => void
   fetchData: (signal?: AbortSignal) => Promise<void>
+  refetch: () => Promise<void>
   storesWithDistance: (Store & { distance: number })[]
   bestPrice: Price | null
   nextBestPrice: Price | null
@@ -101,6 +102,18 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
     }
   }, [fetchData])
 
+  // Safe manual refetch — manages loading/error state and never throws,
+  // unlike raw fetchData (used by retry buttons and post-submit refresh)
+  const refetch = useCallback(async () => {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 15000)
+    try {
+      await onFetchRef.current(controller.signal)
+    } finally {
+      clearTimeout(timer)
+    }
+  }, [])
+
   const storesWithDistance = useMemo(
     () =>
       stores.map((s) => {
@@ -110,13 +123,18 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
     [stores, prices]
   )
 
-  const bestPrice = prices.length > 0 ? prices[0] : null
-  const nextBestPrice = prices.length > 1 ? prices[1] : null
+  // Cheapest prices regardless of the active sort order (sort may be distance/name)
+  const pricesByPrice = useMemo(
+    () => [...prices].sort((a, b) => Number(a.price) - Number(b.price)),
+    [prices]
+  )
+  const bestPrice = pricesByPrice.length > 0 ? pricesByPrice[0] : null
+  const nextBestPrice = pricesByPrice.length > 1 ? pricesByPrice[1] : null
 
   const maxSavings = useMemo(() => {
-    if (prices.length < 2) return null
+    if (pricesByPrice.length < 2) return null
     const byPack = new Map<string, Price[]>()
-    for (const p of prices) {
+    for (const p of pricesByPrice) {
       const ps = p.products?.pack_size ?? 'single'
       const list = byPack.get(ps) ?? []
       list.push(p)
@@ -133,7 +151,7 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
       }
     }
     return best
-  }, [prices])
+  }, [pricesByPrice])
 
   return {
     prices,
@@ -150,6 +168,7 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
     packSize,
     setPackSize,
     fetchData,
+    refetch,
     storesWithDistance,
     bestPrice,
     nextBestPrice,

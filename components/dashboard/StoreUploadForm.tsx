@@ -293,6 +293,7 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange,
                 <div>
                   <Label htmlFor={`${formId}-retailer`}>Retailer</Label>
                   <Select
+                    items={Object.fromEntries(RETAILERS.map((r) => [r.value, r.label]))}
                     value={formData.retailer}
                     onValueChange={(v) => v && setFormData({ ...formData, retailer: v })}
                   >
@@ -312,6 +313,7 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange,
                 <div>
                   <Label htmlFor={`${formId}-variant`}>Variant</Label>
                   <Select
+                    items={Object.fromEntries(MONSTER_VARIANTS.map((v) => [v.value, v.label]))}
                     value={formData.variant}
                     onValueChange={(v) => v && setFormData({ ...formData, variant: v })}
                   >
@@ -331,6 +333,7 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange,
                 <div>
                   <Label htmlFor={`${formId}-packsize`}>Pack Size</Label>
                   <Select
+                    items={{ single: 'Single Can', '4_pack': '4-Pack' }}
                     value={formData.packSize}
                     onValueChange={(v) => v && setFormData({ ...formData, packSize: v })}
                   >

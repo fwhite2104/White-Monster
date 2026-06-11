@@ -85,6 +85,10 @@ export async function GET(request: NextRequest) {
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal server error'
-    return NextResponse.json({ error: message, code: 'INTERNAL_ERROR' }, { status: 500 })
+    const isValidation = message.startsWith('Invalid ')
+    return NextResponse.json(
+      { error: message, code: isValidation ? 'VALIDATION_ERROR' : 'INTERNAL_ERROR' },
+      { status: isValidation ? 400 : 500 }
+    )
   }
 }

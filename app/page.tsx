@@ -47,7 +47,7 @@ export default function Home() {
   const {
     prices, stores, loading, error, lastUpdated,
     radius, setRadius, sort, setSort, variant, setVariant,
-    packSize,     setPackSize, fetchData,
+    packSize,     setPackSize, refetch,
     storesWithDistance, bestPrice, nextBestPrice, maxSavings,
   } = usePriceQuery({ lat, lng })
 
@@ -60,6 +60,10 @@ export default function Home() {
   const [reportStoreName, setReportStoreName] = useState<string | undefined>(undefined)
   const [reportPromptShown, setReportPromptShown] = useState(false)
   const [scanResult, setScanResult] = useState<{ product: Product; prices: Array<Price & { stores?: Store }> } | null>(null)
+  // Once the user leaves the first-visit screen (e.g. via manual search) the
+  // tabbed UI must stay reachable — otherwise tab taps bounce back to a screen
+  // with no tab bar
+  const [firstVisitDismissed, setFirstVisitDismissed] = useState(false)
 
   const hasMapRealEstate = useHasMapRealEstate()
   const showMap = hasMapRealEstate || activeTab === 'stores'
@@ -79,12 +83,23 @@ export default function Home() {
   }, [requestLocation])
 
   const handleOpenManualSearch = useCallback(() => {
-    requestLocation()
-  }, [requestLocation])
+    setFirstVisitDismissed(true)
+    setActiveTab('search')
+  }, [])
 
   const handleSearchInputRef = useCallback((ref: HTMLInputElement | null) => {
     searchInputRef.current = ref
   }, [])
+
+  // After picking an area, show the results — critical on desktop where the
+  // tab bar is hidden and there is otherwise no way off the search view
+  const handleSelectLocation = useCallback(
+    (lat: number, lng: number, label: string) => {
+      setManualLocation(lat, lng, label)
+      setActiveTab('list')
+    },
+    [setManualLocation],
+  )
 
   useEffect(() => {
     if (activeTab === 'search' && searchInputRef.current) {
@@ -144,7 +159,7 @@ export default function Home() {
     [sort, variant, packSize, radius],
   )
 
-  if (status === 'idle' && location?.source === 'default') {
+  if (status === 'idle' && location?.source === 'default' && !firstVisitDismissed) {
     return (
       <div className="min-h-full flex flex-col">
         <Header onReportPrice={() => setShowUploadForm(true)} />
@@ -175,7 +190,7 @@ export default function Home() {
           locationLabel={locationLabel}
           onRetry={handleRetryLocation}
           onManualSearch={handleOpenManualSearch}
-          onSelectLocation={setManualLocation}
+          onSelectLocation={handleSelectLocation}
           openManual={activeTab === 'search'}
           onInputRef={handleSearchInputRef}
         />
@@ -258,7 +273,7 @@ export default function Home() {
             )}
 
             {!loading && error && (
-              <ApiErrorState message={error} onRetry={fetchData} onReportPrice={() => setShowUploadForm(true)} />
+              <ApiErrorState message={error} onRetry={refetch} onReportPrice={() => setShowUploadForm(true)} />
             )}
 
             {!loading && !error && prices.length === 0 && status === 'success' && (
@@ -323,7 +338,7 @@ export default function Home() {
             )}
 
             {!loading && error && (
-              <ApiErrorState message={error} onRetry={fetchData} onReportPrice={() => setShowUploadForm(true)} />
+              <ApiErrorState message={error} onRetry={refetch} onReportPrice={() => setShowUploadForm(true)} />
             )}
 
             {!loading && !error && prices.length > 0 && (
@@ -410,7 +425,7 @@ export default function Home() {
             )}
 
             {!loading && error && (
-              <ApiErrorState message={error} onRetry={fetchData} onReportPrice={() => setShowUploadForm(true)} />
+              <ApiErrorState message={error} onRetry={refetch} onReportPrice={() => setShowUploadForm(true)} />
             )}
           </>
         )}
@@ -479,7 +494,7 @@ export default function Home() {
       />
 
       <StoreUploadForm
-        onSuccess={fetchData}
+        onSuccess={refetch}
         externalOpen={showUploadForm}
         onExternalOpenChange={handleUploadFormOpenChange}
         prefillStoreName={reportStoreName}

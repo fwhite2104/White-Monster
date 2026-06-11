@@ -34,7 +34,8 @@ export const CORK_LOCATIONS: LocationOption[] = [
 
 export function searchLocations(query: string): LocationOption[] {
   const normalized = query.trim().toLowerCase()
-  if (!normalized) return []
+  // Empty query: surface popular areas so the picker is never blank
+  if (!normalized) return CORK_LOCATIONS.slice(0, 8)
 
   const matches = CORK_LOCATIONS.filter(
     (loc) =>

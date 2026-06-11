@@ -1,11 +1,13 @@
 import { createServerClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimitDB, getClientIp } from '@/lib/rate-limit'
-import { validateLat, validateLng } from '@/lib/validate'
+import { validateLat, validateLng, validateRadius } from '@/lib/validate'
+import { CORK_CENTER, DEFAULT_RADIUS_KM } from '@/lib/constants'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
+  try {
   const supabase = await createServerClient()
 
   const clientIp = getClientIp(request)
@@ -22,12 +24,20 @@ export async function GET(request: NextRequest) {
   const lngParam = request.nextUrl.searchParams.get('lng')
   const radiusParam = request.nextUrl.searchParams.get('radius')
 
-  const lat = latParam != null ? validateLat(latParam) : 51.8985
-  const lng = lngParam != null ? validateLng(lngParam) : -8.4756
-  const radius = radiusParam != null ? parseFloat(radiusParam) : 10
-
   if (!barcode) {
     return NextResponse.json({ error: 'barcode is required' }, { status: 400 })
+  }
+
+  let lat: number
+  let lng: number
+  let radius: number
+  try {
+    lat = latParam != null ? validateLat(latParam) : CORK_CENTER.lat
+    lng = lngParam != null ? validateLng(lngParam) : CORK_CENTER.lng
+    radius = radiusParam != null ? validateRadius(radiusParam) : DEFAULT_RADIUS_KM
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Invalid parameters'
+    return NextResponse.json({ error: message }, { status: 400 })
   }
 
   // 1. Look up product by barcode
@@ -80,4 +90,8 @@ export async function GET(request: NextRequest) {
     prices: prices ?? [],
     method: 'postgis',
   })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Internal server error'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

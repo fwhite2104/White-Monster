@@ -18,6 +18,9 @@ export function ScanButton({ onScanResult, userLat, userLng, radius }: ScanButto
   const [error, setError] = useState<string | null>(null)
 
   const handleScan = useCallback(async (barcode: string) => {
+    // Close the scanner right away — the camera stream is already stopped
+    // after a detection, so keeping the overlay open shows a frozen frame
+    setShowScanner(false)
     setLoading(true)
     setError(null)
 
@@ -27,13 +30,17 @@ export function ScanButton({ onScanResult, userLat, userLng, radius }: ScanButto
       )
       const data = await res.json()
 
+      if (!res.ok) {
+        setError(data.error ?? 'Failed to look up barcode')
+        return
+      }
+
       if (!data.found) {
         setError(data.message ?? 'Product not found')
         return
       }
 
       onScanResult(data)
-      setShowScanner(false)
     } catch {
       setError('Failed to look up barcode')
     } finally {
