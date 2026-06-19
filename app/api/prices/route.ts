@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 
     const radiusMeters = radiusKm * 1000
 
-    const { data: rpcData, error: rpcError } = await supabase.rpc('nearby_prices', {
+    const nearbyPromise = supabase.rpc('nearby_prices', {
       p_user_lat: lat,
       p_user_lng: lng,
       p_radius_meters: radiusMeters,
@@ -70,8 +70,67 @@ export async function GET(request: NextRequest) {
       p_pack_size_filter: packSize,
     })
 
+    const storesPromise = supabase
+      .from('stores')
+      .select('id, name, retailer, address, suburb, lat, lng')
+      .eq('is_active', true)
+      .eq('is_approved', true)
+
+    let nationalPromise = supabase
+      .from('prices')
+      .select(`
+        id, store_id, product_id, price, source, scraped_at, clubcard_price,
+        stores!inner(id, name, retailer, address, suburb, lat, lng),
+        products!inner(id, name, variant, size_ml, image_url, pack_size)
+      `)
+      .like('stores.name', '%(National)%')
+      .eq('products.variant', variant)
+
+    if (packSize !== 'all') {
+      nationalPromise = nationalPromise.eq('products.pack_size', packSize)
+    }
+
+    let userPromise = supabase
+      .from('user_prices')
+      .select(`
+        id, store_id, product_id, price, notes, expires_at, created_at,
+        stores!inner(id, name, retailer, address, suburb, lat, lng),
+        products!inner(id, name, variant, size_ml, image_url, pack_size)
+      `)
+      .gt('expires_at', new Date().toISOString())
+      .eq('products.is_active', true)
+      .eq('products.variant', variant)
+
+    if (packSize !== 'all') {
+      userPromise = userPromise.eq('products.pack_size', packSize)
+    }
+
+    const [
+      { data: rpcData, error: rpcError },
+      { data: allStoresData, error: allStoresError },
+      { data: nationalPricesData, error: nationalError },
+      { data: userPricesData, error: userError },
+    ] = await Promise.all([
+      nearbyPromise,
+      storesPromise,
+      nationalPromise,
+      userPromise,
+    ])
+
     if (rpcError) {
       return NextResponse.json({ error: rpcError.message }, { status: 500 })
+    }
+
+    if (allStoresError) {
+      return NextResponse.json({ error: allStoresError.message }, { status: 500 })
+    }
+
+    if (nationalError) {
+      return NextResponse.json({ error: nationalError.message }, { status: 500 })
+    }
+
+    if (userError) {
+      return NextResponse.json({ error: userError.message }, { status: 500 })
     }
 
     const prices = (rpcData ?? []).map((row: Record<string, unknown>) => {
@@ -115,56 +174,6 @@ export async function GET(request: NextRequest) {
         },
       }
     })
-
-    const { data: allStoresData, error: allStoresError } = await supabase
-      .from('stores')
-      .select('id, name, retailer, address, suburb, lat, lng')
-      .eq('is_active', true)
-
-    if (allStoresError) {
-      return NextResponse.json({ error: allStoresError.message }, { status: 500 })
-    }
-
-    let nationalQuery = supabase
-      .from('prices')
-      .select(`
-        id, store_id, product_id, price, source, scraped_at, clubcard_price,
-        stores!inner(id, name, retailer, address, suburb, lat, lng),
-        products!inner(id, name, variant, size_ml, image_url, pack_size)
-      `)
-      .like('stores.name', '%(National)%')
-      .eq('products.variant', variant)
-
-    if (packSize !== 'all') {
-      nationalQuery = nationalQuery.eq('products.pack_size', packSize)
-    }
-
-    const { data: nationalPricesData, error: nationalError } = await nationalQuery
-
-    if (nationalError) {
-      return NextResponse.json({ error: nationalError.message }, { status: 500 })
-    }
-
-    let userQuery = supabase
-      .from('user_prices')
-      .select(`
-        id, store_id, product_id, price, notes, expires_at, created_at,
-        stores!inner(id, name, retailer, address, suburb, lat, lng),
-        products!inner(id, name, variant, size_ml, image_url, pack_size)
-      `)
-      .gt('expires_at', new Date().toISOString())
-      .eq('products.is_active', true)
-      .eq('products.variant', variant)
-
-    if (packSize !== 'all') {
-      userQuery = userQuery.eq('products.pack_size', packSize)
-    }
-
-    const { data: userPricesData, error: userError } = await userQuery
-
-    if (userError) {
-      return NextResponse.json({ error: userError.message }, { status: 500 })
-    }
 
     const nationalPricesTyped = ((nationalPricesData ?? []) as unknown) as PriceWithJoins[]
     const allStoresTyped = ((allStoresData ?? []) as unknown) as StoreData[]
@@ -271,7 +280,7 @@ export async function GET(request: NextRequest) {
       },
     }, {
       headers: {
-        'Cache-Control': 'no-store, max-age=0',
+        'Cache-Control': 'public, max-age=0, must-revalidate',
       },
     })
   } catch (err) {
@@ -321,7 +330,7 @@ export async function POST(request: NextRequest) {
     const { data: storeData, error: storeError } = await supabase
       .from('stores')
       .upsert(
-        { name: storeName, retailer, lat, lng, address },
+        { name: storeName, retailer, lat, lng, address, is_approved: false },
         { onConflict: 'name,retailer', ignoreDuplicates: true }
       )
       .select('id')
