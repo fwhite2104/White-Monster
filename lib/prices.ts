@@ -119,10 +119,10 @@ export function mergeUserPrices(
     return dist <= radiusMeters
   })
 
-  // Aggregate by (retailer, variant, pack_size): lowest price, most recent as tiebreaker
+  // Aggregate by (store_id, variant, pack_size): lowest price, most recent as tiebreaker
   const bestByRetailer = new Map<string, UserPriceRecord>()
   for (const up of nearbyUserPrices) {
-    const key = `${up.stores.retailer}|${up.products.variant}|${up.products.pack_size}`
+    const key = `${up.store_id}|${up.products.variant}|${up.products.pack_size}`
     const existing = bestByRetailer.get(key)
     if (
       !existing ||

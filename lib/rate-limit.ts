@@ -63,7 +63,9 @@ function parseRateLimitKey(key: string): { ip: string; endpoint: string } {
 }
 
 /**
- * DB-backed rate limiter using the rate_limits table (migration 006).
+ * DB-backed rate limiter using the atomic upsert_rate_limit RPC (migration 024).
+ * Uses a single atomic INSERT ... ON CONFLICT to eliminate the race condition
+ * between the SELECT count and INSERT steps.
  * Falls back to in-memory if Supabase is unreachable.
  */
 export async function checkRateLimitDB(
@@ -74,34 +76,26 @@ export async function checkRateLimitDB(
   try {
     const supabase = await createServerClient()
     const { ip, endpoint } = parseRateLimitKey(key)
-    const now = new Date()
-    const windowStart = new Date(now.getTime() - windowMs)
 
-    const { count, error } = await supabase
-      .from('rate_limits')
-      .select('id', { count: 'exact', head: true })
-      .eq('ip_address', ip)
-      .eq('endpoint', endpoint)
-      .gte('window_end', windowStart.toISOString())
+    const { data, error } = await supabase.rpc('upsert_rate_limit', {
+      p_ip: ip,
+      p_endpoint: endpoint,
+      p_window_ms: windowMs,
+      p_limit: limit,
+    })
 
     if (error) throw error
 
-    if (count !== null && count >= limit) {
-      return { allowed: false, remaining: 0, resetTime: now.getTime() + windowMs }
-    }
+    const result = data?.[0]
+    if (!result) throw new Error('No rate limit result')
 
-    await supabase.from('rate_limits').insert({
-      ip_address: ip,
-      endpoint,
-      request_count: 1,
-      window_start: now.toISOString(),
-      window_end: new Date(now.getTime() + windowMs).toISOString(),
-    })
+    const requestCount = result.request_count as number
+    const resetTime = new Date(result.reset_time as string).getTime()
 
     return {
-      allowed: true,
-      remaining: limit - (count ?? 0) - 1,
-      resetTime: now.getTime() + windowMs,
+      allowed: requestCount <= limit,
+      remaining: Math.max(0, limit - requestCount),
+      resetTime,
     }
   } catch {
     return checkRateLimit(key, limit, windowMs)
