@@ -47,3 +47,9 @@ __pycache__/
 # UI audit screenshots
 audit-shots/
 .playwright-cli/
+
+# OpenCode session metadata
+.omo/
+
+# Gitleaks output
+betterleaks-git.txt
