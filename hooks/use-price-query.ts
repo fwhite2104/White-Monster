@@ -23,7 +23,6 @@ interface UsePriceQueryReturn {
   setVariant: (v: string) => void
   packSize: string
   setPackSize: (p: string) => void
-  fetchData: (signal?: AbortSignal) => Promise<void>
   refetch: () => Promise<void>
   storesWithDistance: (Store & { distance: number })[]
   bestPrice: Price | null
@@ -61,10 +60,12 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
     setStores(storesData.stores || [])
 
     if ((pricesData.prices || []).length > 0) {
-      const scraped = pricesData.prices.find(
-        (p: { scraped_at: string | null }) => p.scraped_at != null
-      )
-      setLastUpdated(scraped?.scraped_at ?? null)
+      const timestamps = pricesData.prices
+        .map((p: { scraped_at?: string | null; created_at?: string | null }) => p.scraped_at ?? p.created_at)
+        .filter((t: string | null | undefined): t is string => t != null)
+        .sort()
+        .reverse()
+      setLastUpdated(timestamps[0] ?? null)
     }
   }, [lat, lng, radius, sort, variant, packSize])
 
@@ -167,7 +168,6 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
     setVariant,
     packSize,
     setPackSize,
-    fetchData,
     refetch,
     storesWithDistance,
     bestPrice,
