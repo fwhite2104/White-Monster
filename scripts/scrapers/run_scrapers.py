@@ -50,8 +50,8 @@ def _extract_variant(product_name: str) -> str | None:
     if "lando norris" in lowered:
         return "lando_norris"
 
-    # Viking Berry (check before other fruit variants)
-    if "viking berry" in lowered:
+    # Viking Berry (also handles Tesco's "Viking BRY" abbreviation)
+    if "viking berry" in lowered or "viking bry" in lowered:
         return "viking_berry"
 
     # Mango Loco
@@ -134,8 +134,8 @@ def _extract_variant(product_name: str) -> str | None:
     if "nitro super dry" in lowered or ("nitro" in lowered and "super dry" in lowered):
         return "nitro_super_dry"
 
-    # Zero Sugar
-    if "zero sugar" in lowered or "white zero" in lowered:
+    # Zero Sugar (also handles Tesco's "Z/Sgr" abbreviation)
+    if "zero sugar" in lowered or "white zero" in lowered or "z/sgr" in lowered:
         return "zero_sugar"
 
     # Strawberry Flavour Energy → Ultra Strawberry Dreams (zero_sugar)
@@ -144,6 +144,14 @@ def _extract_variant(product_name: str) -> str | None:
 
     # Original (classic green Monster Energy can)
     if "original" in lowered:
+        return "original"
+    # Catch-all for "Monster Energy Drink" without specific variant (Tesco naming)
+    if "monster energy drink" in lowered and not any(word in lowered for word in
+        ["ultra", "zero", "mango", "pipeline", "juiced", "punch", "rio",
+         "the doctor", "doctor", "monarch", "pacific", "aussie", "fiesta",
+         "viking", "strawberry", "lando", "peachy", "khaotic", "assault",
+         "hydro", "rehab", "nitro", "gold", "violet", "rosa", "paradise",
+         "full throttle", "lemonade", "ruby red", "fantasy", "bry"]):
         return "original"
 
     # No match — caller must handle
