@@ -124,6 +124,7 @@ class CentraIEScraper(BaseScraper):
             product_urls = [
                 url for url in all_urls
                 if "/p/" in url.lower() or "/product/" in url.lower()
+                or "monster" in url.lower()
             ]
             self._log(f"Sitemap discovery: found {len(product_urls)} product URLs")
             return product_urls
