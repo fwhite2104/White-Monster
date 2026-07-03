@@ -17,6 +17,7 @@ page scraping) and then Firecrawl crawl as a last resort.
 
 import re
 import requests
+from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from typing import List, Dict
 from base import BaseScraper
@@ -110,7 +111,7 @@ class CentraIEScraper(BaseScraper):
             if not sitemap_urls:
                 return []
 
-            sitemap_url = sitemap_urls[0].strip()
+            sitemap_url = urljoin(f"{self.BASE_URL}/", sitemap_urls[0].strip())
             self._log(f"Fetching sitemap: {sitemap_url}")
 
             sitemap_response = self._retry_request(

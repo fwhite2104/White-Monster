@@ -59,6 +59,10 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_WEBHOOK_URL not set — skipping Discord notification"
+            exit 0
+          fi
           ALERT_TYPE="Workflow failure"
           if grep -q "\[STALE_ALERT\]" scripts/scrapers/scraper-output.log 2>/dev/null; then
             ALERT_TYPE="Stale data alert — multiple scrapers returned zero results"
