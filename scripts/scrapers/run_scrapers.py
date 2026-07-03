@@ -418,6 +418,18 @@ def main():
     print(json.dumps(run_results, indent=2))
     print(f"___END_STRUCTURED_RESULTS___")
 
+    results = {}
+    for name, prices in [
+        ("Lidl", lidl_prices),
+        ("Aldi", aldi_prices),
+        ("Tesco", tesco_prices),
+        ("SuperValu", supervalu_prices),
+        ("SuperValu Soft Drinks", supervalu_sd_prices),
+        ("Dunnes", dunnes_prices),
+        ("Centra", centra_prices),
+    ]:
+        results[name] = len(prices) if prices else "FAILED"
+
     # --- STALE_ALERT check ---
     total_retailers = len(results) + len(firecrawl_results)
     zero_result_retailers = []
@@ -439,19 +451,6 @@ def main():
         _STALE_ALERT_FIRED = True
     else:
         _STALE_ALERT_FIRED = False
-
-    # Build results summary.
-    results = {}
-    for name, prices in [
-        ("Lidl", lidl_prices),
-        ("Aldi", aldi_prices),
-        ("Tesco", tesco_prices),
-        ("SuperValu", supervalu_prices),
-        ("SuperValu Soft Drinks", supervalu_sd_prices),
-        ("Dunnes", dunnes_prices),
-        ("Centra", centra_prices),
-    ]:
-        results[name] = len(prices) if prices else "FAILED"
 
     print(f"\n=== Scraper Results Summary ===")
     for name, count in results.items():
