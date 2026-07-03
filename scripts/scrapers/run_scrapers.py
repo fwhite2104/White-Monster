@@ -62,6 +62,10 @@ def _extract_variant(product_name: str) -> str | None:
     if "pipeline punch" in lowered:
         return "pipeline_punch"
 
+    # Rio Punch
+    if "rio punch" in lowered:
+        return "rio_punch"
+
     # Hydro Watermelon
     if "hydro" in lowered and "watermelon" in lowered:
         return "hydro_watermelon"
