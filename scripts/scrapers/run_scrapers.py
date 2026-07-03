@@ -98,9 +98,11 @@ def _extract_variant(product_name: str) -> str | None:
         return "ultra_peachy_keen"
     if "ultra paradise" in lowered or "paradise" in lowered:
         return "ultra_paradise"
-    if "ultra rosa" in lowered or "rosa" in lowered:
+    # Ultra Rosa (also handles accented "Ultra Rosá")
+    if "ultra rosa" in lowered or "rosa" in lowered or "rosá" in lowered:
         return "ultra_rosa"
-    if "ultra white" in lowered:
+    # Ultra White / Ultra Zero (same product, different naming)
+    if "ultra white" in lowered or "ultra zero" in lowered:
         return "ultra_white"
 
     # Ripper
@@ -135,6 +137,14 @@ def _extract_variant(product_name: str) -> str | None:
     # Zero Sugar
     if "zero sugar" in lowered or "white zero" in lowered:
         return "zero_sugar"
+
+    # Strawberry Flavour Energy → Ultra Strawberry Dreams (zero_sugar)
+    if "strawberry" in lowered:
+        return "zero_sugar"
+
+    # Original (classic green Monster Energy can)
+    if "original" in lowered:
+        return "original"
 
     # No match — caller must handle
     return None

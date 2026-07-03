@@ -17,6 +17,7 @@ export const RETAILERS = [
 export const MONSTER_VARIANTS = [
   { value: 'zero_sugar', label: 'White Monster Zero Sugar', size: 250, category: 'zero_sugar' },
   { value: 'ultra_white', label: 'Monster Ultra White', size: 250, category: 'zero_sugar' },
+  { value: 'original', label: 'Monster Energy Original', size: 500, category: 'full_sugar' },
   { value: 'ultra_rosa', label: 'Monster Ultra Rosa', size: 250, category: 'zero_sugar' },
   { value: 'ultra_paradise', label: 'Monster Ultra Paradise', size: 250, category: 'zero_sugar' },
   { value: 'ultra_gold', label: 'Monster Ultra Gold', size: 250, category: 'zero_sugar' },

@@ -108,30 +108,10 @@ class RetailerConfig:
 # Pre-configured retailers for Firecrawl scraping.
 # Add entries here as Firecrawl proves effective for each site.
 FIRECRAWL_RETAILERS: dict[str, RetailerConfig] = {
-    "spar": RetailerConfig(
-        retailer="spar",
-        search_url="https://www.spar.ie/search?q=monster+energy",
-        use_structured_extraction=True,
-        extract_schema=PRODUCT_SCHEMA,
-    ),
-    "londis": RetailerConfig(
-        retailer="londis",
-        search_url="https://www.londis.ie/search?q=monster+energy",
-        use_structured_extraction=True,
-        extract_schema=PRODUCT_SCHEMA,
-    ),
-    "dealz": RetailerConfig(
-        retailer="dealz",
-        search_url="https://www.dealz.ie/search?q=monster+energy",
-        use_structured_extraction=True,
-        extract_schema=PRODUCT_SCHEMA,
-    ),
-    "costcutter": RetailerConfig(
-        retailer="costcutter",
-        search_url="https://www.costcutter.ie/search?q=monster+energy",
-        use_structured_extraction=True,
-        extract_schema=PRODUCT_SCHEMA,
-    ),
+    # Londis has an online shop (londisonline.ie) but the current search URL
+    # is a brochure site — needs a working search endpoint to be active.
+    # Spar, Dealz, and Costcutter are brochure-only sites with no e-commerce
+    # — removed from active scraping accordingly.
 }
 
 # Retailers that use Firecrawl as a fallback (tried after bespoke scraper fails).
