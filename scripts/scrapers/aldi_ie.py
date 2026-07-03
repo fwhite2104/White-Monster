@@ -26,12 +26,12 @@ class AldiIEScraper(BaseScraper):
         '[data-testid="product-item"]',
         '.product-tile',
         '.product-item',
-        '.search-result-item',
+        '.product-card',
+        '.product-grid-item',
         '[class*="ProductTile"]',
         '[class*="productTile"]',
         '[class*="ProductCard"]',
         '[class*="product-card"]',
-        'article',
     ]
 
     NAME_SELECTORS = [
@@ -85,6 +85,17 @@ class AldiIEScraper(BaseScraper):
         browser = None
         context = None
         page = None
+        captured_responses: List = []
+        firecrawl_url = "https://groceries.aldi.ie/en-IE/Search?SearchTerm=monster+energy"
+
+        def api_response_handler(response):
+            url = response.url.lower()
+            if any(kw in url for kw in ["search", "product", "api"]):
+                try:
+                    if "application/json" in (response.headers.get("content-type") or ""):
+                        captured_responses.append(response.json())
+                except Exception:
+                    pass
 
         try:
             with sync_playwright() as p:
@@ -98,6 +109,8 @@ class AldiIEScraper(BaseScraper):
                 )
                 page = context.new_page()
 
+                page.on("response", api_response_handler)
+
                 self._log(f"Navigating to {self.SEARCH_URL}")
                 page.goto(self.SEARCH_URL, wait_until="domcontentloaded", timeout=self.NAVIGATION_TIMEOUT)
 
@@ -105,9 +118,26 @@ class AldiIEScraper(BaseScraper):
 
                 product_cards = self._wait_for_product_cards(page)
                 if not product_cards:
-                    self._log("No product cards found after waiting")
+                    self._log("No product cards found after waiting — trying network interception fallback")
                     self._screenshot_debug(page, "no_products")
-                    return []
+                    api_results = self._intercept_api_response(page, captured_responses)
+                    if api_results:
+                        self._log(f"Network interception found {len(api_results)} products")
+                        results = api_results
+                    else:
+                        self._log("Network interception also returned 0 results")
+                        self._log("DOM and API extraction failed — trying Firecrawl fallback")
+                        results = self._firecrawl_fallback(firecrawl_url, pack_size)
+                        page.close()
+                        context.close()
+                        browser.close()
+                        monster_results = [
+                            r for r in results
+                            if "monster" in r.get("product_name", "").lower()
+                        ]
+                        filtered = self._filter_by_pack_size(monster_results, pack_size)
+                        self._log(f"Found {len(filtered)} Monster products (pack_size={pack_size})")
+                        return filtered
 
                 self._log(f"Found {len(product_cards)} product cards")
 
@@ -144,6 +174,10 @@ class AldiIEScraper(BaseScraper):
                     browser.close()
                 except Exception:
                     pass
+
+        if not results:
+            self._log("DOM and API extraction failed — trying Firecrawl fallback")
+            results = self._firecrawl_fallback(firecrawl_url, pack_size)
 
         monster_results = [
             r for r in results
@@ -256,3 +290,69 @@ class AldiIEScraper(BaseScraper):
                 return None
 
         return None
+
+    def _intercept_api_response(self, page, captured: list) -> List[Dict]:
+        results: List[Dict] = []
+        for json_data in captured:
+            items = None
+            if isinstance(json_data, dict):
+                for key in ["products", "items", "results", "data", "productList", "searchResults"]:
+                    if key in json_data and isinstance(json_data[key], list):
+                        items = json_data[key]
+                        break
+                if items is None and json_data.get("product"):
+                    items = [json_data["product"]]
+            elif isinstance(json_data, list):
+                items = json_data
+
+            if not items:
+                continue
+
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                name = (
+                    item.get("name")
+                    or item.get("productName")
+                    or item.get("title")
+                    or item.get("product_title")
+                )
+                price_val = (
+                    item.get("price")
+                    or item.get("productPrice")
+                    or item.get("currentPrice")
+                    or item.get("salePrice")
+                    or item.get("pricePerUnit")
+                )
+                if name and price_val is not None:
+                    try:
+                        price = float(str(price_val).replace("€", "").replace(",", ""))
+                        name_str = str(name)
+                        if "monster" in name_str.lower():
+                            results.append({
+                                "product_name": name_str,
+                                "price": price,
+                                "currency": "EUR",
+                                "retailer": "aldi",
+                            })
+                    except (ValueError, TypeError):
+                        continue
+        return results
+
+    def _firecrawl_fallback(self, firecrawl_url: str, pack_size: str) -> List[Dict]:
+        try:
+            from firecrawl_ie import with_firecrawl_fallback
+            results, source = with_firecrawl_fallback(
+                scraper_fn=lambda: [],
+                retailer=self.retailer,
+                firecrawl_search_url=firecrawl_url,
+                use_structured_extraction=True,
+            )
+            if source == "firecrawl_fallback":
+                self._log(f"Firecrawl fallback found {len(results)} products")
+            elif source == "none":
+                self._log("Firecrawl fallback also failed")
+            return results
+        except Exception as fc_err:
+            self._log(f"Firecrawl fallback also failed: {fc_err}")
+        return []

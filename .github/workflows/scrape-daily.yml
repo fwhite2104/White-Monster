@@ -22,7 +22,12 @@ jobs:
           python-version: '3.11'
       - run: pip install -r scripts/scrapers/requirements.txt
       - run: playwright install --with-deps chromium
-      - run: cd scripts/scrapers && python run_scrapers.py 2>&1 | tee scraper-output.log
+      - name: Run scrapers
+        id: scrape
+        run: |
+          cd scripts/scrapers
+          python run_scrapers.py 2>&1 | tee scraper-output.log
+          exit ${PIPESTATUS[0]}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
@@ -54,12 +59,17 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
+          ALERT_TYPE="Workflow failure"
+          if grep -q "\[STALE_ALERT\]" scripts/scrapers/scraper-output.log 2>/dev/null; then
+            ALERT_TYPE="Stale data alert — multiple scrapers returned zero results"
+          fi
+          FAILING_LINES=$(grep "\[STALE_ALERT\]" scripts/scrapers/scraper-output.log 2>/dev/null | sed 's/.*\[STALE_ALERT\]  //' | tr '\n' '; ')
           curl -sf -X POST "$DISCORD_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d '{
               "embeds": [{
-                "title": "❌ Scraper Failed",
-                "description": "**Workflow:** ${{ github.workflow }}\n**Run:** [${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n**Branch:** ${{ github.ref_name }}\n**Trigger:** ${{ github.event_name }}",
+                "title": "❌ Scraper Pipeline Issue",
+                "description": "**Alert:** '"$ALERT_TYPE"'\n**Failing:** '"${FAILING_LINES:-Unknown}"'\n**Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n**Branch:** ${{ github.ref_name }}",
                 "color": 15548997
               }]
             }'

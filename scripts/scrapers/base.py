@@ -89,6 +89,8 @@ class BaseScraper(ABC):
             'lando norris', 'viking berry', 'mango loco', 'pipeline punch',
             'assault', 'khaotic', 'hydro', 'rehab', 'juice monster',
             'monster energy', 'monster papillon', 'monster java',
+            'ripper', 'monarch', 'the doctor', 'pacific punch', 'ultra fiesta',
+            'aussie lemonade', 'nitro super dry',
         ]
 
         if any(pattern in lowered for pattern in known_monster_patterns):

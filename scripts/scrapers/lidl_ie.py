@@ -32,6 +32,18 @@ class LidlIEScraper(BaseScraper):
         self._log(f"Searching: {query} (pack_size={pack_size})")
         results: List[Dict] = []
         search_url = f"https://www.lidl.ie/q/{query.replace(' ', '%20')}"
+        firecrawl_url = search_url
+
+        captured_responses: List = []
+
+        def api_response_handler(response):
+            url = response.url.lower()
+            if any(kw in url for kw in ["search", "product", "api"]):
+                try:
+                    if "application/json" in (response.headers.get("content-type") or ""):
+                        captured_responses.append(response.json())
+                except Exception:
+                    pass
 
         try:
             with sync_playwright() as p:
@@ -45,6 +57,8 @@ class LidlIEScraper(BaseScraper):
                     locale="en-IE",
                 )
                 page = context.new_page()
+
+                page.on("response", api_response_handler)
 
                 try:
                     page.goto(
@@ -69,8 +83,14 @@ class LidlIEScraper(BaseScraper):
 
                     results = self._extract_products(page)
                     if not results:
-                        self._log("No products extracted from page")
-                        self._screenshot_debug(page, "no_products_extracted")
+                        self._log("No products extracted from DOM — trying network interception fallback")
+                        api_results = self._intercept_api_response(page, captured_responses)
+                        if api_results:
+                            self._log(f"Network interception found {len(api_results)} products")
+                            results = api_results
+                        else:
+                            self._log("Network interception also returned 0 results")
+                            self._screenshot_debug(page, "no_products_extracted")
                 finally:
                     context.close()
                     browser.close()
@@ -82,9 +102,31 @@ class LidlIEScraper(BaseScraper):
             self._log(f"Error during scraping at {search_url}: {e}")
             return []
 
+        if not results:
+            self._log("DOM and API extraction failed — trying Firecrawl fallback")
+            results = self._firecrawl_fallback(query, firecrawl_url)
+
         filtered = self._filter_by_pack_size(results, pack_size)
         self._log(f"Found {len(filtered)} Monster products (pack_size={pack_size})")
         return filtered
+
+    def _firecrawl_fallback(self, query: str, firecrawl_url: str) -> List[Dict]:
+        try:
+            from firecrawl_ie import with_firecrawl_fallback
+            results, source = with_firecrawl_fallback(
+                scraper_fn=lambda: [],
+                retailer=self.retailer,
+                firecrawl_search_url=firecrawl_url,
+                use_structured_extraction=True,
+            )
+            if source == "firecrawl_fallback":
+                self._log(f"Firecrawl fallback found {len(results)} products")
+            elif source == "none":
+                self._log("Firecrawl fallback also failed")
+            return results
+        except Exception as fc_err:
+            self._log(f"Firecrawl fallback also failed: {fc_err}")
+        return []
 
     def _dismiss_cookie_banner(self, page):
         patterns = [
@@ -108,7 +150,7 @@ class LidlIEScraper(BaseScraper):
         for selector, name in patterns:
             try:
                 button = page.locator(selector).first
-                if button.is_visible(timeout=self.BANNER_TIMEOUT // 10):
+                if button.is_visible(timeout=self.BANNER_TIMEOUT):
                     self._log(f"  Dismissing cookie banner: '{name}'")
                     button.click()
                     page.wait_for_timeout(500)
@@ -121,12 +163,11 @@ class LidlIEScraper(BaseScraper):
     def _products_visible(self, page) -> bool:
         product_selectors = [
             '[data-testid="product-tile"]',
+            '[data-testid="product-card"]',
+            '[data-testid="product-item"]',
             '.product-tile',
             '.product-card',
-            '[data-testid="product-card"]',
             '.product-grid-item',
-            '.product',
-            '.product-list-item',
             '[class*="ProductTile"]',
             '[class*="productTile"]',
             '[class*="product-card"]',
@@ -229,12 +270,11 @@ class LidlIEScraper(BaseScraper):
 
         product_container_selectors = [
             '[data-testid="product-tile"]',
+            '[data-testid="product-card"]',
+            '[data-testid="product-item"]',
             '.product-tile',
             '.product-card',
-            '[data-testid="product-card"]',
             '.product-grid-item',
-            '.product',
-            '.product-list-item',
             '[class*="ProductTile"]',
             '[class*="productTile"]',
             '[class*="product-card"]',
@@ -335,3 +375,56 @@ class LidlIEScraper(BaseScraper):
                 continue
         self._log("  Failed to extract price from product")
         return None
+
+    def _intercept_api_response(self, page, captured: list) -> List[Dict]:
+        """Parse captured network responses for product data when DOM extraction fails."""
+        results: List[Dict] = []
+        for json_data in captured:
+            # Try to find product arrays in the response
+            items = None
+            if isinstance(json_data, dict):
+                # Common API response shapes
+                for key in ["products", "items", "results", "data", "productList", "searchResults"]:
+                    if key in json_data and isinstance(json_data[key], list):
+                        items = json_data[key]
+                        break
+                if items is None and json_data.get("product"):
+                    items = [json_data["product"]]
+            elif isinstance(json_data, list):
+                items = json_data
+
+            if not items:
+                continue
+
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                # Extract name from common field names
+                name = (
+                    item.get("name")
+                    or item.get("productName")
+                    or item.get("title")
+                    or item.get("product_title")
+                )
+                # Extract price from common field names
+                price_val = (
+                    item.get("price")
+                    or item.get("productPrice")
+                    or item.get("currentPrice")
+                    or item.get("salePrice")
+                    or item.get("pricePerUnit")
+                )
+                if name and price_val is not None:
+                    try:
+                        price = float(str(price_val).replace("€", "").replace(",", ""))
+                        name_str = str(name)
+                        if "monster" in name_str.lower():
+                            results.append({
+                                "product_name": name_str,
+                                "price": price,
+                                "currency": "EUR",
+                                "retailer": "lidl",
+                            })
+                    except (ValueError, TypeError):
+                        continue
+        return results

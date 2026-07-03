@@ -112,21 +112,54 @@ FIRECRAWL_RETAILERS: dict[str, RetailerConfig] = {
         retailer="spar",
         search_url="https://www.spar.ie/search?q=monster+energy",
         use_structured_extraction=True,
+        extract_schema=PRODUCT_SCHEMA,
     ),
     "londis": RetailerConfig(
         retailer="londis",
         search_url="https://www.londis.ie/search?q=monster+energy",
         use_structured_extraction=True,
+        extract_schema=PRODUCT_SCHEMA,
     ),
     "dealz": RetailerConfig(
         retailer="dealz",
         search_url="https://www.dealz.ie/search?q=monster+energy",
         use_structured_extraction=True,
+        extract_schema=PRODUCT_SCHEMA,
     ),
     "costcutter": RetailerConfig(
         retailer="costcutter",
         search_url="https://www.costcutter.ie/search?q=monster+energy",
         use_structured_extraction=True,
+        extract_schema=PRODUCT_SCHEMA,
+    ),
+}
+
+# Retailers that use Firecrawl as a fallback (tried after bespoke scraper fails).
+# Maps retailer name to its Firecrawl config for the fallback pipeline.
+FALLBACK_RETAILERS: dict[str, RetailerConfig] = {
+    "lidl": RetailerConfig(
+        retailer="lidl",
+        search_url="https://www.lidl.ie/search?q=monster+energy",
+        use_structured_extraction=True,
+        extract_schema=PRODUCT_SCHEMA,
+    ),
+    "aldi": RetailerConfig(
+        retailer="aldi",
+        search_url="https://www.aldi.ie/search?q=monster+energy",
+        use_structured_extraction=True,
+        extract_schema=PRODUCT_SCHEMA,
+    ),
+    "centra": RetailerConfig(
+        retailer="centra",
+        search_url="https://www.centra.ie/offers?q=monster+energy",
+        use_structured_extraction=True,
+        extract_schema=PRODUCT_SCHEMA,
+    ),
+    "dunnes": RetailerConfig(
+        retailer="dunnes",
+        search_url="https://www.dunnesstoresgrocery.com/sm/delivery/rsid/258/results?q=monster",
+        use_structured_extraction=True,
+        extract_schema=PRODUCT_SCHEMA,
     ),
 }
 
@@ -166,6 +199,7 @@ class FirecrawlScraper(BaseScraper):
         self._provider = provider or _default_provider()
         self._use_structured_extraction = use_structured_extraction
         self._extract_schema = extract_schema or PRODUCT_SCHEMA
+        self.last_source: str = "unknown"
 
     # ------------------------------------------------------------------
     # Public API
@@ -211,15 +245,20 @@ class FirecrawlScraper(BaseScraper):
         # Try structured extraction first (if enabled and available).
         products: list[dict[str, Any]] = []
         if self._use_structured_extraction:
-            products = self._parse_structured(doc)
-            if products:
-                self._log(f"Structured extraction found {len(products)} products")
+            try:
+                products = self._parse_structured(doc)
+                if products:
+                    self._log(f"Structured extraction found {len(products)} products")
+                    self.last_source = "firecrawl_structured"
+            except Exception as e:
+                self._log(f"Structured extraction error: {e} — falling back to regex")
 
         # Fall back to regex-based parsing on markdown content.
         if not products and doc.content:
             products = self._parse_markdown(doc.content)
             if products:
                 self._log(f"Regex parsing found {len(products)} products")
+                self.last_source = "firecrawl_regex"
 
         if not products:
             self._log("No Monster products found on page")
@@ -415,8 +454,8 @@ _default_provider_instance: ScrapingProvider | None = None
 def _default_provider() -> ScrapingProvider:
     """Return a shared FirecrawlProvider instance (lazy-init).
 
-    If FIRECRAWL_API_KEY is not set, returns a placeholder provider that
-    always returns empty results. This lets run_scrapers.py include the
+    If FIRECRAWL_API_KEY is not set or empty, returns a placeholder provider
+    that always returns empty results. This lets run_scrapers.py include the
     Firecrawl scraper without crashing when the key is absent.
     """
     global _default_provider_instance
@@ -424,15 +463,29 @@ def _default_provider() -> ScrapingProvider:
         return _default_provider_instance
 
     api_key = os.environ.get("FIRECRAWL_API_KEY")
-    if not api_key:
+
+    if api_key is None:
         logger.warning(
-            "FIRECRAWL_API_KEY not set — Firecrawl provider will return empty results. "
+            "FIRECRAWL_API_KEY not set — Firecrawl will be unavailable. "
             "Set FIRECRAWL_API_KEY in your environment to enable Firecrawl scraping."
         )
         _default_provider_instance = _EmptyProvider()
         return _default_provider_instance
 
-    _default_provider_instance = FirecrawlProvider(api_key=api_key)
+    if api_key == "":
+        logger.warning(
+            "[WARN] FIRECRAWL_API_KEY is set but empty — Firecrawl will be unavailable."
+        )
+        _default_provider_instance = _EmptyProvider()
+        return _default_provider_instance
+
+    api_key_stripped = api_key.strip()
+    if api_key_stripped != api_key or len(api_key_stripped) < 10:
+        logger.warning(
+            f"[WARN] FIRECRAWL_API_KEY appears malformed (len={len(api_key)}) — proceeding but may fail."
+        )
+
+    _default_provider_instance = FirecrawlProvider(api_key=api_key_stripped)
     return _default_provider_instance
 
 
@@ -452,3 +505,51 @@ class _EmptyProvider(ScrapingProvider):
 
     def crawl(self, config: CrawlConfig) -> CrawlResult:
         return CrawlResult(documents=[], total_pages=0, credits_used=0)
+
+
+# ---------------------------------------------------------------------------
+# Firecrawl fallback wrapper
+# ---------------------------------------------------------------------------
+
+
+def with_firecrawl_fallback(
+    scraper_fn,
+    retailer: str,
+    firecrawl_search_url: str,
+    use_structured_extraction: bool = True,
+) -> tuple[list[dict[str, Any]], str]:
+    """Wrapper that tries the bespoke scraper first, then falls back to Firecrawl.
+
+    Args:
+        scraper_fn: Callable that returns a list of product dicts (bespoke scraper).
+        retailer: Retailer key for FirecrawlScraper.
+        firecrawl_search_url: URL to use for Firecrawl fallback.
+        use_structured_extraction: Whether to use LLM-structured extraction.
+
+    Returns:
+        Tuple of (results list, source string) where source is:
+        - "bespoke" if the original scraper returned results
+        - "firecrawl_fallback" if Firecrawl fallback was used
+        - "none" if both failed
+    """
+    results = scraper_fn()
+    if results:
+        return (results, "bespoke")
+
+    logger.info(f"[{retailer}] Bespoke scraper returned no results — trying Firecrawl fallback")
+
+    try:
+        scraper = FirecrawlScraper(
+            retailer=retailer,
+            search_url=firecrawl_search_url,
+            use_structured_extraction=use_structured_extraction,
+        )
+        results = scraper.scrape()
+        if results:
+            logger.info(f"[{retailer}] Firecrawl fallback found {len(results)} products")
+            return (results, "firecrawl_fallback")
+    except Exception as e:
+        logger.warning(f"[{retailer}] Firecrawl fallback failed: {e}")
+
+    logger.warning(f"[{retailer}] Both bespoke and Firecrawl fallback returned no results")
+    return ([], "none")

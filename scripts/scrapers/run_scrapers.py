@@ -35,15 +35,14 @@ def _log(message: str):
     print(f"[{ts}] {message}")
 
 
-def _extract_variant(product_name: str) -> str:
+def _extract_variant(product_name: str) -> str | None:
     """Extract the Monster variant keyword from a scraped product name.
 
     Args:
         product_name: The scraped product name (e.g., 'Monster Ultra White')
 
     Returns:
-        One of the 17 supported variant slugs.
-        Falls back to 'zero_sugar' (most common variant).
+        One of the 17 supported variant slugs, or None if unrecognized.
     """
     lowered = product_name.lower()
 
@@ -100,12 +99,41 @@ def _extract_variant(product_name: str) -> str:
     if "ultra white" in lowered:
         return "ultra_white"
 
+    # Ripper
+    if "ripper" in lowered:
+        return "ripper"
+
+    # Monarch
+    if "monarch" in lowered:
+        if "monster" in lowered or "energy" in lowered:
+            return "monarch"
+
+    # The Doctor
+    if "the doctor" in lowered or "doctor" in lowered:
+        return "the_doctor"
+
+    # Pacific Punch
+    if "pacific punch" in lowered:
+        return "pacific_punch"
+
+    # Ultra Fiesta
+    if "ultra fiesta" in lowered or "fiesta" in lowered:
+        return "ultra_fiesta"
+
+    # Aussie Lemonade
+    if "aussie lemonade" in lowered or ("aussie" in lowered and "lemonade" in lowered):
+        return "aussie_lemonade"
+
+    # Nitro Super Dry
+    if "nitro super dry" in lowered or ("nitro" in lowered and "super dry" in lowered):
+        return "nitro_super_dry"
+
     # Zero Sugar
     if "zero sugar" in lowered or "white zero" in lowered:
         return "zero_sugar"
 
-    # Fallback: most common variant
-    return "zero_sugar"
+    # No match — caller must handle
+    return None
 
 
 def get_or_create_store(
@@ -157,6 +185,9 @@ def push_prices(
             continue
 
         variant = _extract_variant(p["product_name"])
+        if variant is None:
+            print(f"  [UNKNOWN_VARIANT] Could not classify '{p['product_name']}' — skipping")
+            continue
         pack_size = BaseScraper._detect_pack_size(p["product_name"])
 
         if pack_size == "unknown":
@@ -177,6 +208,18 @@ def push_prices(
 
         product_id = product_result.data[0]["id"]
         print(f"  Matched '{p['product_name']}' -> product_id={product_id}")
+
+        # Record in price_history (append-only audit log)
+        try:
+            supabase.table("price_history").insert({
+                "store_id": store_id,
+                "product_id": product_id,
+                "price": p["price"],
+                "source": "scraper",
+                "recorded_at": now,
+            }).execute()
+        except Exception as ph_err:
+            print(f"  [WARN] Failed to write price_history: {ph_err}")
 
         supabase.table("prices").upsert(
             {
@@ -201,6 +244,7 @@ def main():
 
     supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
     _log("=== Monster Cork Scraper ===")
+    _STALE_ALERT_FIRED = False
 
     _log("--- Lidl Ireland ---")
     try:
@@ -312,6 +356,90 @@ def main():
     else:
         _log("Firecrawl scrapers skipped (FIRECRAWL_API_KEY not set or firecrawl_ie not available)")
 
+    # Build structured results for tooling
+    run_results = {}
+    for name, prices in [
+        ("Lidl", lidl_prices),
+        ("Aldi", aldi_prices),
+        ("Tesco", tesco_prices),
+        ("SuperValu", supervalu_prices),
+        ("SuperValu Soft Drinks", supervalu_sd_prices),
+        ("Dunnes", dunnes_prices),
+        ("Centra", centra_prices),
+    ]:
+        if cloudflare_blocked.get(name):
+            run_results[name] = {
+                "attempted": True,
+                "result_count": 0,
+                "source": "bespoke",
+                "error": "Cloudflare blocked",
+            }
+        elif prices and prices != "FAILED":
+            run_results[name] = {
+                "attempted": True,
+                "result_count": len(prices),
+                "source": "bespoke",
+                "error": None,
+            }
+        elif prices == "FAILED":
+            run_results[name] = {
+                "attempted": True,
+                "result_count": 0,
+                "source": "none",
+                "error": "scraper raised exception",
+            }
+        else:
+            run_results[name] = {
+                "attempted": True,
+                "result_count": 0,
+                "source": "none",
+                "error": "empty result",
+            }
+
+    for name, count in firecrawl_results.items():
+        label = name.title()
+        if isinstance(count, list):
+            run_results[label] = {
+                "attempted": True,
+                "result_count": len(count),
+                "source": "firecrawl",
+                "error": None,
+            }
+        else:
+            run_results[label] = {
+                "attempted": True,
+                "result_count": 0,
+                "source": "firecrawl",
+                "error": "FAILED",
+            }
+
+    print(f"\n___STRUCTURED_RESULTS___")
+    import json
+    print(json.dumps(run_results, indent=2))
+    print(f"___END_STRUCTURED_RESULTS___")
+
+    # --- STALE_ALERT check ---
+    total_retailers = len(results) + len(firecrawl_results)
+    zero_result_retailers = []
+    for name, count in results.items():
+        if cloudflare_blocked.get(name):
+            zero_result_retailers.append(f"{name} (Cloudflare blocked)")
+        elif count == "FAILED" or (isinstance(count, int) and count == 0):
+            zero_result_retailers.append(f"{name} (0 results)")
+    for name, count in firecrawl_results.items():
+        if isinstance(count, list) and len(count) == 0:
+            zero_result_retailers.append(f"{name} (Firecrawl: 0 results)")
+        elif count == "FAILED":
+            zero_result_retailers.append(f"{name} (Firecrawl: FAILED)")
+
+    if total_retailers > 0 and len(zero_result_retailers) / total_retailers >= 0.5:
+        print(f"\n[STALE_ALERT] {len(zero_result_retailers)}/{total_retailers} retailers returned zero results:")
+        for r in zero_result_retailers:
+            print(f"  [STALE_ALERT]   - {r}")
+        _STALE_ALERT_FIRED = True
+    else:
+        _STALE_ALERT_FIRED = False
+
     # Build results summary.
     results = {}
     for name, prices in [
@@ -344,6 +472,10 @@ def main():
     total = sum(v for v in results.values() if isinstance(v, int))
     total += sum(len(v) for v in firecrawl_results.values() if isinstance(v, list))
     print(f"  Total: {total} prices")
+
+    if _STALE_ALERT_FIRED:
+        print("\n[STALE_ALERT] Threshold exceeded — exiting with code 1")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

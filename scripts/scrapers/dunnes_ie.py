@@ -7,6 +7,9 @@ productCardDictionary keyed by product IDs from searchResults.
 CSS selectors don't work because the server-rendered HTML has
 no product cards. curl_cffi with impersonate="chrome" bypasses
 Cloudflare. Search for "monster" (not "monster white").
+
+When Cloudflare blocks curl_cffi, the scraper falls back to Firecrawl
+for resilience.
 """
 
 from curl_cffi import requests as curl_requests
@@ -23,6 +26,11 @@ CLOUDFLARE_MARKERS = [
     "cf-browser-verification",
     "cf-challenge-running",
 ]
+
+# Firecrawl fallback URL for Dunnes (used when Cloudflare blocks curl_cffi).
+DUNNES_FIRECRAWL_URL = (
+    "https://www.dunnesstoresgrocery.com/sm/delivery/rsid/258/results?q=monster"
+)
 
 
 class DunnesIEScraper(BaseScraper):
@@ -55,8 +63,13 @@ class DunnesIEScraper(BaseScraper):
             # Check for Cloudflare challenge before generic status handling.
             # Cloudflare may return 200 with a challenge page, 403, or 503.
             if self._is_cloudflare_challenge(response.text):
-                self.cloudflare_blocked = True
-                self._log(f"  [CLOUDFLARE_BLOCKED] Cloudflare challenge detected (HTTP {response.status_code}) — cannot scrape")
+                self._log("[DUNNES] Cloudflare detected — falling back to Firecrawl")
+                firecrawl_results = self._firecrawl_fallback()
+                if firecrawl_results:
+                    filtered = self._filter_by_pack_size(firecrawl_results, pack_size)
+                    self._log(f"Firecrawl fallback found {len(filtered)} Monster products")
+                    return filtered
+                self._log("[DUNNES_HARD_FAIL] Both curl_cffi and Firecrawl failed")
                 return []
 
             if not response.ok:
@@ -70,6 +83,23 @@ class DunnesIEScraper(BaseScraper):
 
         except Exception as e:
             self._log(f"Error after retries: {e}")
+            return []
+
+    def _firecrawl_fallback(self) -> List[Dict]:
+        """Attempt to scrape Dunnes via Firecrawl when Cloudflare blocks curl_cffi."""
+        try:
+            from firecrawl_ie import with_firecrawl_fallback
+            results, source = with_firecrawl_fallback(
+                scraper_fn=lambda: [],
+                retailer="dunnes",
+                firecrawl_search_url=DUNNES_FIRECRAWL_URL,
+                use_structured_extraction=True,
+            )
+            if source == "firecrawl_fallback":
+                self._log(f"Firecrawl fallback found {len(results)} products")
+            return results
+        except Exception as e:
+            self._log(f"Firecrawl fallback error: {e}")
             return []
 
     def _extract_products(self, html: str) -> List[Dict]:
