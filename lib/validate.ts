@@ -1,4 +1,4 @@
-import { MIN_RADIUS_KM, MAX_RADIUS_KM } from './constants'
+import { MIN_RADIUS_KM, MAX_RADIUS_KM, getPackCount, PACK_SIZES } from './constants'
 
 export function validateLat(value: unknown, field = 'lat'): number {
   if (value == null) throw new Error(`Invalid ${field}: must be a valid number`)
@@ -53,10 +53,11 @@ export function validateOptionalString(value: unknown, field: string, max: numbe
 export function validatePrice(value: unknown, packSize: string = 'single', field = 'price'): number {
   const num = Number(value)
   if (!Number.isFinite(num)) throw new Error(`Invalid ${field}: must be a valid finite number`)
-  if (packSize === '4_pack') {
-    if (num < 3 || num > 20) throw new Error(`Invalid ${field}: 4-pack price must be between €3 and €20`)
-  } else {
-    if (num < 0.5 || num > 5) throw new Error(`Invalid ${field}: single can price must be between €0.50 and €5.00`)
-  }
+  const count = getPackCount(packSize)
+  const perCanMin = 0.50
+  const perCanMax = 2.00
+  const min = perCanMin * count
+  const max = perCanMax * count
+  if (num < min || num > max) throw new Error(`Invalid ${field}: price must be between €${min.toFixed(2)} and €${max.toFixed(2)}`)
   return num
 }

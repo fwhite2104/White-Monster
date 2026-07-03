@@ -47,3 +47,19 @@ jobs:
         with:
           name: scraper-logs
           path: scripts/scrapers/scraper-output.log
+
+      - name: Notify Discord on failure
+        if: failure()
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          curl -sf -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "❌ Scraper Failed",
+                "description": "**Workflow:** ${{ github.workflow }}\n**Run:** [${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n**Branch:** ${{ github.ref_name }}\n**Trigger:** ${{ github.event_name }}",
+                "color": 15548997
+              }]
+            }'

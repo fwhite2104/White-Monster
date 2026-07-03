@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
 import { X, TrendingDown, MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getPackCount } from '@/lib/constants'
 import type { Price } from '@/lib/types'
 
 interface SavingsBarProps {
@@ -21,14 +22,13 @@ export function SavingsBar({ prices }: SavingsBarProps) {
     const diff = Number(mostExpensive.price) - Number(cheapest.price)
     if (diff <= 0) return null
     const cheapestProduct = cheapest.products ?? { pack_size: 'single' }
+    const count = getPackCount(cheapestProduct.pack_size)
     return {
       amount: diff,
       storeName: cheapest.stores?.name ?? 'Unknown',
       cheapestPrice: Number(cheapest.price),
       mostExpensivePrice: Number(mostExpensive.price),
-      cheapestPerCan: cheapestProduct.pack_size === '4_pack'
-        ? Number(cheapest.per_can_price ?? Number(cheapest.price) / 4).toFixed(2)
-        : null,
+      cheapestPerCan: count > 1 ? (cheapest.per_can_price ? Number(cheapest.per_can_price).toFixed(2) : (Number(cheapest.price) / count).toFixed(2)) : null,
     }
   }, [prices])
 

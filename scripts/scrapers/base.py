@@ -101,35 +101,25 @@ class BaseScraper(ABC):
 
     @staticmethod
     def _detect_pack_size(product_name: str) -> str:
-        """Detect if a product is a 4-pack or single can from its name.
+        """Detect pack size from product name using numeric patterns.
 
         Returns:
-            '4_pack' if the product name indicates a 4-pack/multi-pack
-            'single' if it indicates a single can
-            'unknown' if it cannot be determined
+            '{n}_pack' for multi-packs where n >= 2 (e.g., '6_pack', '12_pack', '24_pack')
+            'single' for single cans
+            'unknown' if no numeric pack indicator is found
         """
         lowered = product_name.lower()
 
-        # 4-pack indicators (order matters - check these first)
-        four_pack_patterns = [
-            r'\b4\s*pack\b',
-            r'\b4\s*x\s*',
-            r'\b4x\b',
-            r'\b4\s*×',
-            r'\b4\s*pc\b',
-            r'\b4\s*pk\b',
-            r'\b4\s*can\b',
-            r'\bfour\s*pack\b',
-            r'\bmultipack\b',
-            r'\bmulti\s*pack\b',
-            r'\b4\s*\*\s*',
-        ]
+        # ---- Specific conventions (must preserve existing behavior) ----
+        # "multipack" / "multi pack" → 4_pack (existing convention)
+        if re.search(r'\bmultipack\b|\bmulti\s*pack\b', lowered):
+            return '4_pack'
 
-        for pattern in four_pack_patterns:
-            if re.search(pattern, lowered):
-                return '4_pack'
+        # "four pack" → 4_pack (existing convention)
+        if re.search(r'\bfour\s*pack\b', lowered):
+            return '4_pack'
 
-        # Single can indicators
+        # ---- Single can indicators ----
         single_patterns = [
             r'\bsingle\b',
             r'\b1\s*x\s*',
@@ -138,17 +128,52 @@ class BaseScraper(ABC):
             r'\b1\s*pack\b',
             r'\bone\s*can\b',
         ]
-
         for pattern in single_patterns:
             if re.search(pattern, lowered):
                 return 'single'
 
-        # If it says just "500ml" without any pack indicator, it's likely single
-        # If it says "4 x 500ml" or similar, it's a 4-pack (already caught above)
+        # ---- Generic numeric pack size patterns ----
+        # Extract a pack count number; normalize to '{n}_pack' or 'single'
+        pack_count: int | None = None
+
+        # Pattern 1: "6pk", "12-pack", "8pck", "6pc", "4ct", "12 ct"
+        m = re.search(r'\b(\d+)\s*[-]?\s*(pack|pk|pck|pc|ct)\b', lowered)
+        if m:
+            pack_count = int(m.group(1))
+
+        # Pattern 2: "pack of 8", "multi of 12", "multi 12"
+        if pack_count is None:
+            m = re.search(r'\b(pack|multi)\s*(?:of\s+)?(\d+)\b', lowered)
+            if m:
+                pack_count = int(m.group(2))
+
+        # Pattern 3: "8 can", "12 cans"
+        if pack_count is None:
+            m = re.search(r'\b(\d+)\s*(can|cans)\b', lowered)
+            if m:
+                pack_count = int(m.group(1))
+
+        # Pattern 4: "6 × 500ml", "8x500ml", "4*500ml", "24x500ml" (N containers of V ml)
+        if pack_count is None:
+            m = re.search(r'\b(\d+)\s*[×x*]\s*\d+\s*(ml|oz|l)\b', lowered)
+            if m:
+                pack_count = int(m.group(1))
+
+        # Pattern 5: bare "Nx" at word boundary ("24x", "6x")
+        if pack_count is None:
+            m = re.search(r'\b(\d+)x\b', lowered)
+            if m:
+                pack_count = int(m.group(1))
+
+        # ---- Normalize extracted number ----
+        if pack_count is not None:
+            if pack_count == 1:
+                return 'single'
+            return f'{pack_count}_pack'
+
+        # ---- Fallback heuristics ----
+        # "500ml" with no pack indicator → single can
         if re.search(r'\b500ml\b|\b500\s*ml\b', lowered):
-            # Check if there's any number before the ml that suggests multi-pack
-            if re.search(r'\b[2-9]\s*x\s*\d+\s*ml', lowered):
-                return '4_pack'
             return 'single'
 
         return 'unknown'

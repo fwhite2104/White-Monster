@@ -3,7 +3,7 @@
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { TrendingDown, MapPin, Store, Database, Users, AlertTriangle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { getRetailerColor } from '@/lib/constants'
+import { getRetailerColor, getPackCount } from '@/lib/constants'
 import { getFreshnessLabel } from '@/lib/geo'
 import type { Price } from '@/lib/types'
 
@@ -21,9 +21,8 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, maxSavin
   const store = bestPrice.stores ?? { name: 'Unknown Store', retailer: 'other', suburb: '' }
   const product = bestPrice.products ?? { name: 'Unknown Product' }
   const retailerColor = getRetailerColor(store.retailer ?? 'other')
-  const perCanPrice = bestPrice.products?.pack_size === '4_pack'
-    ? Number(bestPrice.per_can_price ?? Number(bestPrice.price) / 4).toFixed(2)
-    : null
+  const count = getPackCount(bestPrice.products?.pack_size ?? 'single')
+  const perCanPrice = count > 1 ? Number(bestPrice.per_can_price ?? Number(bestPrice.price) / count).toFixed(2) : null
   const savings = nextBestPrice
     ? Number(nextBestPrice.price) - Number(bestPrice.price)
     : legacySavings ?? null
@@ -139,7 +138,7 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, maxSavin
                     {'€'}{maxSavings.amount.toFixed(2)}
                   </p>
                   <p className="text-xs text-muted-foreground/70 mt-0.5">
-                    on {maxSavings.packSize === '4_pack' ? 'multipacks' : 'single cans'}
+                    on {maxSavings.packSize !== 'single' ? 'multipacks' : 'single cans'}
                   </p>
                 </div>
               </motion.div>

@@ -49,6 +49,31 @@ export const DEFAULT_FILTERS = {
 /** Max age for a cached GPS fix before auto-refresh silently re-requests. 20 minutes. */
 export const LOCATION_MAX_AGE_MS = 20 * 60 * 1000
 
+/** All supported pack sizes. Defined once and used by API validation, filters, and forms. */
+export const PACK_SIZES = ['single', '4_pack', '6_pack', '8_pack', '10_pack', '12_pack', '24_pack'] as const
+export type PackSize = (typeof PACK_SIZES)[number]
+
+/**
+ * Parse the numeric can count from a pack_size string.
+ * 'single' → 1, '4_pack' → 4, '6_pack' → 6, '12_pack' → 12, etc.
+ * Falls back to 1 for unrecognized values.
+ */
+export function getPackCount(packSize: string): number {
+  if (packSize === 'single') return 1
+  const match = packSize.match(/^(\d+)_pack$/)
+  return match ? parseInt(match[1], 10) : 1
+}
+
+/**
+ * Format a pack_size value for human-readable display.
+ * 'single' → 'Single can', '4_pack' → '4-Pack', '6_pack' → '6-Pack'.
+ */
+export function formatPackSize(packSize: string): string {
+  if (packSize === 'single') return 'Single can'
+  const match = packSize.match(/^(\d+)_pack$/)
+  return match ? `${match[1]}-Pack` : packSize
+}
+
 export function getRetailerColor(retailer: string): string {
   const found = RETAILERS.find((r) => r.value === retailer.toLowerCase())
   return found?.color ?? '#6B7280'

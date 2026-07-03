@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu'
 import { getDistance } from 'geolib'
-import { CORK_CENTER, getRetailerColor } from '@/lib/constants'
+import { CORK_CENTER, getPackCount, formatPackSize, getRetailerColor } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { getTimeAgo } from '@/lib/geo'
 import { PriceAlertDialog } from '@/components/dashboard/PriceAlertDialog'
@@ -36,15 +36,14 @@ function getVariantLabel(product: { variant?: string; pack_size?: string }): str
   const variantName = product.variant
     ? product.variant.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
     : ''
-  const packLabel = product.pack_size === '4_pack' ? '4-pack'
-    : product.pack_size === 'single' ? 'Single can'
-    : product.pack_size ?? ''
+  const packLabel = formatPackSize(product.pack_size ?? '')
   return [variantName, packLabel].filter(Boolean).join(' · ')
 }
 
 function formatPerCanPrice(price: Price): string | null {
-  if (price.products?.pack_size !== '4_pack') return null
-  return Number(price.per_can_price ?? Number(price.price) / 4).toFixed(2)
+  const count = getPackCount(price.products?.pack_size ?? 'single')
+  if (count <= 1) return null
+  return Number(price.per_can_price ?? Number(price.price) / count).toFixed(2)
 }
 
 export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onReportPrice }: PriceCardProps) {

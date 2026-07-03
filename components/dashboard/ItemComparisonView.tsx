@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { MapPin, Sparkles, Tag } from 'lucide-react'
 import { getDistance } from 'geolib'
-import { CORK_CENTER, getRetailerColor } from '@/lib/constants'
+import { CORK_CENTER, getPackCount, formatPackSize, getRetailerColor } from '@/lib/constants'
 import { formatDistance } from '@/lib/geo'
 import type { Price } from '@/lib/types'
 
@@ -28,8 +28,9 @@ function formatVariantLabel(variant: string): string {
 }
 
 function getPerCanPrice(price: Price): number | null {
-  if (price.products?.pack_size !== '4_pack') return null
-  return Number(price.per_can_price ?? Number(price.price) / 4)
+  const count = getPackCount(price.products?.pack_size ?? 'single')
+  if (count <= 1) return null
+  return Number(price.per_can_price ?? Number(price.price) / count)
 }
 
 function PriceStoreCard({
@@ -126,7 +127,7 @@ function PriceStoreCard({
             {price.products?.pack_size && (
               <Badge variant="outline" className="border-foreground/15 text-xs h-4 px-1.5">
                 <Tag className="h-2.5 w-2.5 mr-0.5" />
-                {price.products.pack_size === '4_pack' ? '4-pack' : 'Single'}
+                {formatPackSize(price.products?.pack_size ?? '')}
               </Badge>
             )}
           </div>

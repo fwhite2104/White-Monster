@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
-import { MONSTER_VARIANTS, MIN_RADIUS_KM, MAX_RADIUS_KM } from '@/lib/constants'
+import { MONSTER_VARIANTS, MIN_RADIUS_KM, MAX_RADIUS_KM, PACK_SIZES, formatPackSize } from '@/lib/constants'
 import { ClubcardToggle } from '@/components/dashboard/ClubcardToggle'
 
 interface FilterDrawerProps {
@@ -56,8 +56,9 @@ const SORT_ITEMS = {
 const PACK_SIZE_ITEMS = {
   all: 'All sizes',
   single: 'Single can',
-  '4_pack': '4-Pack',
+  multipack: 'Multipack',
 }
+const MULTIPACK_OPTIONS = PACK_SIZES.filter((s) => s !== 'single')
 const VARIANT_ITEMS = Object.fromEntries(MONSTER_VARIANTS.map((v) => [v.value, v.label]))
 
 export function FilterDrawer({
@@ -100,8 +101,8 @@ export function FilterDrawer({
     },
     {
       label: 'Multipacks',
-      isActive: (_s, _v, p) => p === '4_pack',
-      apply: () => onPackSizeChange('4_pack'),
+      isActive: (_s, _v, p) => p === 'multipack' || MULTIPACK_OPTIONS.includes(p as typeof MULTIPACK_OPTIONS[number]),
+      apply: () => onPackSizeChange('multipack'),
     },
   ]
 
@@ -239,16 +240,53 @@ export function FilterDrawer({
 
               <div className="space-y-2">
                 <Label>Pack size</Label>
-                <Select items={PACK_SIZE_ITEMS} value={packSize} onValueChange={(val) => val && onPackSizeChange(val)}>
-                  <SelectTrigger className="w-full h-11">
-                    <SelectValue placeholder="Pack size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All sizes</SelectItem>
-                    <SelectItem value="single">Single can</SelectItem>
-                    <SelectItem value="4_pack">4-Pack</SelectItem>
-                  </SelectContent>
-                </Select>
+                {(() => {
+                  const isSpecificMultipack = MULTIPACK_OPTIONS.includes(packSize as typeof MULTIPACK_OPTIONS[number])
+                  const selectValue = isSpecificMultipack ? 'multipack' : packSize
+                  return (
+                    <>
+                      <Select items={PACK_SIZE_ITEMS} value={selectValue} onValueChange={(val) => {
+                        if (!val) return
+                        if (val === 'multipack') {
+                          onPackSizeChange('multipack')
+                        } else {
+                          onPackSizeChange(val)
+                        }
+                      }}>
+                        <SelectTrigger className="w-full h-11">
+                          <SelectValue placeholder="Pack size" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All sizes</SelectItem>
+                          <SelectItem value="single">Single can</SelectItem>
+                          <SelectItem value="multipack">Multipack</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {(selectValue === 'multipack') && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {MULTIPACK_OPTIONS.map((size) => {
+                            const active = packSize === size
+                            return (
+                              <button
+                                key={size}
+                                type="button"
+                                onClick={() => onPackSizeChange(active ? 'multipack' : size)}
+                                className={cn(
+                                  'inline-flex items-center h-8 px-3 rounded-full text-xs font-medium transition-colors',
+                                  active
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                )}
+                              >
+                                {formatPackSize(size)}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
               </div>
 
               <div className="space-y-3 pt-1">

@@ -37,7 +37,7 @@ export interface Price {
   stores?: Store
   products?: Product
   distance?: number
-  /** Price per individual can, computed from pack_size. Equal to `price` for singles, `price / 4` for 4-packs. */
+  /** Price per individual can, computed from pack_size using getPackCount(). Equal to `price` for singles, `price / count` for multipacks. */
   per_can_price?: number
   /** DRS deposit included in the displayed price. €0.15 per 250ml can. */
   drs_deposit?: number

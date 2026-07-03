@@ -23,7 +23,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { useGeolocation } from '@/hooks/use-geolocation'
-import { RETAILERS, CORK_CENTER, MONSTER_VARIANTS } from '@/lib/constants'
+import { RETAILERS, CORK_CENTER, MONSTER_VARIANTS, PACK_SIZES, getPackCount, formatPackSize } from '@/lib/constants'
 
 const CORK_STORES = [
   'Centra Wilton',
@@ -101,10 +101,11 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange,
   }, [])
 
   const priceVal = parseFloat(formData.price)
+  const packCount = getPackCount(formData.packSize)
+  const perCanMin = 0.5
+  const perCanMax = 2.0
   const priceValid = formData.price === '' ? null : (
-    !isNaN(priceVal) && (
-      formData.packSize === '4_pack' ? (priceVal >= 3 && priceVal <= 20) : (priceVal >= 0.5 && priceVal <= 5)
-    )
+    !isNaN(priceVal) && priceVal >= perCanMin * packCount && priceVal <= perCanMax * packCount
   )
   const storeNameValid = formData.storeName.trim().length >= 3 ? true : formData.storeName === '' ? null : false
 
@@ -117,13 +118,9 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange,
       markTouched('price')
       return
     }
-    if (formData.packSize === '4_pack' && (priceVal < 3 || priceVal > 20)) {
-      setSubmitError('4-pack price must be between €3 and €20')
-      markTouched('price')
-      return
-    }
-    if (formData.packSize === 'single' && (priceVal < 0.5 || priceVal > 5)) {
-      setSubmitError('Single can price must be between €0.50 and €5.00')
+    const count = getPackCount(formData.packSize)
+    if (priceVal < perCanMin * count || priceVal > perCanMax * count) {
+      setSubmitError(`Price must be between €${(perCanMin * count).toFixed(2)} and €${(perCanMax * count).toFixed(2)} for ${formatPackSize(formData.packSize)}`)
       markTouched('price')
       return
     }
@@ -132,7 +129,7 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange,
     const lng = location != null && Number.isFinite(location.lng) ? location.lng : CORK_CENTER.lng
 
     const variantLabel = MONSTER_VARIANTS.find(v => v.value === formData.variant)?.label ?? 'White Monster Zero Sugar'
-    const suffix = formData.packSize === '4_pack' ? ' 4-Pack' : ''
+    const suffix = formData.packSize !== 'single' ? ` ${formatPackSize(formData.packSize)}` : ''
     const productName = `${variantLabel}${suffix}`
 
     setSubmitting(true)
@@ -333,7 +330,7 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange,
                 <div>
                   <Label htmlFor={`${formId}-packsize`}>Pack Size</Label>
                   <Select
-                    items={{ single: 'Single Can', '4_pack': '4-Pack' }}
+                    items={Object.fromEntries(PACK_SIZES.map((s) => [s, formatPackSize(s)]))}
                     value={formData.packSize}
                     onValueChange={(v) => v && setFormData({ ...formData, packSize: v })}
                   >
@@ -341,8 +338,11 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange,
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="single">Single Can</SelectItem>
-                      <SelectItem value="4_pack">4-Pack</SelectItem>
+                      {PACK_SIZES.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {formatPackSize(s)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -354,9 +354,9 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange,
                       id={`${formId}-price`}
                       type="number"
                       step="0.01"
-                      min={formData.packSize === '4_pack' ? 3 : 0.5}
-                      max={formData.packSize === '4_pack' ? 20 : 5}
-                      placeholder={formData.packSize === '4_pack' ? '6.50' : '2.50'}
+                      min={perCanMin * packCount}
+                      max={perCanMax * packCount}
+                      placeholder={(packCount * 1.5).toFixed(2)}
                       value={formData.price}
                       onChange={(e) =>
                         setFormData({ ...formData, price: e.target.value })
@@ -386,9 +386,9 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange,
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {formData.packSize === '4_pack'
-                      ? 'Enter the total 4-pack price (typically €5–€9)'
-                      : 'Enter the price per single can (typically €1.50–€3)'}
+                    {packCount > 1
+                      ? `Enter the total ${formatPackSize(formData.packSize).toLowerCase()} price (€${(perCanMin * packCount).toFixed(2)}–€${(perCanMax * packCount).toFixed(2)})`
+                      : 'Enter the price per single can (€0.50–€2.00)'}
                   </p>
                 </div>
 

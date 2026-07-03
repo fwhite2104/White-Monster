@@ -72,13 +72,17 @@ class SuperValuSoftDrinksScraper(BaseScraper):
             for item in items:
                 name = item.get("name", "")
                 brand = item.get("brand", "")
-                if "monster" in name.lower() or "monster" in brand.lower():
-                    results.append({
-                        "product_name": name,
-                        "price": float(item.get("priceNumeric", 0)),
-                        "currency": "EUR",
-                        "retailer": "supervalu",
-                    })
+                if not ("monster" in name.lower() or "monster" in brand.lower()):
+                    continue
+                if not self._validate_monster_product(name):
+                    continue
+
+                results.append({
+                    "product_name": name,
+                    "price": float(item.get("priceNumeric", 0)),
+                    "currency": "EUR",
+                    "retailer": "supervalu",
+                })
 
             total = data.get("total", 0)
             if page * take >= total or page * take >= max_items:

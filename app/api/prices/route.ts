@@ -7,6 +7,8 @@ import {
   DEFAULT_RADIUS_KM,
   MONSTER_VARIANTS,
   RETAILERS,
+  PACK_SIZES,
+  getPackCount,
 } from '@/lib/constants'
 import {
   validateLat,
@@ -57,7 +59,7 @@ export async function GET(request: NextRequest) {
     const sort = validateEnum(sortParam, 'sort', ['price', 'distance', 'name'])
 
     const packSizeParam = searchParams.get('pack_size') ?? 'all'
-    const packSize = validateEnum(packSizeParam, 'pack_size', ['all', 'single', '4_pack'])
+    const packSize = validateEnum(packSizeParam, 'pack_size', ['all', 'multipack', ...PACK_SIZES])
 
     const radiusMeters = radiusKm * 1000
 
@@ -192,7 +194,7 @@ export async function GET(request: NextRequest) {
       const rowPackSize = row.products.pack_size
       const totalPrice = Number(row.price)
       const { base_price, drs_deposit } = splitPrice(totalPrice, rowPackSize)
-      const perCanPrice = rowPackSize === '4_pack' ? totalPrice / 4 : totalPrice
+        const perCanPrice = getPackCount(rowPackSize) > 1 ? totalPrice / getPackCount(rowPackSize) : totalPrice
       const storeRetailer = row.stores.retailer
       const clubcardPrice = (row as unknown as Record<string, unknown>).clubcard_price !== undefined
         ? (row as unknown as Record<string, unknown>).clubcard_price
@@ -228,7 +230,7 @@ export async function GET(request: NextRequest) {
       const rowPackSize = row.products.pack_size
       const totalPrice = Number(row.price)
       const { base_price, drs_deposit } = splitPrice(totalPrice, rowPackSize)
-      const perCanPrice = rowPackSize === '4_pack' ? totalPrice / 4 : totalPrice
+        const perCanPrice = getPackCount(rowPackSize) > 1 ? totalPrice / getPackCount(rowPackSize) : totalPrice
 
       return {
         id: row.id,
@@ -319,7 +321,7 @@ export async function POST(request: NextRequest) {
       body.retailer && body.retailer !== ''
         ? validateEnum(body.retailer, 'retailer', RETAILERS.map((r) => r.value))
         : 'other'
-    const packSize = validateEnum(body.packSize ?? 'single', 'packSize', ['single', '4_pack'])
+    const packSize = validateEnum(body.packSize ?? 'single', 'packSize', [...PACK_SIZES])
     const price = validatePrice(body.price, packSize)
     const variant = validateEnum(body.variant ?? 'zero_sugar', 'variant', MONSTER_VARIANTS.map((v) => v.value))
     const lat = validateLat(body.lat)

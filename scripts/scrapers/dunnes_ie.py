@@ -33,6 +33,7 @@ class DunnesIEScraper(BaseScraper):
 
     def __init__(self):
         super().__init__("dunnes", delay=2.0)
+        self.cloudflare_blocked = False
         self.session = curl_requests.Session(impersonate="chrome")
         self.session.headers.update({
             "User-Agent": (
@@ -51,12 +52,15 @@ class DunnesIEScraper(BaseScraper):
                 lambda: self.session.get(url, timeout=self.timeout)
             )
 
-            if not response.ok:
-                self._log(f"Non-200 status: {response.status_code}")
+            # Check for Cloudflare challenge before generic status handling.
+            # Cloudflare may return 200 with a challenge page, 403, or 503.
+            if self._is_cloudflare_challenge(response.text):
+                self.cloudflare_blocked = True
+                self._log(f"  [CLOUDFLARE_BLOCKED] Cloudflare challenge detected (HTTP {response.status_code}) — cannot scrape")
                 return []
 
-            if self._is_cloudflare_challenge(response.text):
-                self._log("Cloudflare challenge detected — cannot scrape")
+            if not response.ok:
+                self._log(f"Non-200 status: {response.status_code}")
                 return []
 
             results = self._extract_products(response.text)

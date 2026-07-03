@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Tag, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { formatPackSize } from '@/lib/constants'
 import type { Store, Product } from '@/lib/types'
 
 interface PriceReportFlowProps {
@@ -89,7 +90,7 @@ export function PriceReportFlow({ store, products, open, onOpenChange }: PriceRe
                 <option value="">Select product</option>
                 {products.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} ({p.pack_size === '4_pack' ? '4-pack' : 'single'})
+                    {p.name} ({formatPackSize(p.pack_size)})
                   </option>
                 ))}
               </select>

@@ -5,7 +5,7 @@ import { X, MapPin, Package } from 'lucide-react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { getRetailerColor } from '@/lib/constants'
+import { getRetailerColor, formatPackSize } from '@/lib/constants'
 import type { Price, Product, Store } from '@/lib/types'
 
 interface ScanResultProps {
@@ -36,7 +36,7 @@ export function ScanResult({ product, prices, onClose }: ScanResultProps) {
             {product.variant.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
             {' · '}
             {product.size_ml}ml
-            {product.pack_size === '4_pack' && ' · 4-pack'}
+            {product.pack_size && product.pack_size !== 'single' && ` · ${formatPackSize(product.pack_size)}`}
           </p>
         </div>
         {best && (

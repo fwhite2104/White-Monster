@@ -119,6 +119,7 @@ def get_or_create_store(
             "lng": lng,
             "suburb": suburb,
             "address": "National pricing",
+            "is_approved": True,
         },
         on_conflict="name,retailer",
     ).execute()
@@ -159,7 +160,8 @@ def push_prices(
         pack_size = BaseScraper._detect_pack_size(p["product_name"])
 
         if pack_size == "unknown":
-            pack_size = "single"
+            print(f"  [PACK_SIZE_UNMATCHED] Could not determine pack size for '{p['product_name']}' — skipping")
+            continue
 
         product_result = (
             supabase.table("products")
@@ -252,9 +254,11 @@ def main():
         _log(f"  [WARN] SuperValu Soft Drinks scraper failed: {e}")
         supervalu_sd_prices = []
 
+    cloudflare_blocked: dict[str, bool] = {}
     _log("--- Dunnes Stores Ireland ---")
+    dunnes_scraper = DunnesIEScraper()
     try:
-        dunnes_prices = DunnesIEScraper().scrape()
+        dunnes_prices = dunnes_scraper.scrape()
         dunnes_store = get_or_create_store(
             supabase, "dunnes", "Dunnes Stores Ireland (National)", 51.8985, -8.4756, "Cork City"
         )
@@ -262,6 +266,7 @@ def main():
     except Exception as e:
         _log(f"  [WARN] Dunnes scraper failed: {e}")
         dunnes_prices = []
+    cloudflare_blocked["Dunnes"] = dunnes_scraper.cloudflare_blocked
 
     _log("--- Centra Ireland ---")
     try:
@@ -322,8 +327,12 @@ def main():
 
     print(f"\n=== Scraper Results Summary ===")
     for name, count in results.items():
-        status = f"{count} prices" if count != "FAILED" else "FAILED"
-        print(f"  {name}: {status}")
+        if cloudflare_blocked.get(name):
+            print(f"  {name}: 0 products (Cloudflare blocked)")
+        elif count != "FAILED":
+            print(f"  {name}: {count} prices")
+        else:
+            print(f"  {name}: FAILED")
     # Append Firecrawl-backed retailer results.
     if firecrawl_results:
         for name, count in firecrawl_results.items():

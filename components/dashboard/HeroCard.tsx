@@ -5,7 +5,7 @@ import { MapPin, TrendingDown, CirclePlus, AlertTriangle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { getRetailerColor } from '@/lib/constants'
+import { getRetailerColor, getPackCount, formatPackSize } from '@/lib/constants'
 import { formatDistance, getFreshnessLabel } from '@/lib/geo'
 import type { Price } from '@/lib/types'
 
@@ -22,9 +22,7 @@ function getVariantLabel(product: { variant?: string; pack_size?: string; size_m
   const variantName = product.variant
     ? product.variant.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
     : ''
-  const packLabel = product.pack_size === '4_pack' ? '4-pack'
-    : product.pack_size === 'single' ? 'Single can'
-    : product.pack_size ?? ''
+  const packLabel = formatPackSize(product.pack_size ?? '')
   return [variantName, packLabel].filter(Boolean).join(' · ')
 }
 
@@ -67,9 +65,8 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
   const product = bestPrice.products ?? { name: 'Monster', variant: 'unknown', pack_size: 'single' }
   const retailerColor = getRetailerColor(store.retailer)
   const distance = typeof bestPrice.distance === 'number' ? bestPrice.distance : 0
-  const perCanPrice = product.pack_size === '4_pack'
-    ? Number(bestPrice.per_can_price ?? Number(bestPrice.price) / 4).toFixed(2)
-    : null
+  const count = getPackCount(product.pack_size ?? 'single')
+  const perCanPrice = count > 1 ? (bestPrice.per_can_price ? Number(bestPrice.per_can_price).toFixed(2) : (Number(bestPrice.price) / count).toFixed(2)) : null
   const savings = nextBestPrice ? Number(nextBestPrice.price) - Number(bestPrice.price) : null
   const variantLabel = getVariantLabel(product)
   const freshness = getFreshnessLabel(bestPrice.scraped_at)

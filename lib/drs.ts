@@ -1,6 +1,8 @@
 // lib/drs.ts — Ireland Deposit Return Scheme calculation logic
 // DRS deposit: €0.15 per 250ml can (standard for all Monster Energy variants in this app)
 
+import { getPackCount } from './constants'
+
 const DRS_RATE_250ML = 0.15
 
 /**
@@ -11,7 +13,7 @@ export function calculateDrsDeposit(
   packSize: string,
   quantity: number = 1,
 ): number {
-  const cans = packSize === '4_pack' ? 4 : 1
+  const cans = getPackCount(packSize)
   return Number((DRS_RATE_250ML * cans * quantity).toFixed(2))
 }
 
@@ -30,12 +32,10 @@ export function splitPrice(
 }
 
 /**
- * Get DRS deposit per individual can.
+ * Get DRS deposit per individual can. Always €0.15 per 250ml can.
  */
-export function drsPerCan(packSize: string): number {
-  return packSize === '4_pack'
-    ? Number((DRS_RATE_250ML).toFixed(2))
-    : DRS_RATE_250ML
+export function drsPerCan(_packSize: string): number {
+  return DRS_RATE_250ML
 }
 
 export const DRS_INFO = {
