@@ -235,14 +235,19 @@ def push_prices(
         except Exception as ph_err:
             print(f"  [WARN] Failed to write price_history: {ph_err}")
 
+        upsert_data = {
+            "store_id": store_id,
+            "product_id": product_id,
+            "price": p["price"],
+            "source": "scraper",
+            "scraped_at": now,
+        }
+        if "has_clubcard_pricing" in p:
+            upsert_data["has_clubcard_pricing"] = p["has_clubcard_pricing"]
+        if "clubcard_price" in p and p["clubcard_price"] is not None:
+            upsert_data["clubcard_price"] = p["clubcard_price"]
         supabase.table("prices").upsert(
-            {
-                "store_id": store_id,
-                "product_id": product_id,
-                "price": p["price"],
-                "source": "scraper",
-                "scraped_at": now,
-            },
+            upsert_data,
             on_conflict="store_id,product_id,source",
         ).execute()
         print(f"  {p['product_name']}: EUR {p['price']}")
