@@ -152,7 +152,7 @@ export function PriceList({
   })
 
   return (
-    <div id="price-list" className="space-y-3">
+    <div id="price-list">
       {/* 2-column grid on sm+ screens, single column on mobile */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" role="list" aria-label="Price results">
         <AnimatePresence mode="popLayout">

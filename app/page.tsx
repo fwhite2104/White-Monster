@@ -170,7 +170,8 @@ export default function Home() {
     )
   }
 
-  const mapContent = (stores.length > 0 || loading) && (
+  // Always render map shell on lg+ so it doesn't unmount during loading/empty states (map flicker bug).
+  const mapContent = (
     <aside className="hidden lg:block lg:col-span-5 xl:col-span-4 h-full">
       <div className="sticky top-20 h-[calc(100vh-6rem)]">
         <MapErrorBoundary>

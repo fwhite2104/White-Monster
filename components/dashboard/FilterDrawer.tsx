@@ -139,7 +139,7 @@ export function FilterDrawer({
   }, [onSortChange, onVariantChange, onPackSizeChange, onRadiusChange])
 
   return (
-    <div className="space-y-3">
+    <div>
       <div
         ref={pillGroupRef}
         role="group"
