@@ -55,7 +55,7 @@ export const DEFAULT_FILTERS = {
 export const LOCATION_MAX_AGE_MS = 20 * 60 * 1000
 
 /** All supported pack sizes. Defined once and used by API validation, filters, and forms. */
-export const PACK_SIZES = ['single', '4_pack', '6_pack', '8_pack', '10_pack', '12_pack', '24_pack'] as const
+export const PACK_SIZES = ['single', '4_pack', '9_pack', '6_pack', '8_pack', '10_pack', '12_pack', '24_pack'] as const
 export type PackSize = (typeof PACK_SIZES)[number]
 
 /**

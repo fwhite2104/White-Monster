@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
-import { CORK_CENTER, LOCATION_MAX_AGE_MS } from '@/lib/constants'
-import { toast } from 'sonner'
+import { useState, useCallback, useRef } from 'react'
+import { CORK_CENTER } from '@/lib/constants'
 import { isValidCoordinate } from '@/lib/geo'
 
 export type LocationSource = 'gps' | 'manual' | 'cached' | 'default'
@@ -57,17 +56,12 @@ function getLocationLabel(location: LocationInfo | null, status: LocationStatus)
   return 'Location may be inaccurate'
 }
 
-function isLocationStale(timestamp: number | undefined): boolean {
-  if (timestamp === undefined) return true
-  return Date.now() - timestamp > LOCATION_MAX_AGE_MS
-}
-
-function loadCachedLocation(): { location: LocationInfo; timestamp: number } | null {
+function loadCachedLocation(): { location: LocationInfo; timestamp: number; denied?: boolean } | null {
   if (!isClient()) return null
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
-    const parsed = JSON.parse(raw) as { lat: number; lng: number; accuracy?: number; timestamp?: number }
+    const parsed = JSON.parse(raw) as { lat: number; lng: number; accuracy?: number; timestamp?: number; denied?: boolean }
     if (typeof parsed.lat !== 'number' || typeof parsed.lng !== 'number') return null
     return {
       location: {
@@ -77,13 +71,14 @@ function loadCachedLocation(): { location: LocationInfo; timestamp: number } | n
         source: 'cached',
       },
       timestamp: typeof parsed.timestamp === 'number' ? parsed.timestamp : 0,
+      denied: parsed.denied,
     }
   } catch {
     return null
   }
 }
 
-function saveLocationToStorage(location: LocationInfo): void {
+function saveLocationToStorage(location: LocationInfo, status?: LocationStatus): void {
   if (!isClient()) return
   try {
     localStorage.setItem(
@@ -93,6 +88,7 @@ function saveLocationToStorage(location: LocationInfo): void {
         lng: location.lng,
         accuracy: location.accuracy,
         timestamp: Date.now(),
+        denied: status === 'denied' ? true : undefined,
       })
     )
   } catch {
@@ -107,11 +103,16 @@ interface InternalState {
 }
 
 export function useGeolocation(): GeolocationResult {
-  const cachedTimestampRef = useRef<number>(0)
-
   const [state, setState] = useState<InternalState>(() => {
     const cached = loadCachedLocation()
     if (cached) {
+      if (cached.denied) {
+        return {
+          location: cached.location,
+          status: 'denied',
+          error: 'Location permission denied. You can search for your area manually.',
+        }
+      }
       return {
         location: cached.location,
         status: 'success',
@@ -125,16 +126,7 @@ export function useGeolocation(): GeolocationResult {
     }
   })
 
-  // Sync cachedTimestampRef from storage on mount — must run before auto-refresh effect
-  useEffect(() => {
-    const cached = loadCachedLocation()
-    if (cached) {
-      cachedTimestampRef.current = cached.timestamp
-    }
-  }, [])
-
   const requestIdRef = useRef(0)
-  const initialSourceRef = useRef(state.location.source)
 
   const requestLocation = useCallback((onSuccess?: () => void) => {
     if (!isClient()) {
@@ -221,11 +213,15 @@ export function useGeolocation(): GeolocationResult {
             status = 'error'
         }
 
+        const finalStatus = status
         setState({
           location: getDefaultLocation(),
-          status,
+          status: finalStatus,
           error: messages[err.code] || 'An unknown error occurred while getting your location.',
         })
+        if (finalStatus === 'denied') {
+          saveLocationToStorage(getDefaultLocation(), 'denied')
+        }
       },
       {
         enableHighAccuracy: true,
@@ -268,42 +264,6 @@ export function useGeolocation(): GeolocationResult {
       error: null,
     })
   }, [])
-
-  // Auto-refresh location on mount — only when the cached fix is stale (> LOCATION_MAX_AGE_MS)
-  useEffect(() => {
-    if (!isClient()) return
-
-    // Don't auto-refresh if user has set manual location
-    if (initialSourceRef.current === 'manual') return
-
-    // Only re-request if the cached timestamp is stale — prevents hammering GPS on every mount
-    if (!isLocationStale(cachedTimestampRef.current)) return
-
-    const checkAndRefresh = async () => {
-      try {
-        if ('permissions' in navigator) {
-          const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName })
-          if (result.state === 'granted') {
-            // Permission already granted — safe to auto-refresh silently
-            requestLocation(() => toast('Location refreshed'))
-          } else {
-            // "prompt" or "denied" — don't auto-fire dialog
-            return
-          }
-        } else {
-          // Permissions API unavailable — only auto-refresh if prior cache exists (implies prior grant)
-          if (initialSourceRef.current !== 'cached') return
-          requestLocation(() => toast('Location refreshed'))
-        }
-      } catch {
-        // Permissions API error — be conservative, don't auto-refresh
-      }
-    }
-
-    // Small delay to ensure hydration is complete
-    const timer = setTimeout(checkAndRefresh, 100)
-    return () => clearTimeout(timer)
-  }, [requestLocation])
 
   const locationLabel = getLocationLabel(state.location, state.status)
 

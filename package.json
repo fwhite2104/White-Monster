@@ -20,7 +20,6 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.40.0",
     "geolib": "^3.3.14",
-    "html5-qrcode": "^2.3.8",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.17.0",
     "next": "16.2.6",

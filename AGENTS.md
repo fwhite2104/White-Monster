@@ -157,7 +157,7 @@ Update these files before finishing:
 
 ## NOTES
 - Supabase free tier pauses after 7 days of inactivity; Vercel cron prevents this by pinging `/api/health` every 3 days
-- Scrapers run via GitHub Actions (`scrape-daily.yml`) at 06:00 UTC daily
+- Scrapers run via GitHub Actions (`scrape-daily.yml`) at 09:00 UTC daily (10:00 IST during DST)
 - `next-env.d.ts` is in `.gitignore` — do not commit it
 - `.sisyphus/` at repo root is OpenCode session metadata, not project code
 - `ignoreScripts` + `trustedDependencies` in `package.json` is a Bun-specific workaround for `sharp` and `unrs-resolver`

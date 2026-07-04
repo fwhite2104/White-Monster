@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef, startTransition } from 'react'
 import { DEFAULT_RADIUS_KM } from '@/lib/constants'
+import { getTimeAgo } from '@/lib/geo'
 import type { Price, Store } from '@/lib/types'
 
 interface UsePriceQueryOptions {
@@ -15,6 +16,8 @@ interface UsePriceQueryReturn {
   loading: boolean
   error: string | null
   lastUpdated: string | null
+  freshnessStatus: 'fresh' | 'stale' | 'outdated'
+  freshnessTimeAgo: string
   radius: number
   setRadius: (r: number) => void
   sort: string
@@ -36,6 +39,8 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
+  const [freshnessStatus, setFreshnessStatus] = useState<'fresh' | 'stale' | 'outdated'>('fresh')
+  const [freshnessTimeAgo, setFreshnessTimeAgo] = useState('')
   const [radius, setRadius] = useState(DEFAULT_RADIUS_KM)
   const [sort, setSort] = useState('price')
   const [variant, setVariant] = useState('zero_sugar')
@@ -59,13 +64,24 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
     setPrices(pricesData.prices || [])
     setStores(storesData.stores || [])
 
-    if ((pricesData.prices || []).length > 0) {
-      const timestamps = pricesData.prices
-        .map((p: { scraped_at?: string | null; created_at?: string | null }) => p.scraped_at ?? p.created_at)
-        .filter((t: string | null | undefined): t is string => t != null)
-        .sort()
-        .reverse()
-      setLastUpdated(timestamps[0] ?? null)
+    const scrapedAt = pricesData.meta?.last_scraped_at ?? null
+    setLastUpdated(scrapedAt)
+
+    if (scrapedAt) {
+      const hours = (Date.now() - new Date(scrapedAt).getTime()) / (1000 * 60 * 60)
+      if (hours >= 168) {
+        setFreshnessStatus('outdated')
+        setFreshnessTimeAgo(getTimeAgo(scrapedAt))
+      } else if (hours >= 48) {
+        setFreshnessStatus('stale')
+        setFreshnessTimeAgo(getTimeAgo(scrapedAt))
+      } else {
+        setFreshnessStatus('fresh')
+        setFreshnessTimeAgo('')
+      }
+    } else {
+      setFreshnessStatus('fresh')
+      setFreshnessTimeAgo('')
     }
   }, [lat, lng, radius, sort, variant, packSize])
 
@@ -160,6 +176,8 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
     loading,
     error,
     lastUpdated,
+    freshnessStatus,
+    freshnessTimeAgo,
     radius,
     setRadius,
     sort,

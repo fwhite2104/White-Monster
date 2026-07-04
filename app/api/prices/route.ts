@@ -78,6 +78,14 @@ export async function GET(request: NextRequest) {
       .eq('is_active', true)
       .eq('is_approved', true)
 
+    const lastScrapedAtPromise = supabase
+      .from('prices')
+      .select('scraped_at')
+      .eq('source', 'scraper')
+      .order('scraped_at', { ascending: false })
+      .limit(1)
+      .single()
+
     let nationalPromise = supabase
       .from('prices')
       .select(`
@@ -112,11 +120,13 @@ export async function GET(request: NextRequest) {
       { data: allStoresData, error: allStoresError },
       { data: nationalPricesData, error: nationalError },
       { data: userPricesData, error: userError },
+      { data: lastScrapedAtData },
     ] = await Promise.all([
       nearbyPromise,
       storesPromise,
       nationalPromise,
       userPromise,
+      lastScrapedAtPromise,
     ])
 
     if (rpcError) {
@@ -256,7 +266,15 @@ export async function GET(request: NextRequest) {
     for (const p of allPrices) {
       const key = `${p.store_id}|${p.product_id}`
       const existing = bestPriceByStoreProduct.get(key)
-      if (!existing || Number(p.price) < Number(existing.price)) {
+      if (!existing) {
+        bestPriceByStoreProduct.set(key, p)
+      } else if (existing.source === 'scraper' && p.source === 'user_reported') {
+        // user_reported always wins over scraper
+        bestPriceByStoreProduct.set(key, p)
+      } else if (existing.source === 'user_reported' && p.source === 'scraper') {
+        // keep user_reported, skip scraper
+      } else if (Number(p.price) < Number(existing.price)) {
+        // same source or both non-user → keep the cheaper
         bestPriceByStoreProduct.set(key, p)
       }
     }
@@ -279,6 +297,7 @@ export async function GET(request: NextRequest) {
         pack_size: packSize,
         center: { lat, lng },
         sort,
+        last_scraped_at: lastScrapedAtData?.scraped_at ?? null,
       },
     }, {
       headers: {
