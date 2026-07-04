@@ -205,8 +205,8 @@ export function FilterDrawer({
               <DialogTitle>Filters</DialogTitle>
             </DialogHeader>
 
-            <div className="space-y-5">
-              <div className="space-y-2">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
                 <Label>Sort by</Label>
                 <Select items={SORT_ITEMS} value={sort} onValueChange={(val) => val && onSortChange(val)}>
                   <SelectTrigger className="w-full h-11">
@@ -220,7 +220,7 @@ export function FilterDrawer({
                 </Select>
               </div>
 
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label>Variant</Label>
                 <Select items={VARIANT_ITEMS} value={variant} onValueChange={(val) => val && onVariantChange(val)}>
                   <SelectTrigger className="w-full h-11">
@@ -236,7 +236,7 @@ export function FilterDrawer({
                 </Select>
               </div>
 
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label>Pack size</Label>
                 {(() => {
                   const isSpecificMultipack = MULTIPACK_OPTIONS.includes(packSize as typeof MULTIPACK_OPTIONS[number])
@@ -287,7 +287,7 @@ export function FilterDrawer({
                 })()}
               </div>
 
-              <div className="space-y-3 pt-1">
+              <div className="flex flex-col gap-3 pt-1">
                 <div className="flex items-center justify-between">
                   <Label>Search radius</Label>
                   <Badge variant="secondary" className="min-w-[60px] justify-center text-xs">

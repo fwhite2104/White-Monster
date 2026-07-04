@@ -228,7 +228,7 @@ export default function Home() {
         <DataFreshnessBanner status={freshnessStatus} timeAgo={freshnessTimeAgo} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
-          <div className="lg:col-span-7 xl:col-span-8 space-y-4 md:space-y-6">
+          <div className="lg:col-span-7 xl:col-span-8 space-y-6">
             {(activeTab === 'list' || activeTab === 'deals') && (
               <FilterDrawer
                 sort={sort}
@@ -446,7 +446,7 @@ export default function Home() {
         </div>
 
         {!loading && !error && stores.length > 0 && (
-          <div className="lg:hidden mt-4 space-y-3">
+          <div className="lg:hidden mt-4">
             {(activeTab === 'stores' || activeTab === 'list' || activeTab === 'deals') && (
               <MapErrorBoundary>
                 <StoreMapBlock

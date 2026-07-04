@@ -2,13 +2,15 @@
 
 import dynamic from 'next/dynamic'
 import type { Store } from '@/lib/types'
+import { Skeleton } from '@/components/ui/skeleton'
 
-const StoreMap = dynamic(() => import('./StoreMap'), {
-  ssr: false,
-  loading: () => (
-    <div className="h-[400px] w-full rounded-lg bg-muted shimmer-bar" />
-  ),
-})
+const MapLibreMapAsync = dynamic(
+  () => import('./MapLibreMap').then((m) => ({ default: m.default })),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[400px] w-full rounded-lg" />,
+  }
+)
 
 interface StoreMapBlockProps {
   stores: Store[]
@@ -25,21 +27,19 @@ interface StoreMapBlockProps {
   cheapestStoreId?: string | null
 }
 
-export function StoreMapBlock({
-  stores,
-  userLocation,
-  highlightedStoreId,
-  onMarkerClick,
-  cheapestStoreId,
-}: StoreMapBlockProps) {
+export function StoreMapBlock(props: StoreMapBlockProps) {
   return (
-    <div style={{ height: '400px', width: '100%' }} className="rounded-xl card-shadow-sm overflow-hidden">
-      <StoreMap
-        stores={stores}
-        userLocation={userLocation}
-        highlightedStoreId={highlightedStoreId}
-        onMarkerClick={onMarkerClick}
-        cheapestStoreId={cheapestStoreId}
+    <div
+      style={{ height: '400px', width: '100%' }}
+      className="rounded-xl card-shadow-sm overflow-hidden"
+    >
+      <MapLibreMapAsync
+        stores={props.stores}
+        userLocation={props.userLocation}
+        selectedStoreId={props.highlightedStoreId}
+        cheapestStoreId={props.cheapestStoreId}
+        onMarkerClick={props.onMarkerClick}
+        className="h-full w-full"
       />
     </div>
   )
