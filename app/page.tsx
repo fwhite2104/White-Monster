@@ -33,6 +33,7 @@ import {
 import { MapPin } from 'lucide-react'
 import { StoreMapBlock } from '@/components/map/StoreMapBlock'
 import { WeeklyDealsBanner } from '@/components/dashboard/WeeklyDealsBanner'
+import { Card } from '@/components/ui/card'
 
 export default function Home() {
   const geo = useGeolocation()
@@ -91,15 +92,19 @@ export default function Home() {
   )
 
   useEffect(() => {
-    if (activeTab === 'search' && searchInputRef.current) {
-      const isMobile = window.matchMedia('(max-width: 767px)').matches
-      if (!isMobile) {
-        const timer = setTimeout(() => {
-          searchInputRef.current?.focus()
-        }, 100)
-        return () => clearTimeout(timer)
+    if (activeTab !== 'search') return
+    const mediaQuery = window.matchMedia('(max-width: 767px)')
+    const handler = () => {
+      if (mediaQuery.matches && searchInputRef.current) {
+        searchInputRef.current.focus()
       }
     }
+    // Initial check
+    if (mediaQuery.matches && searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+    mediaQuery.addEventListener('change', handler)
+    return () => mediaQuery.removeEventListener('change', handler)
   }, [activeTab])
 
   const handleExpandRadius = useCallback(() => {
@@ -206,6 +211,19 @@ export default function Home() {
           onInputRef={handleSearchInputRef}
         />
 
+        {location?.source === 'default' && (
+          <div className="rounded-xl bg-muted/40 border border-border px-4 py-2.5 flex items-center gap-2 text-xs text-muted-foreground">
+            <MapPin className="h-3.5 w-3.5 shrink-0" />
+            Showing prices near Cork city center — results may not reflect your location
+            <button
+              onClick={handleOpenManualSearch}
+              className="text-primary hover:underline ml-1"
+            >
+              Set location
+            </button>
+          </div>
+        )}
+
         <DataFreshnessBanner status={freshnessStatus} timeAgo={freshnessTimeAgo} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
@@ -250,7 +268,7 @@ export default function Home() {
             )}
 
             {activeTab === 'list' && (
-              <>
+              <div role="tabpanel" id="tabpanel-list" aria-labelledby="tab-list">
                 {!loading && !error && (
                   <>
                     {bestPrice && nextBestPrice && (Number(nextBestPrice.price) - Number(bestPrice.price)) > 0 && (
@@ -265,8 +283,6 @@ export default function Home() {
                       bestPrice={bestPrice}
                       nextBestPrice={nextBestPrice}
                       totalResults={prices.length}
-                      userLat={location?.lat}
-                      userLng={location?.lng}
                       onReportPrice={() => setShowUploadForm(true)}
                     />
                   </>
@@ -319,11 +335,11 @@ export default function Home() {
                     />
                   </div>
                 )}
-              </>
+              </div>
             )}
 
             {activeTab === 'deals' && (
-              <>
+              <div role="tabpanel" id="tabpanel-deals" aria-labelledby="tab-deals">
                 {!loading && !error && (
                   <>
                     {bestPrice && nextBestPrice && (Number(nextBestPrice.price) - Number(bestPrice.price)) > 0 && (
@@ -338,8 +354,6 @@ export default function Home() {
                       bestPrice={bestPrice}
                       nextBestPrice={nextBestPrice}
                       totalResults={prices.length}
-                      userLat={location?.lat}
-                      userLng={location?.lng}
                       onReportPrice={() => setShowUploadForm(true)}
                     />
                   </>
@@ -376,11 +390,11 @@ export default function Home() {
                 {!loading && !error && (
                   <LastUpdated date={lastUpdated} />
                 )}
-              </>
+              </div>
             )}
 
             {activeTab === 'stores' && (
-              <>
+              <div role="tabpanel" id="tabpanel-stores" aria-labelledby="tab-stores">
                 {loading && (
                   <div className="space-y-4">
                     <LoadingSkeleton variant="hero" />
@@ -391,7 +405,39 @@ export default function Home() {
                 {!loading && error && (
                   <ApiErrorState message={error} onRetry={refetch} onReportPrice={() => setShowUploadForm(true)} />
                 )}
-              </>
+
+                {!loading && !error && stores.length === 0 && (
+                  <NoResultsState
+                    filters={{ variant, packSize, radius }}
+                    onResetFilters={handleResetFilters}
+                    onExpandRadius={handleExpandRadius}
+                    onReportPrice={() => setShowUploadForm(true)}
+                  />
+                )}
+
+                {!loading && !error && stores.length > 0 && (
+                  <div className="space-y-3">
+                    {stores.slice(0, 10).map((store) => (
+                      <Card key={store.id} className="bg-card ring-1 ring-foreground/8 p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium">{store.name}</p>
+                            {store.suburb && <p className="text-xs text-muted-foreground">{store.suburb}</p>}
+                          </div>
+                          <span className="text-xs text-muted-foreground tabular-nums capitalize">
+                            {store.retailer}
+                          </span>
+                        </div>
+                      </Card>
+                    ))}
+                    {stores.length > 10 && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        +{stores.length - 10} more stores
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

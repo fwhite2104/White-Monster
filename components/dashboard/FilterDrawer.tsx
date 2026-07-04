@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
-import { MONSTER_VARIANTS, MIN_RADIUS_KM, MAX_RADIUS_KM, PACK_SIZES, formatPackSize } from '@/lib/constants'
+import { MONSTER_VARIANTS, MIN_RADIUS_KM, MAX_RADIUS_KM, PACK_SIZES, formatPackSize, DEFAULT_FILTERS } from '@/lib/constants'
 import { ClubcardToggle } from '@/components/dashboard/ClubcardToggle'
 
 interface FilterDrawerProps {
@@ -44,8 +44,6 @@ interface QuickFilter {
   isActive: (sort: string, variant: string, packSize: string, radius: number) => boolean
   apply: () => void
 }
-
-const DEFAULTS = { sort: 'price', variant: 'zero_sugar', packSize: '4_pack', radius: 10 }
 
 // Base UI's Select.Value renders the raw value unless Root gets an items map
 const SORT_ITEMS = {
@@ -107,10 +105,10 @@ export function FilterDrawer({
   ]
 
   const activeFilterCount = [
-    sort !== DEFAULTS.sort,
-    variant !== DEFAULTS.variant,
-    packSize !== DEFAULTS.packSize,
-    radius !== DEFAULTS.radius,
+    sort !== DEFAULT_FILTERS.sort,
+    variant !== DEFAULT_FILTERS.variant,
+    packSize !== DEFAULT_FILTERS.packSize,
+    radius !== DEFAULT_FILTERS.radius,
   ].filter(Boolean).length
 
   const pillGroupRef = useRef<HTMLDivElement>(null)
@@ -134,10 +132,10 @@ export function FilterDrawer({
   }, [])
 
   const handleReset = useCallback(() => {
-    onSortChange(DEFAULTS.sort)
-    onVariantChange(DEFAULTS.variant)
-    onPackSizeChange(DEFAULTS.packSize)
-    onRadiusChange(DEFAULTS.radius)
+    onSortChange(DEFAULT_FILTERS.sort)
+    onVariantChange(DEFAULT_FILTERS.variant)
+    onPackSizeChange(DEFAULT_FILTERS.packSize)
+    onRadiusChange(DEFAULT_FILTERS.radius)
   }, [onSortChange, onVariantChange, onPackSizeChange, onRadiusChange])
 
   return (

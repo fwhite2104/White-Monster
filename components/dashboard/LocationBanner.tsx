@@ -36,7 +36,7 @@ export function LocationBanner({
     // Track the search tab: open the panel on entry, collapse it on exit so it
     // doesn't linger above the List/Stores views. Manual toggles within a tab
     // still work because this only runs when openManual changes.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     setShowManual(Boolean(openManual))
   }, [openManual])
 

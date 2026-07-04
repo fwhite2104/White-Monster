@@ -102,6 +102,8 @@ export function BottomTabNav({
                     : 'text-muted-foreground',
                   key === 'stores' && isLocating && 'pointer-events-none opacity-50'
                 )}
+                id={`tab-${key}`}
+                aria-controls={`tabpanel-${key}`}
                 role="tab"
                 aria-label={label}
                 aria-selected={isActive}

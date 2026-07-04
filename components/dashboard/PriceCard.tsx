@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useAnimatedNumber } from '@/hooks/use-animated-number'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
@@ -56,9 +56,13 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
   const retailerColor = getRetailerColor(store.retailer)
   const isUserReported = price.source === 'user_upload' || price.source === 'user_reported'
 
-  const distance = getDistance(
-    { latitude: lat, longitude: lng },
-    { latitude: store.lat, longitude: store.lng }
+  const distance = useMemo(
+    () =>
+      getDistance(
+        { latitude: lat, longitude: lng },
+        { latitude: store.lat, longitude: store.lng }
+      ),
+    [lat, lng, store.lat, store.lng]
   )
 
   const variantLabel = getVariantLabel(product)
@@ -67,7 +71,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
   const handleShare = useCallback(() => {
     const canPrice = perCanDisplay ? ` (€${perCanDisplay}/can)` : ''
     const text = `Found ${product.name} for €${Number(price.price).toFixed(2)}${canPrice} at ${store.name}!`
-    navigator.clipboard.writeText(`${text} ${window.location.href}`)
+    navigator.clipboard.writeText(text)
   }, [perCanDisplay, product.name, price.price, store.name])
 
   const handleReport = useCallback(() => {

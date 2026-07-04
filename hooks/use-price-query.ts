@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, useRef, startTransition } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { DEFAULT_RADIUS_KM } from '@/lib/constants'
 import { getTimeAgo } from '@/lib/geo'
 import type { Price, Store } from '@/lib/types'
@@ -85,34 +85,25 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
     }
   }, [lat, lng, radius, sort, variant, packSize])
 
-  const onFetchRef = useRef<(signal: AbortSignal) => Promise<void>>(
-    null as unknown as (signal: AbortSignal) => Promise<void>
-  )
-
   useEffect(() => {
-    onFetchRef.current = async (signal: AbortSignal) => {
-      setLoading(true)
-      setError(null)
-      try {
-        await fetchData(signal)
-      } catch (err) {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 15000)
+
+    setLoading(true)
+    setError(null)
+
+    fetchData(controller.signal)
+      .catch((err) => {
         if (err instanceof DOMException && err.name === 'AbortError') {
           setError('Request timed out. Please try again.')
         } else {
           setError(err instanceof Error ? err.message : 'Something went wrong')
         }
-      } finally {
+      })
+      .finally(() => {
         setLoading(false)
-      }
-    }
-  }, [fetchData])
+      })
 
-  useEffect(() => {
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 15000)
-    startTransition(() => {
-      onFetchRef.current(controller.signal)
-    })
     return () => {
       controller.abort()
       clearTimeout(timer)
@@ -124,12 +115,21 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
   const refetch = useCallback(async () => {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), 15000)
+    setLoading(true)
+    setError(null)
     try {
-      await onFetchRef.current(controller.signal)
+      await fetchData(controller.signal)
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setError('Request timed out. Please try again.')
+      } else {
+        setError(err instanceof Error ? err.message : 'Something went wrong')
+      }
     } finally {
+      setLoading(false)
       clearTimeout(timer)
     }
-  }, [])
+  }, [fetchData])
 
   const storesWithDistance = useMemo(
     () =>

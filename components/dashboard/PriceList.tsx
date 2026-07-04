@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { motion, useReducedMotion, useInView, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { MonsterCanIcon } from '@/components/ui/MonsterCanIcon'
 import { PriceCard } from './PriceCard'
 import { ReportPriceCard } from '@/components/dashboard/ReportPriceCard'
 import type { Price } from '@/lib/types'
@@ -74,26 +75,7 @@ export function PriceList({
           transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1], delay: 0.1 }}
           aria-hidden="true"
         >
-          <svg
-            width="56"
-            height="80"
-            viewBox="0 0 56 80"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="opacity-30"
-          >
-            {/* Can body */}
-            <rect x="6" y="12" width="44" height="56" rx="4" fill="currentColor" className="text-primary" />
-            {/* Can top ellipse */}
-            <ellipse cx="28" cy="12" rx="22" ry="6" fill="currentColor" className="text-primary/60" />
-            {/* Can bottom ellipse */}
-            <ellipse cx="28" cy="68" rx="22" ry="6" fill="currentColor" className="text-primary/40" />
-            {/* Tab */}
-            <ellipse cx="28" cy="10" rx="6" ry="2" fill="currentColor" className="text-foreground/40" />
-            <rect x="26" y="4" width="4" height="8" rx="2" fill="currentColor" className="text-foreground/40" />
-            {/* Monster M slash marks */}
-            <path d="M18 32 L22 48 L28 36 L34 48 L38 32" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-background" fill="none" />
-          </svg>
+          <MonsterCanIcon className="opacity-30" />
         </motion.div>
 
         <div className="space-y-1.5">
@@ -170,9 +152,9 @@ export function PriceList({
   })
 
   return (
-    <div id="price-list" className="space-y-3" role="list" aria-label="Price results">
+    <div id="price-list" className="space-y-3">
       {/* 2-column grid on sm+ screens, single column on mobile */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" role="list" aria-label="Price results">
         <AnimatePresence mode="popLayout">
           {items}
         </AnimatePresence>

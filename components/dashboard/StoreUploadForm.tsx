@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useId } from 'react'
+import { useState, useCallback, useId, useEffect } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -85,16 +85,11 @@ export function StoreUploadForm({ onSuccess, externalOpen, onExternalOpenChange,
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
 
-  const [prevOpen, setPrevOpen] = useState(open)
-  const [prevPrefill, setPrevPrefill] = useState(prefillStoreName)
-
-  if (open && prefillStoreName) {
-    if (!prevOpen || prefillStoreName !== prevPrefill) {
+  useEffect(() => {
+    if (open && prefillStoreName) {
       setFormData(prev => ({ ...prev, storeName: prefillStoreName }))
     }
-  }
-  if (open !== prevOpen) setPrevOpen(open)
-  if (prefillStoreName !== prevPrefill) setPrevPrefill(prefillStoreName)
+  }, [open, prefillStoreName])
 
   const markTouched = useCallback((field: string) => {
     setTouched(prev => new Set(prev).add(field))

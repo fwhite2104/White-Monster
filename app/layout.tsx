@@ -18,6 +18,27 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Monster Cork | Find Cheapest Monster Energy Nearby",
   description: "Find the cheapest Monster Energy drinks near you in Cork, Ireland. Compare prices across Tesco, Dunnes, SuperValu, Lidl, Aldi, Centra, and more. Live prices, store locator, and price reporting.",
+  openGraph: {
+    title: "Monster Cork — Compare Monster Energy Prices in Cork",
+    description:
+      "Find the cheapest Monster Energy drink prices across Irish retailers in Cork. Compare Tesco, Dunnes, SuperValu, Lidl, Aldi, Centra, and more.",
+    url: "https://white-monster-tracker.vercel.app",
+    siteName: "Monster Cork",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Monster Cork — Compare Monster Energy Prices in Cork",
+    description:
+      "Find the cheapest Monster Energy drink prices across Irish retailers in Cork.",
+  },
 };
 
 export default function RootLayout({

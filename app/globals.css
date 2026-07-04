@@ -242,9 +242,9 @@
 
   /* Hover: opacity shift only — scale transforms cause layout shift on cards with nested buttons */
   @media (hover: hover) and (pointer: fine) {
-    button:hover:not(:disabled),
-    a:hover:not(:disabled),
-    [role="button"]:hover:not(:disabled) {
+    button:hover:not(:disabled):not([data-framer-motion-effect]),
+    a:hover:not(:disabled):not([data-framer-motion-effect]),
+    [role="button"]:hover:not(:disabled):not([data-framer-motion-effect]) {
       opacity: 0.88;
     }
   }
