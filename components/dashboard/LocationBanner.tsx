@@ -125,7 +125,7 @@ export function LocationBanner({
       <div
         className={cn(
           'flex items-center gap-3 rounded-xl px-4 py-3 ring-1 ring-foreground/8',
-          isSuccess && 'bg-primary/5 ring-primary/15',
+          isSuccess && 'bg-primary/5 ring-primary/15 card-shadow-sm border-l-2 border-primary',
           isError && 'bg-destructive/5 ring-destructive/15',
           status === 'idle' && 'bg-card',
           status === 'requesting' && 'bg-card'

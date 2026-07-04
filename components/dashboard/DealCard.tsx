@@ -23,9 +23,9 @@ export function DealCard({ deal }: DealCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
     >
-      <Card className="relative bg-card ring-1 ring-foreground/10 hover:ring-foreground/20 overflow-hidden">
+      <Card className="relative bg-card ring-1 ring-foreground/10 hover:ring-foreground/20 overflow-hidden card-shadow-sm hover:card-shadow-md">
         <div
-          className="h-1 w-full"
+          className="h-1.5 w-full"
           style={{ backgroundColor: retailerColor }}
         />
 
@@ -43,8 +43,8 @@ export function DealCard({ deal }: DealCardProps) {
                 <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{deal.description}</p>
               )}
 
-              <div className="flex items-baseline gap-2 mt-2">
-                <span className="text-lg font-bold text-green-400 tabular-nums">
+              <div className="flex items-baseline gap-2 mt-2 flex-wrap">
+                <span className="text-price-lg price-hero text-primary">
                   €{Number(deal.deal_price).toFixed(2)}
                 </span>
                 <span className="text-xs text-muted-foreground line-through tabular-nums">

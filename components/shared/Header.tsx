@@ -19,7 +19,7 @@ export function Header({ onReportPrice }: HeaderProps) {
           >
             <Zap className="size-5 text-primary" aria-hidden="true" />
           </motion.div>
-          <h1 className="text-lg font-bold tracking-tight">
+          <h1 className="text-heading-lg font-semibold tracking-tight">
             Monster <span className="text-primary">Cork</span>
           </h1>
         </div>

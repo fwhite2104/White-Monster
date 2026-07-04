@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useGeolocation } from '@/hooks/use-geolocation'
-import { useHasMapRealEstate } from '@/hooks/use-has-map-realestate'
 import { CORK_CENTER, DEFAULT_FILTERS } from '@/lib/constants'
-import type { Price, Store, Product } from '@/lib/types'
+import type { Store } from '@/lib/types'
 import { usePriceQuery } from '@/hooks/use-price-query'
 import { Header } from '@/components/shared/Header'
 import { Footer } from '@/components/shared/Footer'
@@ -16,6 +15,7 @@ import { LoadingSkeleton } from '@/components/dashboard/LoadingSkeleton'
 import { LastUpdated } from '@/components/dashboard/LastUpdated'
 import { StoreUploadForm } from '@/components/dashboard/StoreUploadForm'
 import { LocationBanner } from '@/components/dashboard/LocationBanner'
+import { DataFreshnessBanner } from '@/components/dashboard/DataFreshnessBanner'
 import { ReportPriceCard } from '@/components/dashboard/ReportPriceCard'
 import { ItemComparisonView } from '@/components/dashboard/ItemComparisonView'
 import { BottomTabNav, type TabKey } from '@/components/dashboard/BottomTabNav'
@@ -32,10 +32,7 @@ import {
 } from '@/components/dashboard/StateScreens'
 import { MapPin } from 'lucide-react'
 import { StoreMapBlock } from '@/components/map/StoreMapBlock'
-import { ScanButton } from '@/components/dashboard/ScanButton'
-import { ScanResult } from '@/components/dashboard/ScanResult'
 import { WeeklyDealsBanner } from '@/components/dashboard/WeeklyDealsBanner'
-
 
 export default function Home() {
   const geo = useGeolocation()
@@ -47,8 +44,9 @@ export default function Home() {
   const {
     prices, stores, loading, error, lastUpdated,
     radius, setRadius, sort, setSort, variant, setVariant,
-    packSize,     setPackSize, refetch,
+    packSize, setPackSize, refetch,
     storesWithDistance, bestPrice, nextBestPrice, maxSavings,
+    freshnessStatus, freshnessTimeAgo,
   } = usePriceQuery({ lat, lng })
 
   const [showUploadForm, setShowUploadForm] = useState(false)
@@ -59,13 +57,7 @@ export default function Home() {
   const searchInputRef = useRef<HTMLInputElement | null>(null)
   const [reportStoreName, setReportStoreName] = useState<string | undefined>(undefined)
   const [reportPromptShown, setReportPromptShown] = useState(false)
-  const [scanResult, setScanResult] = useState<{ product: Product; prices: Array<Price & { stores?: Store }> } | null>(null)
-  // Once the user leaves the first-visit screen (e.g. via manual search) the
-  // tabbed UI must stay reachable — otherwise tab taps bounce back to a screen
-  // with no tab bar
   const [firstVisitDismissed, setFirstVisitDismissed] = useState(false)
-
-const hasMapRealEstate = useHasMapRealEstate()
 
   const selectedStorePrice = useMemo(() => {
     if (!selectedStore) return undefined
@@ -90,8 +82,6 @@ const hasMapRealEstate = useHasMapRealEstate()
     searchInputRef.current = ref
   }, [])
 
-  // After picking an area, show the results — critical on desktop where the
-  // tab bar is hidden and there is otherwise no way off the search view
   const handleSelectLocation = useCallback(
     (lat: number, lng: number, label: string) => {
       setManualLocation(lat, lng, label)
@@ -102,10 +92,13 @@ const hasMapRealEstate = useHasMapRealEstate()
 
   useEffect(() => {
     if (activeTab === 'search' && searchInputRef.current) {
-      const timer = setTimeout(() => {
-        searchInputRef.current?.focus()
-      }, 100)
-      return () => clearTimeout(timer)
+      const isMobile = window.matchMedia('(max-width: 767px)').matches
+      if (!isMobile) {
+        const timer = setTimeout(() => {
+          searchInputRef.current?.focus()
+        }, 100)
+        return () => clearTimeout(timer)
+      }
     }
   }, [activeTab])
 
@@ -172,11 +165,37 @@ const hasMapRealEstate = useHasMapRealEstate()
     )
   }
 
+  const mapContent = (stores.length > 0 || loading) && (
+    <aside className="hidden lg:block lg:col-span-5 xl:col-span-4 h-full">
+      <div className="sticky top-20 h-[calc(100vh-6rem)]">
+        <MapErrorBoundary>
+          <StoreMapBlock
+            stores={storesWithDistance}
+            userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
+            highlightedStoreId={highlightedStoreId}
+            onMarkerClick={handleMarkerClick}
+            selectedStore={selectedStore}
+            selectedStorePrice={selectedStorePrice}
+            isSelectedCheapest={isSelectedCheapest}
+            onReportPrice={handleMapInfoReportPrice}
+            onClose={() => setSelectedStore(null)}
+            lat={lat}
+            lng={lng}
+            cheapestStoreId={bestPrice?.store_id ?? null}
+          />
+        </MapErrorBoundary>
+      </div>
+    </aside>
+  )
+
   return (
     <div className="min-h-full flex flex-col">
       <Header onReportPrice={() => setShowUploadForm(true)} />
 
-      <main id="main-content" className="flex-1 max-w-7xl mx-auto w-full px-4 pt-4 pb-24 md:pb-6 md:pt-6 space-y-4 md:space-y-6">
+      <main
+        id="main-content"
+        className="flex-1 max-w-7xl mx-auto w-full px-4 pt-4 pb-24 md:pb-6 md:pt-6"
+      >
         <LocationBanner
           status={status}
           locationLabel={locationLabel}
@@ -187,193 +206,201 @@ const hasMapRealEstate = useHasMapRealEstate()
           onInputRef={handleSearchInputRef}
         />
 
-        {(activeTab === 'list' || activeTab === 'deals') && (
-          <FilterDrawer
-            sort={sort}
-            onSortChange={setSort}
-            variant={variant}
-            onVariantChange={setVariant}
-            packSize={packSize}
-            onPackSizeChange={setPackSize}
-            radius={radius}
-            onRadiusChange={setRadius}
-            open={filterDrawerOpen}
-            onOpenChange={setFilterDrawerOpen}
-          />
-        )}
+        <DataFreshnessBanner status={freshnessStatus} timeAgo={freshnessTimeAgo} />
 
-        {(activeTab === 'list' || activeTab === 'deals') && (
-          <StaleDataWarning lastUpdated={lastUpdated} onReportPrice={() => setShowUploadForm(true)} />
-        )}
-
-        {(activeTab === 'list' || activeTab === 'deals') && prices.length === 0 && (
-          <>
-            {status === 'denied' && (
-              <LocationDeniedState
-                onRetry={handleRetryLocation}
-                onManualSearch={handleOpenManualSearch}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
+          <div className="lg:col-span-7 xl:col-span-8 space-y-4 md:space-y-6">
+            {(activeTab === 'list' || activeTab === 'deals') && (
+              <FilterDrawer
+                sort={sort}
+                onSortChange={setSort}
+                variant={variant}
+                onVariantChange={setVariant}
+                packSize={packSize}
+                onPackSizeChange={setPackSize}
+                radius={radius}
+                onRadiusChange={setRadius}
+                open={filterDrawerOpen}
+                onOpenChange={setFilterDrawerOpen}
               />
             )}
-            {status === 'timeout' && !loading && (
-              <LocationTimeoutState
-                onRetry={handleRetryLocation}
-                onManualSearch={handleOpenManualSearch}
-              />
-            )}
-            {status === 'unavailable' && !loading && (
-              <LocationUnavailableState onManualSearch={handleOpenManualSearch} />
-            )}
-          </>
-        )}
 
-        {activeTab === 'list' && (
-          <>
-            {!loading && !error && (
+            {(activeTab === 'list' || activeTab === 'deals') && (
+              <StaleDataWarning lastUpdated={lastUpdated} onReportPrice={() => setShowUploadForm(true)} />
+            )}
+
+            {(activeTab === 'list' || activeTab === 'deals') && prices.length === 0 && (
               <>
-                {bestPrice && nextBestPrice && (Number(nextBestPrice.price) - Number(bestPrice.price)) > 0 && (
-                  <BestDealBanner
-                    bestPrice={bestPrice}
-                    nextBestPrice={nextBestPrice}
-                    totalPrices={prices.length}
-                    maxSavings={maxSavings}
+                {status === 'denied' && (
+                  <LocationDeniedState
+                    onRetry={handleRetryLocation}
+                    onManualSearch={handleOpenManualSearch}
                   />
                 )}
-                <HeroCard
-                  bestPrice={bestPrice}
-                  nextBestPrice={nextBestPrice}
-                  totalResults={prices.length}
-                  userLat={location?.lat}
-                  userLng={location?.lng}
-                  onReportPrice={() => setShowUploadForm(true)}
-                />
+                {status === 'timeout' && !loading && (
+                  <LocationTimeoutState
+                    onRetry={handleRetryLocation}
+                    onManualSearch={handleOpenManualSearch}
+                  />
+                )}
+                {status === 'unavailable' && !loading && (
+                  <LocationUnavailableState onManualSearch={handleOpenManualSearch} />
+                )}
               </>
             )}
 
-            {!loading && !error && prices.length > 0 && (
-              <ReportPriceCard onReportPrice={() => setShowUploadForm(true)} variant="desktop" />
-            )}
-
-            {!loading && !error && (
-              <WeeklyDealsBanner />
-            )}
-
-            {loading && (
-              <div className="space-y-4">
-                <LoadingSkeleton variant="hero" />
-                <LoadingSkeleton variant="card" count={3} />
-              </div>
-            )}
-
-            {!loading && error && (
-              <ApiErrorState message={error} onRetry={refetch} onReportPrice={() => setShowUploadForm(true)} />
-            )}
-
-            {!loading && !error && prices.length === 0 && status === 'success' && (
-              <NoResultsState
-                filters={{ variant, packSize, radius }}
-                onResetFilters={handleResetFilters}
-                onExpandRadius={handleExpandRadius}
-                onReportPrice={() => setShowUploadForm(true)}
-              />
-            )}
-
-            {!loading && !error && (
-              <LastUpdated date={lastUpdated} />
-            )}
-
-            {!loading && !error && prices.length > 0 && (
-              <div aria-live="polite" aria-atomic="true" aria-label="Price results">
-                <PriceList
-                  prices={prices}
-                  userLat={location?.lat}
-                  userLng={location?.lng}
-                  highlightedStoreId={highlightedStoreId}
-                  onStoreHover={setHighlightedStoreId}
-                  onReportPrice={() => setShowUploadForm(true)}
-                  onWidenRadius={handleExpandRadius}
-                  reportPromptShown={reportPromptShown}
-                  onReportPromptSeen={() => setReportPromptShown(true)}
-                />
-              </div>
-            )}
-          </>
-        )}
-
-        {activeTab === 'deals' && (
-          <>
-            {!loading && !error && (
+            {activeTab === 'list' && (
               <>
-                {bestPrice && nextBestPrice && (Number(nextBestPrice.price) - Number(bestPrice.price)) > 0 && (
-                  <BestDealBanner
-                    bestPrice={bestPrice}
-                    nextBestPrice={nextBestPrice}
-                    totalPrices={prices.length}
-                    maxSavings={maxSavings}
+                {!loading && !error && (
+                  <>
+                    {bestPrice && nextBestPrice && (Number(nextBestPrice.price) - Number(bestPrice.price)) > 0 && (
+                      <BestDealBanner
+                        bestPrice={bestPrice}
+                        nextBestPrice={nextBestPrice}
+                        totalPrices={prices.length}
+                        maxSavings={maxSavings}
+                      />
+                    )}
+                    <HeroCard
+                      bestPrice={bestPrice}
+                      nextBestPrice={nextBestPrice}
+                      totalResults={prices.length}
+                      userLat={location?.lat}
+                      userLng={location?.lng}
+                      onReportPrice={() => setShowUploadForm(true)}
+                    />
+                  </>
+                )}
+
+                {!loading && !error && prices.length > 0 && (
+                  <ReportPriceCard onReportPrice={() => setShowUploadForm(true)} variant="desktop" />
+                )}
+
+                {!loading && !error && (
+                  <WeeklyDealsBanner />
+                )}
+
+                {loading && (
+                  <div className="space-y-4">
+                    <LoadingSkeleton variant="hero" />
+                    <LoadingSkeleton variant="card" count={3} />
+                  </div>
+                )}
+
+                {!loading && error && (
+                  <ApiErrorState message={error} onRetry={refetch} onReportPrice={() => setShowUploadForm(true)} />
+                )}
+
+                {!loading && !error && prices.length === 0 && status === 'success' && (
+                  <NoResultsState
+                    filters={{ variant, packSize, radius }}
+                    onResetFilters={handleResetFilters}
+                    onExpandRadius={handleExpandRadius}
+                    onReportPrice={() => setShowUploadForm(true)}
                   />
                 )}
-                <HeroCard
-                  bestPrice={bestPrice}
-                  nextBestPrice={nextBestPrice}
-                  totalResults={prices.length}
-                  userLat={location?.lat}
-                  userLng={location?.lng}
-                  onReportPrice={() => setShowUploadForm(true)}
-                />
+
+                {!loading && !error && (
+                  <LastUpdated date={lastUpdated} />
+                )}
+
+                {!loading && !error && prices.length > 0 && (
+                  <div aria-live="polite" aria-atomic="true" aria-label="Price results">
+                    <PriceList
+                      prices={prices}
+                      userLat={location?.lat}
+                      userLng={location?.lng}
+                      highlightedStoreId={highlightedStoreId}
+                      onStoreHover={setHighlightedStoreId}
+                      onReportPrice={() => setShowUploadForm(true)}
+                      onWidenRadius={handleExpandRadius}
+                      reportPromptShown={reportPromptShown}
+                      onReportPromptSeen={() => setReportPromptShown(true)}
+                    />
+                  </div>
+                )}
               </>
             )}
 
-            {loading && (
-              <div className="space-y-4">
-                <LoadingSkeleton variant="hero" />
-                <LoadingSkeleton variant="card" count={3} />
-              </div>
+            {activeTab === 'deals' && (
+              <>
+                {!loading && !error && (
+                  <>
+                    {bestPrice && nextBestPrice && (Number(nextBestPrice.price) - Number(bestPrice.price)) > 0 && (
+                      <BestDealBanner
+                        bestPrice={bestPrice}
+                        nextBestPrice={nextBestPrice}
+                        totalPrices={prices.length}
+                        maxSavings={maxSavings}
+                      />
+                    )}
+                    <HeroCard
+                      bestPrice={bestPrice}
+                      nextBestPrice={nextBestPrice}
+                      totalResults={prices.length}
+                      userLat={location?.lat}
+                      userLng={location?.lng}
+                      onReportPrice={() => setShowUploadForm(true)}
+                    />
+                  </>
+                )}
+
+                {loading && (
+                  <div className="space-y-4">
+                    <LoadingSkeleton variant="hero" />
+                    <LoadingSkeleton variant="card" count={3} />
+                  </div>
+                )}
+
+                {!loading && error && (
+                  <ApiErrorState message={error} onRetry={refetch} onReportPrice={() => setShowUploadForm(true)} />
+                )}
+
+                {!loading && !error && prices.length > 0 && (
+                  <ItemComparisonView
+                    prices={prices}
+                    userLat={location?.lat}
+                    userLng={location?.lng}
+                  />
+                )}
+
+                {!loading && !error && prices.length === 0 && status === 'success' && (
+                  <NoResultsState
+                    filters={{ variant, packSize, radius }}
+                    onResetFilters={handleResetFilters}
+                    onExpandRadius={handleExpandRadius}
+                    onReportPrice={() => setShowUploadForm(true)}
+                  />
+                )}
+
+                {!loading && !error && (
+                  <LastUpdated date={lastUpdated} />
+                )}
+              </>
             )}
 
-            {!loading && error && (
-              <ApiErrorState message={error} onRetry={refetch} onReportPrice={() => setShowUploadForm(true)} />
-            )}
+            {activeTab === 'stores' && (
+              <>
+                {loading && (
+                  <div className="space-y-4">
+                    <LoadingSkeleton variant="hero" />
+                    <LoadingSkeleton variant="card" count={3} />
+                  </div>
+                )}
 
-            {!loading && !error && prices.length > 0 && (
-              <ItemComparisonView
-                prices={prices}
-                userLat={location?.lat}
-                userLng={location?.lng}
-              />
+                {!loading && error && (
+                  <ApiErrorState message={error} onRetry={refetch} onReportPrice={() => setShowUploadForm(true)} />
+                )}
+              </>
             )}
+          </div>
 
-            {!loading && !error && prices.length === 0 && status === 'success' && (
-              <NoResultsState
-                filters={{ variant, packSize, radius }}
-                onResetFilters={handleResetFilters}
-                onExpandRadius={handleExpandRadius}
-                onReportPrice={() => setShowUploadForm(true)}
-              />
-            )}
-
-            {!loading && !error && (
-              <LastUpdated date={lastUpdated} />
-            )}
-          </>
-        )}
-
-        {activeTab === 'stores' && (
-          <>
-            {loading && (
-              <div className="space-y-4">
-                <LoadingSkeleton variant="hero" />
-                <LoadingSkeleton variant="card" count={3} />
-              </div>
-            )}
-
-            {!loading && error && (
-              <ApiErrorState message={error} onRetry={refetch} onReportPrice={() => setShowUploadForm(true)} />
-            )}
-          </>
-        )}
+          {mapContent}
+        </div>
 
         {!loading && !error && stores.length > 0 && (
-          <>
-            {(activeTab === 'stores' || hasMapRealEstate) && (
+          <div className="lg:hidden mt-4 space-y-3">
+            {(activeTab === 'stores' || activeTab === 'list' || activeTab === 'deals') && (
               <MapErrorBoundary>
                 <StoreMapBlock
                   stores={storesWithDistance}
@@ -391,7 +418,7 @@ const hasMapRealEstate = useHasMapRealEstate()
                 />
               </MapErrorBoundary>
             )}
-            {(activeTab === 'stores' || !hasMapRealEstate) && (
+            {(activeTab !== 'stores' && activeTab !== 'list' && activeTab !== 'deals') && (
               <a
                 href={`https://www.google.com/maps?q=${lat},${lng}`}
                 target="_blank"
@@ -422,7 +449,7 @@ const hasMapRealEstate = useHasMapRealEstate()
                 </svg>
               </a>
             )}
-          </>
+          </div>
         )}
       </main>
 
@@ -443,26 +470,6 @@ const hasMapRealEstate = useHasMapRealEstate()
         onExternalOpenChange={handleUploadFormOpenChange}
         prefillStoreName={reportStoreName}
       />
-
-      {/* Scan barcode floating action button */}
-      {activeTab !== 'stores' && !scanResult && (
-        <div className="fixed bottom-24 left-4 z-[var(--z-fab)] md:bottom-6 md:right-6 md:left-auto">
-          <ScanButton
-            onScanResult={(result) => setScanResult({ product: result.product, prices: result.prices })}
-            userLat={lat}
-            userLng={lng}
-            radius={radius}
-          />
-        </div>
-      )}
-
-      {scanResult && (
-        <ScanResult
-          product={scanResult.product}
-          prices={scanResult.prices}
-          onClose={() => setScanResult(null)}
-        />
-      )}
     </div>
   )
 }

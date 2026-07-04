@@ -81,7 +81,7 @@ export function BottomTabNav({
         )}
       >
         <nav
-          className="flex items-stretch justify-around px-1 pt-1.5 pb-safe"
+          className="flex items-stretch justify-around px-1 pt-1.5 pb-safe overflow-x-hidden"
           role="tablist"
           aria-label="Main navigation"
         >
@@ -109,8 +109,11 @@ export function BottomTabNav({
                 {isActive && (
                   <motion.div
                     layoutId="activeTabBg"
-                    className="absolute inset-x-1 inset-y-0.5 rounded-lg bg-primary/10"
-                    transition={{ type: 'spring', duration: 0.5, bounce: 0.15 }}
+                    className="absolute inset-x-1 inset-y-0.5 rounded-xl bg-[color:var(--color-brand-surface)]"
+                    transition={shouldReduceMotion
+                      ? { duration: 0 }
+                      : { type: 'spring', duration: 0.4, bounce: 0.08 }
+                    }
                   />
                 )}
 

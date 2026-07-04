@@ -33,7 +33,7 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, maxSavin
       initial={shouldReduceMotion ? false : { opacity: 0, y: -12, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-      className="relative overflow-hidden rounded-xl border border-[oklch(0.72_0.22_145/0.2)] bg-[oklch(0.72_0.22_145/0.04)]"
+      className="relative overflow-hidden rounded-xl border border-primary/15 bg-brand-surface card-shadow-sm"
     >
       <div className="p-4 sm:p-5 md:p-6 space-y-3">
         <div className="flex items-center justify-between gap-3">
@@ -67,11 +67,11 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, maxSavin
         <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4">
           <div className="flex-1 space-y-2 min-w-0">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">
-              <span className="text-primary tabular-nums [font-variant-numeric:slashed-zero]">
+              <span className="text-primary price-hero">
                 {'€'}{Number(bestPrice.price).toFixed(2)}
               </span>
               {perCanPrice && (
-                <span className="text-muted-foreground text-sm sm:text-base md:text-lg font-normal ml-2 tabular-nums">
+                <span className="text-muted-foreground text-sm sm:text-base md:text-lg font-normal ml-2 price-md">
                   ({'€'}{perCanPrice}/can)
                 </span>
               )}
@@ -134,7 +134,7 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, maxSavin
               >
                 <div className="text-right">
                   <p className="text-xs text-muted-foreground">You could save up to</p>
-                  <p className="text-lg sm:text-xl font-bold text-primary tabular-nums [font-variant-numeric:slashed-zero]">
+                  <p className="text-lg sm:text-xl font-bold text-primary price-hero">
                     {'€'}{maxSavings.amount.toFixed(2)}
                   </p>
                   <p className="text-xs text-muted-foreground/70 mt-0.5">

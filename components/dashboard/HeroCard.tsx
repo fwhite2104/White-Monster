@@ -77,9 +77,9 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
     >
-      <Card className="relative overflow-hidden bg-brand-surface border border-primary/20">
+      <Card className="relative overflow-hidden bg-brand-surface border border-primary/15 card-shadow-lg">
         <div
-          className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl"
+          className="absolute left-0 top-0 right-0 h-[3px] rounded-t-xl"
           style={{ backgroundColor: `${retailerColor}99` }}
           aria-hidden="true"
         />
@@ -88,7 +88,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
           <div className="flex flex-col md:flex-row md:items-center md:gap-6">
             <div className="flex items-baseline gap-2 md:flex-col md:gap-1">
               <motion.p
-                className="text-3xl sm:text-5xl font-bold text-primary tracking-tight tabular-nums [font-variant-numeric:slashed-zero]"
+                className="text-price-hero price-hero text-primary"
                 initial={shouldReduceMotion ? false : { scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', duration: 0.5, bounce: 0.2, delay: 0.1 }}
@@ -96,11 +96,11 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
                 €{Number(bestPrice.price).toFixed(2)}
               </motion.p>
               {perCanPrice && (
-                <span className="text-xs text-muted-foreground md:text-sm">
+                <span className="text-price-sm text-muted-foreground">
                   (€{perCanPrice}/can)
                 </span>
               )}
-              <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium md:text-sm">
+              <span className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
                 best price
               </span>
             </div>
@@ -161,7 +161,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
                   transition={{ type: 'spring', duration: 0.4, bounce: 0.15, delay: 0.2 }}
                   className="mt-3 md:mt-0"
                 >
-                  <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary rounded-lg px-3 py-2">
+                  <div                   className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary rounded-lg px-3 py-2">
                     <TrendingDown className="h-4 w-4" />
                     <span className="text-sm font-medium tabular-nums">
                       Save €{savings.toFixed(2)} vs next cheapest

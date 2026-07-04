@@ -127,7 +127,11 @@
   --brand-muted: oklch(0.72 0.22 145 / 0.08);
   --brand-surface: oklch(0.72 0.22 145 / 0.06);
 
-  /* Shadow scale */
+  /* Card elevation scale — shadow + subtle border (preferred over ring-*) */
+  --shadow-card-sm: 0 1px 3px oklch(0 0 0 / 0.3), 0 1px 2px oklch(0 0 0 / 0.2);
+  --shadow-card-md: 0 4px 12px oklch(0 0 0 / 0.35), 0 2px 4px oklch(0 0 0 / 0.2);
+  --shadow-card-lg: 0 10px 24px oklch(0 0 0 / 0.4), 0 4px 8px oklch(0 0 0 / 0.25);
+  /* Legacy shadow aliases for backward compat */
   --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.3), 0 1px 2px oklch(0 0 0 / 0.2);
   --shadow-md: 0 4px 12px oklch(0 0 0 / 0.35), 0 2px 4px oklch(0 0 0 / 0.2);
   --shadow-lg: 0 10px 24px oklch(0 0 0 / 0.4), 0 4px 8px oklch(0 0 0 / 0.25);
@@ -154,6 +158,27 @@
   --space-2xl: 3rem;
   --space-3xl: 4rem;
   --space-4xl: 5rem;
+
+  /* =========================================
+     TYPE SCALE — premium fintech/consumer app
+     ========================================= */
+  /* Display: hero prices, big savings figures */
+  --text-display: clamp(2rem, 4vw, 3.5rem);
+  --text-display-sm: clamp(1.5rem, 3vw, 2.25rem);
+  /* Heading: section titles, card headers */
+  --text-heading-lg: 1.5rem;
+  --text-heading-md: 1.25rem;
+  --text-heading-sm: 1.125rem;
+  /* Body: secondary info, metadata */
+  --text-body: 0.875rem;
+  --text-body-sm: 0.8125rem;
+  /* Mono price: all price figures */
+  --text-price-hero: clamp(2rem, 4vw, 3rem);
+  --text-price-lg: 1.5rem;
+  --text-price-md: 1.125rem;
+  --text-price-base: 1rem;
+  --text-price-sm: 0.875rem;
+  --text-price-xs: 0.75rem;
 }
 
 /* Dark mode variables are the same since this is a dark-only app */
@@ -294,6 +319,56 @@
   }
   .scrollbar-none::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Price typography — mono tabular-nums for all price figures
+     Use these on any element showing a monetary value */
+  .price-hero {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+    letter-spacing: -0.02em;
+  }
+  .price-lg {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+  }
+  .price-md {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+  }
+  .price-base {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+  }
+
+  /* Display text — hero headings */
+  .text-display {
+    font-size: var(--text-display);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    text-wrap: balance;
+  }
+  .text-display-sm {
+    font-size: var(--text-display-sm);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+
+  /* Card elevation — shadow + 1px border (preferred over flat ring-1 cards) */
+  .card-shadow-sm {
+    box-shadow: var(--shadow-card-sm);
+    border: 1px solid var(--color-border-default);
+  }
+  .card-shadow-md {
+    box-shadow: var(--shadow-card-md);
+    border: 1px solid var(--color-border-default);
+  }
+  .card-shadow-lg {
+    box-shadow: var(--shadow-card-lg);
+    border: 1px solid var(--color-border-default);
   }
 }
 

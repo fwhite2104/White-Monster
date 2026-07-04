@@ -36,7 +36,7 @@ export function WeeklyDealsBanner() {
     >
       <div className="flex items-center gap-2">
         <Flame className="h-4 w-4 text-orange-400" />
-        <h2 className="text-sm font-semibold">This Week&apos;s Deals</h2>
+        <h2 className="text-heading-sm font-semibold">This Week&apos;s Deals</h2>
         <span className="text-xs text-muted-foreground">{deals.length} active</span>
       </div>
 

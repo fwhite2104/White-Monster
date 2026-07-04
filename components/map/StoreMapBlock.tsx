@@ -33,7 +33,7 @@ export function StoreMapBlock({
   cheapestStoreId,
 }: StoreMapBlockProps) {
   return (
-    <div style={{ height: '400px', width: '100%' }}>
+    <div style={{ height: '400px', width: '100%' }} className="rounded-xl card-shadow-sm overflow-hidden">
       <StoreMap
         stores={stores}
         userLocation={userLocation}

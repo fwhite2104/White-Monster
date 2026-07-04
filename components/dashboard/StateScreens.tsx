@@ -28,10 +28,10 @@ function StateScreen({
       transition={{ duration: 0.4, ease: 'easeOut' }}
       className="flex flex-col items-center justify-center py-16 px-4 text-center"
     >
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/40 mb-5">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[color:var(--color-brand-surface)] mb-5">
         <Icon className={`h-7 w-7 ${iconColor}`} />
       </div>
-      <h3 className="text-base font-semibold text-foreground mb-1.5">{title}</h3>
+      <h3 className="text-lg font-semibold text-foreground mb-1.5">{title}</h3>
       <p className="text-sm text-muted-foreground max-w-xs leading-relaxed mb-6">{subtitle}</p>
       <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
         {children}
@@ -52,24 +52,29 @@ export function LocationDeniedState({
       icon={MapPinOff}
       iconColor="text-muted-foreground"
       title="Location access denied"
-      subtitle="Enable location in your browser settings, or search by area to find nearby prices"
+      subtitle="Search for your area below to find nearby Monster prices"
     >
-      <Button
-        variant="outline"
-        size="lg"
-        onClick={onRetry}
-        className="min-h-[44px] min-w-[44px]"
-      >
-        Try again
-      </Button>
-      <Button
-        variant="default"
-        size="lg"
-        onClick={onManualSearch}
-        className="min-h-[44px] min-w-[44px]"
-      >
-        Search by area
-      </Button>
+      <div className="w-full max-w-sm space-y-2">
+        <p className="text-xs text-muted-foreground">
+          To re-enable location access, click the lock icon in your browser&apos;s address bar and allow location access.
+        </p>
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={onRetry}
+          className="w-full min-h-[44px]"
+        >
+          Try again
+        </Button>
+        <Button
+          variant="default"
+          size="lg"
+          onClick={onManualSearch}
+          className="w-full min-h-[44px]"
+        >
+          Search by area
+        </Button>
+      </div>
     </StateScreen>
   )
 }
@@ -86,24 +91,26 @@ export function LocationTimeoutState({
       icon={Clock}
       iconColor="text-amber-500"
       title="Location request timed out"
-      subtitle="Taking too long to find your location. This can happen indoors or with poor GPS signal."
+      subtitle="This can happen indoors or with poor GPS signal. Search for your area below to find nearby prices."
     >
-      <Button
-        variant="outline"
-        size="lg"
-        onClick={onRetry}
-        className="min-h-[44px] min-w-[44px]"
-      >
-        Try again
-      </Button>
-      <Button
-        variant="default"
-        size="lg"
-        onClick={onManualSearch}
-        className="min-h-[44px] min-w-[44px]"
-      >
-        Search by area
-      </Button>
+      <div className="w-full max-w-sm space-y-2">
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={onRetry}
+          className="w-full min-h-[44px]"
+        >
+          Try again
+        </Button>
+        <Button
+          variant="default"
+          size="lg"
+          onClick={onManualSearch}
+          className="w-full min-h-[44px]"
+        >
+          Search by area
+        </Button>
+      </div>
     </StateScreen>
   )
 }
@@ -249,7 +256,7 @@ export function StaleDataWarning({
       initial={shouldReduceMotion ? false : { opacity: 0, y: -8, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.3 }}
-      className="flex items-center gap-3 rounded-xl bg-amber-500/10 border border-amber-500/20 px-4 py-3"
+      className="flex items-center gap-3 rounded-xl bg-[color:var(--color-brand-surface)] border border-primary/15 px-4 py-3"
     >
       <AlertCircle className="h-4 w-4 shrink-0 text-amber-400" />
       <span className="text-sm text-amber-200 flex-1">

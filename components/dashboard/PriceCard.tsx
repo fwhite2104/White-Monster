@@ -92,8 +92,8 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
       <Card
         className={
           isCheapest
-            ? 'relative bg-card ring-2 ring-primary/30 overflow-hidden border-l-[3px]'
-            : 'relative bg-card ring-1 ring-foreground/8 hover:ring-foreground/15 overflow-hidden transition-[ring-color] duration-200 border-l-[3px]'
+            ? 'relative bg-card ring-1 ring-primary/20 overflow-hidden border-l-[2px] card-shadow-md'
+            : 'relative bg-card ring-1 ring-foreground/8 hover:ring-foreground/15 overflow-hidden transition-[ring-color] duration-200 border-l-[2px] card-shadow-sm hover:card-shadow-md'
         }
         style={{ borderLeftColor: `${retailerColor}99` }}
       >
@@ -105,14 +105,14 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
               <div className="flex items-baseline gap-2 flex-wrap">
                 <span
                   className={cn(
-                    'text-xl font-bold tracking-tight leading-none tabular-nums [font-variant-numeric:slashed-zero]',
-                    isCheapest && 'text-primary',
+                    'text-price-lg price-hero leading-none',
+                    isCheapest ? 'text-primary' : 'text-foreground',
                   )}
                 >
                   €{animatedPrice}
                 </span>
                 {perCanDisplay && (
-                  <span className="text-xs text-muted-foreground tabular-nums">
+                  <span className="text-price-sm text-muted-foreground tabular-nums">
                     €{perCanDisplay}/can
                   </span>
                 )}
