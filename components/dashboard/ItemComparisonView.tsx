@@ -65,7 +65,7 @@ function PriceStoreCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3, ease: 'easeOut' }}
       whileHover={shouldReduceMotion ? {} : { y: -3, scale: 1.02 }}
-      className="shrink-0"
+      className="shrink-0 min-w-0"
     >
       <Card
         className={
@@ -186,7 +186,7 @@ export function ItemComparisonView({
             </span>
           </div>
 
-          <div className="flex md:flex-wrap gap-3 overflow-x-auto pb-2 md:pb-0 scrollbar-none -mx-1 px-1 md:mx-0 md:px-0 [mask-image:linear-gradient(to_right,black_calc(100%-3rem),transparent)] md:[mask-image:none]">
+          <div className="flex md:flex-wrap gap-3 overflow-x-auto pt-2 -mt-2 pb-2 md:pb-0 scrollbar-none -mx-1 px-1 md:mx-0 md:px-0 md:pt-0 md:-mt-0 md:[mask-image:none] [mask-image:linear-gradient(to_right,black_calc(100%-3rem),transparent)]">
             {group.prices.map((price, idx) => (
               <PriceStoreCard
                 key={price.id}
