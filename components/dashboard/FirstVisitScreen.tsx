@@ -12,6 +12,41 @@ function staggerDelay(index: number) {
   return 0.12 + index * DURATION_STAGGER
 }
 
+/* Pure CSS particles — 20 floating dots with staggered animation */
+const PARTICLES = Array.from({ length: 20 }, (_, i) => ({
+  id: i,
+  left: `${(i * 37 + 13) % 100}%`,
+  top: `${(i * 53 + 7) % 100}%`,
+  size: 2 + (i % 3),
+  delay: `${(i * 0.7) % 8}s`,
+  duration: `${6 + (i % 5) * 2}s`,
+}))
+
+function ParticleField() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+      {PARTICLES.map((p) => (
+        <div
+          key={p.id}
+          className="absolute rounded-full"
+          style={{
+            left: p.left,
+            top: p.top,
+            width: p.size,
+            height: p.size,
+            background: p.id % 3 === 0
+              ? 'oklch(0.72 0.22 145 / 0.5)'
+              : p.id % 3 === 1
+                ? 'oklch(0.78 0.18 195 / 0.4)'
+                : 'rgba(255,255,255,0.3)',
+            animation: `particle-float ${p.duration} ease-in-out ${p.delay} infinite`,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
 export function FirstVisitScreen({
   onRequestLocation,
   onManualSearch,
@@ -26,24 +61,20 @@ export function FirstVisitScreen({
   return (
     <div className="relative min-h-[calc(100svh-4rem)] flex items-center justify-center overflow-hidden px-4 py-10">
       <div
-        className="absolute inset-0 opacity-[0.04]"
+        className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage:
-            'linear-gradient(var(--color-foreground) 1px, transparent 1px), linear-gradient(90deg, var(--color-foreground) 1px, transparent 1px)',
-          backgroundSize: '48px 48px',
+          background: 'radial-gradient(ellipse 60% 50% at 50% 40%, oklch(0.72 0.22 145 / 0.06) 0%, transparent 70%)',
         }}
+        aria-hidden="true"
       />
 
-      <div className="absolute top-0 left-0 w-px h-40 bg-gradient-to-b from-transparent via-[color:var(--color-brand-glow)] to-transparent opacity-60" />
-      <div className="absolute bottom-0 right-0 w-px h-40 bg-gradient-to-t from-transparent via-[color:var(--color-brand-glow)] to-transparent opacity-60" />
-      <div className="absolute top-24 right-0 h-px w-32 bg-gradient-to-l from-transparent via-[color:var(--color-brand-glow)] to-transparent opacity-40" />
-      <div className="absolute bottom-24 left-0 h-px w-32 bg-gradient-to-r from-transparent via-[color:var(--color-brand-glow)] to-transparent opacity-40" />
+      {!shouldReduceMotion && <ParticleField />}
 
       <motion.div
         initial={shouldReduceMotion ? false : { opacity: 0, y: 30, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: DURATION_BASE, ease: EASE_OUT }}
-        className="relative z-10 flex flex-col items-center text-center max-w-lg lg:max-w-xl"
+        className="relative z-10 flex flex-col items-center text-center max-w-lg lg:max-w-xl rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 px-6 py-10 sm:px-10 sm:py-12"
       >
         <motion.div
           initial={shouldReduceMotion ? false : { scaleX: 0, opacity: 0 }}
@@ -99,7 +130,10 @@ export function FirstVisitScreen({
           <Button
             size="lg"
             onClick={onRequestLocation}
-            className="w-full sm:w-auto min-h-[52px] px-8 text-[15px] font-semibold gap-2.5 rounded-xl shadow-[0_0_24px_var(--color-brand-glow)]"
+            className="w-full sm:w-auto min-h-[52px] px-8 text-[15px] font-semibold gap-2.5 rounded-xl"
+            style={{
+              boxShadow: '0 0 24px oklch(0.72 0.22 145 / 0.4), 0 0 64px oklch(0.72 0.22 145 / 0.15)',
+            }}
           >
             <MapPin className="h-5 w-5" />
             Find nearby prices
@@ -140,7 +174,7 @@ export function FirstVisitScreen({
               variant="outline"
               size="sm"
               onClick={onReportPrice}
-              className="w-full sm:w-auto min-h-[44px] px-6 gap-2 text-sm rounded-lg border-border hover:border-primary/40 hover:bg-[color:var(--color-brand-muted)]"
+              className="w-full sm:w-auto min-h-[44px] px-6 gap-2 text-sm rounded-lg border-white/10 hover:border-primary/40 hover:bg-white/5"
             >
               <CirclePlus className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">Report a Price</span>
@@ -162,7 +196,7 @@ export function FirstVisitScreen({
             <Scan className="h-3.5 w-3.5" />
             Automated checks
           </span>
-          <span className="h-3 w-px bg-border" />
+          <span className="h-3 w-px bg-white/10" />
           <span className="inline-flex items-center gap-1.5">
             <Users className="h-3.5 w-3.5" />
             Community reports
