@@ -31,7 +31,7 @@ export function StoreMapBlock(props: StoreMapBlockProps) {
   return (
     <div
       style={{ height: '400px', width: '100%' }}
-      className="rounded-xl card-shadow-sm overflow-hidden"
+      className="rounded-xl overflow-hidden border border-white/10 backdrop-blur-xl bg-white/5"
     >
       <MapLibreMapAsync
         stores={props.stores}

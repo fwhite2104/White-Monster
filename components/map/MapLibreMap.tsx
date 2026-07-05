@@ -98,10 +98,10 @@ function CheapestStoreMarker({ highlighted }: { highlighted: boolean }) {
 function StorePopupContent({ store }: { store: Store }) {
   const retailerColor = getRetailerColor(store.retailer)
   return (
-    <div className="flex overflow-hidden rounded-[var(--radius)]" style={{ minWidth: '160px' }}>
+    <div className="flex overflow-hidden rounded-xl" style={{ minWidth: '160px' }}>
       <div
         className="w-1 shrink-0"
-        style={{ backgroundColor: `${retailerColor}99` }}
+        style={{ backgroundColor: retailerColor }}
       />
       <div className="flex-1 px-3 py-2 text-sm">
         <p className="font-semibold text-foreground">{store.name}</p>
@@ -202,11 +202,13 @@ export default function MapLibreMap({
 
       <style>{`
         .maplibregl-popup-content {
-          background: var(--card) !important;
+          background: rgba(0, 0, 0, 0.6) !important;
+          backdrop-filter: blur(20px) !important;
+          -webkit-backdrop-filter: blur(20px) !important;
           color: var(--foreground) !important;
-          border-radius: var(--radius) !important;
-          box-shadow: var(--shadow-md) !important;
-          border: 1px solid var(--border) !important;
+          border-radius: 0.75rem !important;
+          box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
           padding: 0 !important;
           overflow: hidden;
         }
