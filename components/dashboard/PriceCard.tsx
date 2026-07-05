@@ -3,10 +3,9 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useAnimatedNumber } from '@/hooks/use-animated-number'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { MapPin, Clock, Share2, User, Bot, MoreHorizontal, CirclePlus, Bell, Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -14,7 +13,7 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu'
 import { getDistance } from 'geolib'
-import { CORK_CENTER, getPackCount, formatPackSize, getRetailerColor } from '@/lib/constants'
+import { CORK_CENTER, getPackCount, formatPackSize } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { getTimeAgo } from '@/lib/geo'
 import { PriceAlertDialog } from '@/components/dashboard/PriceAlertDialog'
@@ -53,7 +52,6 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
   const lng = Number.isFinite(userLng) ? (userLng as number) : CORK_CENTER.lng
   const store = price.stores ?? { name: 'Unknown', retailer: 'other', lat: 0, lng: 0, suburb: '', address: '' }
   const product = price.products ?? { name: 'Unknown Product', variant: 'unknown', pack_size: 'single' }
-  const retailerColor = getRetailerColor(store.retailer)
   const isUserReported = price.source === 'user_upload' || price.source === 'user_reported'
 
   const distance = useMemo(
@@ -86,23 +84,21 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
 
   return (
     <motion.div
+      layout
       initial={shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      whileHover={shouldReduceMotion ? {} : { boxShadow: 'var(--shadow-md)' }}
       transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
       onMouseEnter={onHover}
       className="relative"
     >
-      <Card
-        className={
-          isCheapest
-            ? 'relative bg-card ring-1 ring-primary/20 overflow-hidden border-l-[2px] card-shadow-md'
-            : 'relative bg-card border border-[#1e293b] hover:border-[#334155] overflow-hidden transition-[border-color] duration-200 border-l-[2px] card-shadow-sm hover:card-shadow-md'
-        }
-        style={{ borderLeftColor: `${retailerColor}99` }}
+      <div
+        className={cn(
+          'relative rounded-xl overflow-hidden border border-white/10 border-l-[3px] bg-white/5 backdrop-blur-xl',
+          isCheapest && 'glow-primary',
+        )}
+        style={{ borderLeftColor: `var(--retailer-${store.retailer})` }}
       >
-
-        <CardContent className="ps-5 pe-4 py-4">
+        <div className="ps-5 pe-4 py-4">
           {/* Row 1: Price + Actions */}
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
@@ -193,7 +189,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
                 · {store.suburb}
               </span>
             )}
-            <span className="ml-auto shrink-0 inline-flex items-center gap-1 text-xs tabular-nums px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+            <span className="ml-auto shrink-0 inline-flex items-center gap-1 text-xs tabular-nums px-2 py-0.5 rounded-full bg-white/5 text-muted-foreground">
               <MapPin className="h-3 w-3" />
               {(distance / 1000).toFixed(1)} km
             </span>
@@ -224,7 +220,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
               </Badge>
             )}
             {variantLabel && (
-              <Badge variant="outline" className="border-[#1e293b] text-xs h-5 font-normal">
+              <Badge variant="outline" className="border-white/10 text-xs h-5 font-normal">
                 {variantLabel}
               </Badge>
             )}
@@ -244,8 +240,8 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
               {getTimeAgo(price.scraped_at)}
             </span>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <PriceAlertDialog
         open={alertOpen}

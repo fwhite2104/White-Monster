@@ -118,29 +118,40 @@ export function PriceHistoryChart({
     <div className={className}>
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0 0)" />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.08)" />
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 11, fill: 'oklch(0.62 0 0)' }}
+            tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
             tickFormatter={(v: string) => v.slice(5)}
+            stroke="rgba(255, 255, 255, 0.1)"
           />
           <YAxis
-            tick={{ fontSize: 11, fill: 'oklch(0.62 0 0)' }}
+            tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
             tickFormatter={(v: number) => `€${v.toFixed(2)}`}
             width={50}
+            stroke="rgba(255, 255, 255, 0.1)"
           />
           <Tooltip
             formatter={(value) => [`€${Number(value).toFixed(2)}`, '']}
             labelFormatter={(label) => String(label)}
+            contentStyle={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '0.5rem',
+              color: 'var(--foreground)',
+            }}
+            labelStyle={{ color: 'var(--muted-foreground)' }}
           />
-          {uniqueRetailers.map((r) => (
+          {uniqueRetailers.map((r, idx) => (
             <Line
               key={r}
               type="monotone"
               dataKey={r}
-              stroke={retailerColors[r] ?? '#6B7280'}
+              stroke={idx === 0 ? 'var(--color-primary)' : retailerColors[r] ?? 'var(--color-muted-foreground)'}
               strokeWidth={2}
               dot={false}
+              activeDot={{ r: 4, fill: 'var(--color-secondary)', stroke: 'var(--background)', strokeWidth: 2 }}
               connectNulls
             />
           ))}
@@ -149,9 +160,9 @@ export function PriceHistoryChart({
 
       {stats && stats.dataPoints > 0 && (
         <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
-          <span>Low: €{stats.min?.toFixed(2)}</span>
-          <span>Avg: €{stats.avg?.toFixed(2)}</span>
-          <span>High: €{stats.max?.toFixed(2)}</span>
+          <span className="price-xs">Low: €{stats.min?.toFixed(2)}</span>
+          <span className="price-xs">Avg: €{stats.avg?.toFixed(2)}</span>
+          <span className="price-xs">High: €{stats.max?.toFixed(2)}</span>
           <span>{stats.dataPoints} data points</span>
         </div>
       )}
