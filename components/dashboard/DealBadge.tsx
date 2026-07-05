@@ -13,7 +13,7 @@ export function DealBadge({ dealType, className }: DealBadgeProps) {
   return (
     <Badge
       variant="outline"
-      className={`text-xs h-5 font-semibold ${DEAL_TYPE_COLORS[dealType] ?? 'bg-[#1e293b] text-foreground'} ${className ?? ''}`}
+      className={`text-xs h-5 font-semibold ${DEAL_TYPE_COLORS[dealType] ?? 'bg-muted text-muted-foreground'} ${className ?? ''}`}
     >
       {DEAL_TYPE_LABELS[dealType] ?? dealType}
     </Badge>

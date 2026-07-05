@@ -15,7 +15,7 @@ export function ConvenienceStoreCard({ store, onReportPrice }: ConvenienceStoreC
   const isConvenience = storeType === 'convenience' || storeType === 'petrol_station'
 
   return (
-    <div className="rounded-xl bg-card ring-1 ring-[#1e293b] p-3.5">
+    <div className="rounded-xl bg-card ring-1 ring-border p-3.5">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
