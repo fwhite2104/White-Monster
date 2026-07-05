@@ -91,7 +91,7 @@ export function StoreRegistrationForm({ open, onOpenChange, userLat, userLng }: 
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. SPAR Cork City"
                 required
-                className="mt-1 w-full h-9 px-3 rounded-lg bg-card ring-1 ring-foreground/10 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-primary/30"
+                className="mt-1 w-full h-9 px-3 rounded-lg bg-card ring-1 ring-[#1e293b] text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-[#22c55e]"
               />
             </div>
 
@@ -101,7 +101,7 @@ export function StoreRegistrationForm({ open, onOpenChange, userLat, userLng }: 
                 value={retailer}
                 onChange={(e) => setRetailer(e.target.value)}
                 required
-                className="mt-1 w-full h-9 px-3 rounded-lg bg-card ring-1 ring-foreground/10 text-sm focus:outline-none focus:ring-primary/30"
+                className="mt-1 w-full h-9 px-3 rounded-lg bg-card ring-1 ring-[#1e293b] text-sm focus:outline-none focus:ring-[#22c55e]"
               >
                 <option value="">Select retailer</option>
                 {CONVENIENCE_RETAILERS.map((r) => (
@@ -118,7 +118,7 @@ export function StoreRegistrationForm({ open, onOpenChange, userLat, userLng }: 
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="e.g. 12 Patrick Street"
                 required
-                className="mt-1 w-full h-9 px-3 rounded-lg bg-card ring-1 ring-foreground/10 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-primary/30"
+                className="mt-1 w-full h-9 px-3 rounded-lg bg-card ring-1 ring-[#1e293b] text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-[#22c55e]"
               />
             </div>
 
@@ -129,7 +129,7 @@ export function StoreRegistrationForm({ open, onOpenChange, userLat, userLng }: 
                 value={suburb}
                 onChange={(e) => setSuburb(e.target.value)}
                 placeholder="e.g. Douglas"
-                className="mt-1 w-full h-9 px-3 rounded-lg bg-card ring-1 ring-foreground/10 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-primary/30"
+                className="mt-1 w-full h-9 px-3 rounded-lg bg-card ring-1 ring-[#1e293b] text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-[#22c55e]"
               />
             </div>
 

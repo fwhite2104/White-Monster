@@ -85,7 +85,7 @@ export function PriceReportFlow({ store, products, open, onOpenChange }: PriceRe
                 value={selectedProduct}
                 onChange={(e) => setSelectedProduct(e.target.value)}
                 required
-                className="mt-1 w-full h-9 px-3 rounded-lg bg-card ring-1 ring-foreground/10 text-sm focus:outline-none focus:ring-primary/30"
+                className="mt-1 w-full h-9 px-3 rounded-lg bg-card ring-1 ring-[#1e293b] text-sm focus:outline-none focus:ring-[#22c55e]"
               >
                 <option value="">Select product</option>
                 {products.map((p) => (
@@ -107,7 +107,7 @@ export function PriceReportFlow({ store, products, open, onOpenChange }: PriceRe
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder="e.g. 2.49"
                 required
-                className="mt-1 w-full h-9 px-3 rounded-lg bg-card ring-1 ring-foreground/10 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-primary/30"
+                className="mt-1 w-full h-9 px-3 rounded-lg bg-card ring-1 ring-[#1e293b] text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-[#22c55e]"
               />
             </div>
 
@@ -118,7 +118,7 @@ export function PriceReportFlow({ store, products, open, onOpenChange }: PriceRe
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="e.g. on special offer"
-                className="mt-1 w-full h-9 px-3 rounded-lg bg-card ring-1 ring-foreground/10 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-primary/30"
+                className="mt-1 w-full h-9 px-3 rounded-lg bg-card ring-1 ring-[#1e293b] text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-[#22c55e]"
               />
             </div>
 

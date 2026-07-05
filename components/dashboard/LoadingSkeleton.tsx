@@ -12,7 +12,7 @@ function SkeletonBar({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'rounded-md bg-muted/60 shimmer-bar',
+        'rounded-md bg-[#1e293b] shimmer-bar',
         className
       )}
     />
@@ -25,22 +25,22 @@ function CardSkeleton({ index }: { index: number }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08, duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-      className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/8"
+      className="overflow-hidden rounded-xl bg-card border border-[#1e293b]"
     >
       <div className="p-4 space-y-3">
         <div className="flex justify-between items-start gap-4">
           <div className="flex-1 space-y-2">
             <SkeletonBar className="h-5 w-32" />
-            <SkeletonBar className="h-3.5 w-24 bg-muted/40" />
+            <SkeletonBar className="h-3.5 w-24 bg-[#1e293b]" />
           </div>
           <div className="space-y-2 text-right shrink-0">
             <SkeletonBar className="h-7 w-20 bg-primary/20" />
-            <SkeletonBar className="h-5 w-16 rounded-full bg-muted/40" />
+            <SkeletonBar className="h-5 w-16 rounded-full bg-[#1e293b]" />
           </div>
         </div>
-        <div className="flex justify-between items-center pt-3 border-t border-border/50">
+        <div className="flex justify-between items-center pt-3 border-t border-[#1e293b]">
           <SkeletonBar className="h-5 w-16 rounded-full" />
-          <SkeletonBar className="h-3 w-28 bg-muted/30" />
+          <SkeletonBar className="h-3 w-28 bg-[#1e293b]" />
         </div>
       </div>
     </motion.div>
@@ -53,24 +53,24 @@ function HeroSkeleton() {
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-      className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/8 p-5 sm:p-6"
+      className="overflow-hidden rounded-xl bg-card border border-[#1e293b] p-5 sm:p-6"
     >
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div className="flex-1 space-y-3">
           <div className="flex items-center gap-2.5">
             <SkeletonBar className="h-8 w-8 rounded-lg bg-primary/15" />
-            <SkeletonBar className="h-4 w-28 bg-muted/60" />
+            <SkeletonBar className="h-4 w-28 bg-[#1e293b]" />
           </div>
           <SkeletonBar className="h-10 w-28" />
           <div className="flex items-center gap-3 flex-wrap">
-            <SkeletonBar className="h-4 w-32 bg-muted/40" />
-            <SkeletonBar className="h-4 w-20 bg-muted/40" />
-            <SkeletonBar className="h-5 w-16 rounded-full bg-muted/40" />
+            <SkeletonBar className="h-4 w-32 bg-[#1e293b]" />
+            <SkeletonBar className="h-4 w-20 bg-[#1e293b]" />
+            <SkeletonBar className="h-5 w-16 rounded-full bg-[#1e293b]" />
           </div>
         </div>
         <div className="flex items-center gap-4 sm:flex-col sm:items-end">
           <div className="space-y-1 text-right">
-            <SkeletonBar className="h-3 w-16 bg-muted/30" />
+            <SkeletonBar className="h-3 w-16 bg-[#1e293b]" />
             <SkeletonBar className="h-6 w-16 bg-primary/20" />
           </div>
         </div>
@@ -91,14 +91,14 @@ function FilterSkeleton() {
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="h-11 w-20 shrink-0 rounded-full bg-muted/40 shimmer-bar"
+            className="h-11 w-20 shrink-0 rounded-full bg-[#1e293b] shimmer-bar"
           />
         ))}
       </div>
       <div className="flex items-center gap-3">
-        <SkeletonBar className="h-4 w-12 bg-muted/40" />
-        <SkeletonBar className="h-1.5 flex-1 rounded-full bg-muted/30" />
-        <SkeletonBar className="h-6 w-14 rounded-full bg-muted/40" />
+        <SkeletonBar className="h-4 w-12 bg-[#1e293b]" />
+        <SkeletonBar className="h-1.5 flex-1 rounded-full bg-[#1e293b]" />
+        <SkeletonBar className="h-6 w-14 rounded-full bg-[#1e293b]" />
       </div>
     </motion.div>
   )

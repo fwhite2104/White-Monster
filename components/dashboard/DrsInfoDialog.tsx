@@ -14,7 +14,7 @@ export function DrsInfoDialog({ open, onClose }: DrsInfoDialogProps) {
 
   return (
     <div className="fixed inset-0 z-[var(--z-dialog)] flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-sm rounded-lg border border-border bg-card p-6 shadow-lg">
+      <div className="w-full max-w-sm rounded-lg border border-[#1e293b] bg-card p-6 shadow-lg">
         <div className="flex items-center gap-2 mb-3">
           <Info className="h-5 w-5 text-green-400" />
           <h2 className="text-lg font-semibold">{DRS_INFO.schemeName}</h2>
@@ -23,7 +23,7 @@ export function DrsInfoDialog({ open, onClose }: DrsInfoDialogProps) {
         <div className="space-y-3 text-sm text-muted-foreground">
           <p>{DRS_INFO.description}</p>
 
-          <div className="rounded-lg bg-muted/50 p-3 space-y-1">
+          <div className="rounded-lg bg-[#1e293b] p-3 space-y-1">
             <p className="font-medium text-foreground">How it works</p>
             <ul className="list-disc list-inside space-y-0.5">
               <li>€{DRS_INFO.rate.toFixed(2)} deposit added per {DRS_INFO.applicableSizes}</li>
