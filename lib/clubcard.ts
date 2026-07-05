@@ -51,13 +51,6 @@ export function getEffectivePrice(
 }
 
 /**
- * Format the Clubcard price string.
- */
-export function formatClubcardPrice(clubcardPrice: number): string {
-  return `€${clubcardPrice.toFixed(2)}`
-}
-
-/**
  * Format the saving display (e.g., "Save €1.85 (23%)").
  */
 export function formatClubcardSaving(

@@ -1,1 +1,0 @@
-import '@vitejs/plugin-react'

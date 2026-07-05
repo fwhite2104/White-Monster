@@ -31,13 +31,6 @@ export function splitPrice(
   }
 }
 
-/**
- * Get DRS deposit per individual can. Always €0.15 per 250ml can.
- */
-export function drsPerCan(_packSize: string): number {
-  return DRS_RATE_250ML
-}
-
 export const DRS_INFO = {
   rate: DRS_RATE_250ML,
   description:

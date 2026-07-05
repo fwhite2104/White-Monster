@@ -212,21 +212,6 @@
   --text-price-xs: 0.75rem;
 }
 
-/* Dark mode variables are the same since this is a dark-only app */
-/* The "dark" class variant provides same values for shadcn/ui compatibility */
-.dark, [data-theme="dark"] {
-  --background: oklch(0.08 0.02 265);
-  --foreground: #f8fafc;
-  --card: rgba(255, 255, 255, 0.05);
-  --card-foreground: #f8fafc;
-  --primary: oklch(0.72 0.22 145);
-  --primary-foreground: #052e16;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.08);
-  --ring: oklch(0.72 0.22 145);
-}
-
-/* Auto dark mode via OS preference — applies .dark variant automatically */
 @media (prefers-color-scheme: dark) {
   :root:not(.dark):not([data-theme]) {
     --background: oklch(0.08 0.02 265);
