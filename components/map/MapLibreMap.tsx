@@ -195,7 +195,7 @@ export default function MapLibreMap({
   return (
     <div className={cn('relative', className)}>
       {!userLocation && validStores.length > 0 && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 backdrop-blur-sm pointer-events-none whitespace-nowrap">
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 rounded-full text-xs font-medium bg-black/60 text-amber-300 backdrop-blur-sm pointer-events-none whitespace-nowrap">
           Location access denied — showing default map view
         </div>
       )}

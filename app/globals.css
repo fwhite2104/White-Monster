@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* maplibre CSS loaded at layout level so it applies across dynamic imports (ssr:false) */
+@import "maplibre-gl/dist/maplibre-gl.css";
 
 @custom-variant dark (&:is(.dark *, [data-theme="dark"] *));
 

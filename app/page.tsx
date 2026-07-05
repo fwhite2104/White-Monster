@@ -224,7 +224,7 @@ export default function Home() {
         )}
 
         <div className="hidden lg:block mb-6">
-          <div className="h-[calc(100vh-6rem)] max-h-[600px]">
+          <div className="h-[420px]">
             <MapErrorBoundary>
               <StoreMapBlock
                 stores={storesWithDistance}
