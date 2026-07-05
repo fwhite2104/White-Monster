@@ -1,17 +1,24 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Fira_Sans, Fira_Code } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const inter = Inter({
+const firaSans = Fira_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+const firaCode = Fira_Code({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#1e1e1e",
+  themeColor: "#020617",
   viewportFit: "cover",
 };
 
@@ -47,7 +54,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} dark h-full antialiased`}>
+    <html
+      lang="en"
+      className={`${firaSans.variable} ${firaCode.variable} dark h-full antialiased`}
+    >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <a
           href="#main-content"

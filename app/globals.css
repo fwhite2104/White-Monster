@@ -8,7 +8,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-mono: var(--font-mono);
   --font-heading: var(--font-sans);
   
   --color-chart-5: var(--chart-5);
@@ -77,32 +77,33 @@
 }
 
 :root {
-  --background: oklch(0.12 0 0);
-  --foreground: oklch(0.97 0 0);
-  --card: oklch(0.16 0 0);
-  --card-foreground: oklch(0.97 0 0);
-  --popover: oklch(0.16 0 0);
-  --popover-foreground: oklch(0.97 0 0);
-  --primary: oklch(0.72 0.22 145);
-  --primary-foreground: oklch(0.1 0 0);
-  --primary-light: oklch(0.8 0.18 145);
-  --primary-dark: oklch(0.55 0.25 145);
-  --secondary: oklch(0.22 0 0);
-  --secondary-foreground: oklch(0.97 0 0);
-  --muted: oklch(0.22 0 0);
-  --muted-foreground: oklch(0.62 0 0);
-  --accent: oklch(0.3 0.12 145);
-  --accent-foreground: oklch(0.97 0 0);
-  --destructive: oklch(0.61 0.245 27.325);
-  --destructive-foreground: oklch(0.1 0 0);
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.72 0.22 145);
-  --chart-1: oklch(0.72 0.22 145);
-  --chart-2: oklch(0.6 0.18 145);
-  --chart-3: oklch(0.48 0.14 145);
-  --chart-4: oklch(0.36 0.1 145);
-  --chart-5: oklch(0.24 0.06 145);
+  /* OLED dark palette — premium professional dark theme */
+  --background: #020617;
+  --foreground: #f8fafc;
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+  --popover: #0f172a;
+  --popover-foreground: #f8fafc;
+  --primary: #22c55e;
+  --primary-foreground: #052e16;
+  --primary-light: #4ade80;
+  --primary-dark: #16a34a;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #22c55e;
+  --accent-foreground: #052e16;
+  --destructive: #ef4444;
+  --destructive-foreground: #f8fafc;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #22c55e;
+  --chart-1: #22c55e;
+  --chart-2: #16a34a;
+  --chart-3: #15803d;
+  --chart-4: #166534;
+  --chart-5: #14532d;
   --radius: 0.75rem;
   
 
@@ -120,20 +121,20 @@
   --color-border-strong: var(--ring);
   --color-danger: var(--destructive);
 
-  /* Brand accent variants */
-  --brand-glow: oklch(0.72 0.22 145 / 0.15);
-  --brand-glow-strong: oklch(0.72 0.22 145 / 0.3);
-  --brand-muted: oklch(0.72 0.22 145 / 0.08);
-  --brand-surface: oklch(0.72 0.22 145 / 0.06);
+  /* Brand accent variants — green glow on dark OLED */
+  --brand-glow: rgba(34, 197, 94, 0.15);
+  --brand-glow-strong: rgba(34, 197, 94, 0.3);
+  --brand-muted: rgba(34, 197, 94, 0.08);
+  --brand-surface: rgba(34, 197, 94, 0.06);
 
   /* Card elevation scale — shadow + subtle border (preferred over ring-*) */
-  --shadow-card-sm: 0 1px 3px oklch(0 0 0 / 0.3), 0 1px 2px oklch(0 0 0 / 0.2);
-  --shadow-card-md: 0 4px 12px oklch(0 0 0 / 0.35), 0 2px 4px oklch(0 0 0 / 0.2);
-  --shadow-card-lg: 0 10px 24px oklch(0 0 0 / 0.4), 0 4px 8px oklch(0 0 0 / 0.25);
+  --shadow-card-sm: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-card-md: 0 4px 12px rgba(0, 0, 0, 0.55), 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-card-lg: 0 10px 24px rgba(0, 0, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.45);
   /* Legacy shadow aliases for backward compat */
-  --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.3), 0 1px 2px oklch(0 0 0 / 0.2);
-  --shadow-md: 0 4px 12px oklch(0 0 0 / 0.35), 0 2px 4px oklch(0 0 0 / 0.2);
-  --shadow-lg: 0 10px 24px oklch(0 0 0 / 0.4), 0 4px 8px oklch(0 0 0 / 0.25);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.55), 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.45);
 
   /* Emil Kowalski custom easing curves */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -183,29 +184,29 @@
 /* Dark mode variables are the same since this is a dark-only app */
 /* The "dark" class variant provides same values for shadcn/ui compatibility */
 .dark, [data-theme="dark"] {
-  --background: oklch(0.12 0 0);
-  --foreground: oklch(0.97 0 0);
-  --card: oklch(0.16 0 0);
-  --card-foreground: oklch(0.97 0 0);
-  --primary: oklch(0.72 0.22 145);
-  --primary-foreground: oklch(0.1 0 0);
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.72 0.22 145);
+  --background: #020617;
+  --foreground: #f8fafc;
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+  --primary: #22c55e;
+  --primary-foreground: #052e16;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #22c55e;
 }
 
 /* Auto dark mode via OS preference — applies .dark variant automatically */
 @media (prefers-color-scheme: dark) {
   :root:not(.dark):not([data-theme]) {
-    --background: oklch(0.12 0 0);
-    --foreground: oklch(0.97 0 0);
-    --card: oklch(0.16 0 0);
-    --card-foreground: oklch(0.97 0 0);
-    --primary: oklch(0.72 0.22 145);
-    --primary-foreground: oklch(0.1 0 0);
-    --border: oklch(1 0 0 / 8%);
-    --input: oklch(1 0 0 / 12%);
-    --ring: oklch(0.72 0.22 145);
+    --background: #020617;
+    --foreground: #f8fafc;
+    --card: #0f172a;
+    --card-foreground: #f8fafc;
+    --primary: #22c55e;
+    --primary-foreground: #052e16;
+    --border: #1e293b;
+    --input: #1e293b;
+    --ring: #22c55e;
   }
 }
 
@@ -294,7 +295,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    oklch(0.35 0 0 / 0.4),
+    rgba(30, 41, 59, 0.4),
     transparent
   );
   animation: shimmer 2s var(--ease-in-out) infinite;

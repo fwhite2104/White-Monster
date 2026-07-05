@@ -36,9 +36,9 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
       >
-        <Card className="bg-card ring-1 ring-foreground/10">
+        <Card className="bg-card border border-[#1e293b]">
           <CardContent className="p-6 text-center space-y-4">
-            <div className="mx-auto w-14 h-14 rounded-full bg-muted/50 flex items-center justify-center">
+            <div className="mx-auto w-14 h-14 rounded-full bg-muted flex items-center justify-center">
               <MapPin className="h-7 w-7 text-muted-foreground" />
             </div>
             <div>
@@ -105,7 +105,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
               </span>
             </div>
 
-            <div className="hidden md:block w-px h-16 bg-foreground/10" />
+            <div className="hidden md:block w-px h-16 bg-[#1e293b]" />
 
             <div className="flex-1 space-y-1.5 mt-2 md:mt-0 md:space-y-2">
               <div className="flex items-center gap-2">
@@ -145,7 +145,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
               </div>
 
               {variantLabel && (
-                <Badge variant="outline" className="border-foreground/15 text-xs">
+                <Badge variant="outline" className="border-[#1e293b] text-xs">
                   {variantLabel}
                 </Badge>
               )}
@@ -172,7 +172,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
             </AnimatePresence>
           </div>
 
-          <div className="mt-2 pt-2 sm:mt-3 sm:pt-3 border-t border-foreground/10 flex items-center justify-between">
+          <div className="mt-2 pt-2 sm:mt-3 sm:pt-3 border-t border-[#1e293b] flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
               {totalResults} price{totalResults !== 1 ? 's' : ''} found nearby
             </p>

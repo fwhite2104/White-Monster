@@ -64,14 +64,14 @@ function PriceStoreCard({
       initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3, ease: 'easeOut' }}
-      whileHover={shouldReduceMotion ? {} : { y: -3, scale: 1.02 }}
+      whileHover={shouldReduceMotion ? {} : { y: -3 }}
       className="shrink-0 min-w-0"
     >
       <Card
         className={
           isCheapest
             ? 'w-44 md:w-52 bg-card ring-1 ring-primary/30 relative overflow-visible'
-            : 'w-44 md:w-52 bg-card ring-1 ring-foreground/10 hover:ring-foreground/20 relative overflow-visible'
+            : 'w-44 md:w-52 bg-card border border-[#1e293b] hover:border-[#334155] relative overflow-visible'
         }
       >
         {isCheapest && (
@@ -125,7 +125,7 @@ function PriceStoreCard({
               {formatDistance(distance)}
             </span>
             {price.products?.pack_size && (
-              <Badge variant="outline" className="border-foreground/15 text-xs h-4 px-1.5">
+              <Badge variant="outline" className="border-[#1e293b] text-xs h-4 px-1.5">
                 <Tag className="h-2.5 w-2.5 mr-0.5" />
                 {formatPackSize(price.products?.pack_size ?? '')}
               </Badge>

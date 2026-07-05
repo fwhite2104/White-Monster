@@ -97,7 +97,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
         className={
           isCheapest
             ? 'relative bg-card ring-1 ring-primary/20 overflow-hidden border-l-[2px] card-shadow-md'
-            : 'relative bg-card ring-1 ring-foreground/8 hover:ring-foreground/15 overflow-hidden transition-[ring-color] duration-200 border-l-[2px] card-shadow-sm hover:card-shadow-md'
+            : 'relative bg-card border border-[#1e293b] hover:border-[#334155] overflow-hidden transition-[border-color] duration-200 border-l-[2px] card-shadow-sm hover:card-shadow-md'
         }
         style={{ borderLeftColor: `${retailerColor}99` }}
       >
@@ -193,7 +193,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
                 · {store.suburb}
               </span>
             )}
-            <span className="ml-auto shrink-0 inline-flex items-center gap-1 text-xs tabular-nums px-2 py-0.5 rounded-full bg-muted/60 text-muted-foreground">
+            <span className="ml-auto shrink-0 inline-flex items-center gap-1 text-xs tabular-nums px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
               <MapPin className="h-3 w-3" />
               {(distance / 1000).toFixed(1)} km
             </span>
@@ -224,7 +224,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
               </Badge>
             )}
             {variantLabel && (
-              <Badge variant="outline" className="border-foreground/10 text-xs h-5 font-normal">
+              <Badge variant="outline" className="border-[#1e293b] text-xs h-5 font-normal">
                 {variantLabel}
               </Badge>
             )}

@@ -23,7 +23,7 @@ export function DealCard({ deal }: DealCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
     >
-      <Card className="relative bg-card ring-1 ring-foreground/10 hover:ring-foreground/20 overflow-hidden card-shadow-sm hover:card-shadow-md">
+      <Card className="relative bg-card border border-[#1e293b] hover:border-[#334155] overflow-hidden card-shadow-sm hover:card-shadow-md">
         <div
           className="h-1.5 w-full"
           style={{ backgroundColor: retailerColor }}
@@ -69,7 +69,7 @@ export function DealCard({ deal }: DealCardProps) {
                 <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                   <Tag className="h-3 w-3 text-muted-foreground shrink-0" />
                   {deal.products.slice(0, 3).map((p) => (
-                    <Badge key={p.id} variant="outline" className="text-xs h-4 border-foreground/15">
+                    <Badge key={p.id} variant="outline" className="text-xs h-4 border-[#1e293b]">
                       {p.name}
                     </Badge>
                   ))}
