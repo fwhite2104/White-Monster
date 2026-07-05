@@ -41,7 +41,8 @@ export function WeeklyDealsBanner() {
       </div>
 
       <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4"
+        className="flex gap-3 overflow-x-auto scrollbar-none pb-2"
+        style={{ scrollSnapType: 'x mandatory' }}
         variants={shouldReduceMotion ? undefined : gridVariants}
         initial={shouldReduceMotion ? false : 'hidden'}
         animate={shouldReduceMotion ? false : 'show'}
@@ -50,6 +51,8 @@ export function WeeklyDealsBanner() {
           <motion.div
             key={deal.id}
             variants={shouldReduceMotion ? undefined : cardVariants}
+            className="shrink-0 w-[280px] sm:w-[320px]"
+            style={{ scrollSnapAlign: 'start' }}
           >
             <DealCard deal={deal} />
           </motion.div>

@@ -2,11 +2,11 @@
 
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { MapPin, TrendingDown, CirclePlus, AlertTriangle } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { getRetailerColor, getPackCount, formatPackSize } from '@/lib/constants'
 import { formatDistance, getFreshnessLabel } from '@/lib/geo'
+import { useAnimatedNumber } from '@/hooks/use-animated-number'
 import type { Price } from '@/lib/types'
 
 interface HeroCardProps {
@@ -36,27 +36,25 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
       >
-        <Card className="bg-card border border-[#1e293b]">
-          <CardContent className="p-6 text-center space-y-4">
-            <div className="mx-auto w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-              <MapPin className="h-7 w-7 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-base font-medium text-foreground">
-                No prices found nearby
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Try expanding your search radius or checking back later.
-              </p>
-            </div>
-            {onReportPrice && (
-              <Button onClick={onReportPrice} variant="default" size="lg" className="mt-2">
-                <CirclePlus className="size-4 mr-2" />
-                Be the first to report a price
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+        <div className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-6 text-center space-y-4">
+          <div className="mx-auto w-14 h-14 rounded-full bg-white/5 flex items-center justify-center">
+            <MapPin className="h-7 w-7 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="text-base font-medium text-foreground">
+              No prices found nearby
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Try expanding your search radius or checking back later.
+            </p>
+          </div>
+          {onReportPrice && (
+            <Button onClick={onReportPrice} variant="default" size="lg" className="mt-2">
+              <CirclePlus className="size-4 mr-2" />
+              Be the first to report a price
+            </Button>
+          )}
+        </div>
       </motion.div>
     )
   }
@@ -71,41 +69,56 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
   const variantLabel = getVariantLabel(product)
   const freshness = getFreshnessLabel(bestPrice.scraped_at)
 
+  const animatedPrice = useAnimatedNumber(Number(bestPrice.price))
+
   return (
     <motion.div
       initial={shouldReduceMotion ? false : { opacity: 0, y: 16, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
     >
-      <Card className="relative overflow-hidden bg-brand-surface border border-primary/15 card-shadow-lg">
-        <div
-          className="absolute left-0 top-0 right-0 h-[3px] rounded-t-xl"
-          style={{ backgroundColor: `${retailerColor}99` }}
-          aria-hidden="true"
-        />
-
-        <CardContent className="relative p-3 sm:p-5">
+      <div
+        className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl"
+        style={{
+          background: 'radial-gradient(ellipse 80% 60% at 20% 30%, oklch(0.72 0.22 145 / 0.12), transparent 70%), rgba(255,255,255,0.03)',
+        }}
+      >
+        <div className="relative p-3 sm:p-5">
           <div className="flex flex-col md:flex-row md:items-center md:gap-6">
-            <div className="flex items-baseline gap-2 md:flex-col md:gap-1">
-              <motion.p
-                className="text-price-hero price-hero text-primary"
+            {/* Price + icon cluster */}
+            <div className="flex items-center gap-3 md:flex-col md:items-baseline md:gap-1">
+              {/* Energy bolt SVG mark */}
+              <motion.div
+                className="hidden md:flex items-center justify-center size-10 rounded-lg bg-primary/10 shrink-0"
                 initial={shouldReduceMotion ? false : { scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', duration: 0.5, bounce: 0.2, delay: 0.1 }}
+                transition={{ type: 'spring', duration: 0.4, bounce: 0.2 }}
               >
-                €{Number(bestPrice.price).toFixed(2)}
-              </motion.p>
-              {perCanPrice && (
-                <span className="text-price-sm text-muted-foreground">
-                  (€{perCanPrice}/can)
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="oklch(0.72 0.22 145)" opacity="0.9" />
+                </svg>
+              </motion.div>
+              <div>
+                <motion.p
+                  className="text-price-hero price-hero text-primary"
+                  initial={shouldReduceMotion ? false : { scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', duration: 0.5, bounce: 0.2, delay: 0.1 }}
+                >
+                  €{animatedPrice}
+                </motion.p>
+                {perCanPrice && (
+                  <span className="text-price-sm text-muted-foreground">
+                    (€{perCanPrice}/can)
+                  </span>
+                )}
+                <span className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
+                  best price
                 </span>
-              )}
-              <span className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
-                best price
-              </span>
+              </div>
             </div>
 
-            <div className="hidden md:block w-px h-16 bg-[#1e293b]" />
+            <div className="hidden md:block w-px h-16 bg-white/10" />
 
             <div className="flex-1 space-y-1.5 mt-2 md:mt-0 md:space-y-2">
               <div className="flex items-center gap-2">
@@ -145,7 +158,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
               </div>
 
               {variantLabel && (
-                <Badge variant="outline" className="border-[#1e293b] text-xs">
+                <Badge variant="outline" className="border-white/10 text-xs">
                   {variantLabel}
                 </Badge>
               )}
@@ -161,7 +174,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
                   transition={{ type: 'spring', duration: 0.4, bounce: 0.15, delay: 0.2 }}
                   className="mt-3 md:mt-0"
                 >
-                  <div                   className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary rounded-lg px-3 py-2">
+                  <div className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary rounded-lg px-3 py-2">
                     <TrendingDown className="h-4 w-4" />
                     <span className="text-sm font-medium tabular-nums">
                       Save €{savings.toFixed(2)} vs next cheapest
@@ -172,7 +185,7 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
             </AnimatePresence>
           </div>
 
-          <div className="mt-2 pt-2 sm:mt-3 sm:pt-3 border-t border-[#1e293b] flex items-center justify-between">
+          <div className="mt-2 pt-2 sm:mt-3 sm:pt-3 border-t border-white/10 flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
               {totalResults} price{totalResults !== 1 ? 's' : ''} found nearby
             </p>
@@ -183,8 +196,8 @@ export function HeroCard({ bestPrice, nextBestPrice, totalResults, onReportPrice
               </Button>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </motion.div>
   )
 }

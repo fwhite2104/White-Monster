@@ -5,6 +5,7 @@ import { TrendingDown, MapPin, Store, Database, Users, AlertTriangle } from 'luc
 import { Badge } from '@/components/ui/badge'
 import { getRetailerColor, getPackCount } from '@/lib/constants'
 import { getFreshnessLabel } from '@/lib/geo'
+import { cn } from '@/lib/utils'
 import type { Price } from '@/lib/types'
 
 interface BestDealBannerProps {
@@ -33,7 +34,11 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, maxSavin
       initial={shouldReduceMotion ? false : { opacity: 0, y: -12, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-      className="relative overflow-hidden rounded-xl border border-primary/15 bg-brand-surface card-shadow-sm"
+      className={cn(
+        'relative overflow-hidden rounded-xl border bg-white/5 backdrop-blur-xl',
+        !shouldReduceMotion && 'neon-border-cycle',
+        shouldReduceMotion && 'border-primary/40',
+      )}
     >
       <div className="p-4 sm:p-5 md:p-6 space-y-3">
         <div className="flex items-center justify-between gap-3">
@@ -52,12 +57,12 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, maxSavin
           </div>
 
           {bestPrice.source === 'user_upload' || bestPrice.source === 'user_reported' ? (
-            <Badge variant="outline" className="border-primary/20 text-primary/80 gap-1 text-xs">
+            <Badge variant="outline" className="border-white/10 text-primary/80 gap-1 text-xs">
               <Users className="h-3 w-3" />
               Community
             </Badge>
           ) : (
-            <Badge variant="outline" className="border-muted/20 text-muted-foreground gap-1 text-xs">
+            <Badge variant="outline" className="border-white/10 text-muted-foreground gap-1 text-xs">
               <Database className="h-3 w-3" />
               Scraped
             </Badge>
@@ -93,7 +98,7 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, maxSavin
               )}
               <Badge
                 variant="outline"
-                className="border-foreground/20"
+                className="border-white/10"
                 style={{ borderColor: `${retailerColor}60` }}
               >
                 <span
@@ -137,7 +142,7 @@ export function BestDealBanner({ bestPrice, nextBestPrice, totalPrices, maxSavin
                   <p className="text-lg sm:text-xl font-bold text-primary price-hero">
                     {'€'}{maxSavings.amount.toFixed(2)}
                   </p>
-                  <p className="text-xs text-muted-foreground/70 mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     on {maxSavings.packSize !== 'single' ? 'multipacks' : 'single cans'}
                   </p>
                 </div>
