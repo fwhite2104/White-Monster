@@ -12,7 +12,7 @@ function SkeletonBar({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'rounded-md bg-[#1e293b] shimmer-bar',
+        'rounded-md bg-muted-foreground/10 shimmer-bar',
         className
       )}
     />
@@ -25,7 +25,7 @@ function CardSkeleton({ index }: { index: number }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08, duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-      className="overflow-hidden rounded-xl bg-card border border-[#1e293b]"
+      className="overflow-hidden rounded-xl bg-card border border-border"
     >
       <div className="p-4 space-y-3">
         <div className="flex justify-between items-start gap-4">
@@ -38,7 +38,7 @@ function CardSkeleton({ index }: { index: number }) {
             <SkeletonBar className="h-5 w-16 rounded-full bg-[#1e293b]" />
           </div>
         </div>
-        <div className="flex justify-between items-center pt-3 border-t border-[#1e293b]">
+        <div className="flex justify-between items-center pt-3 border-t border-border">
           <SkeletonBar className="h-5 w-16 rounded-full" />
           <SkeletonBar className="h-3 w-28 bg-[#1e293b]" />
         </div>

@@ -174,7 +174,7 @@ export function BottomTabNav({
           onClick={toggleCollapsed}
           className={cn(
             'flex items-center justify-center size-8 rounded-lg',
-            'text-muted-foreground hover:text-foreground hover:bg-white/10',
+            'text-muted-foreground hover:text-foreground hover:bg-white/10 border-border',
             'transition-colors duration-200 shrink-0',
           )}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}

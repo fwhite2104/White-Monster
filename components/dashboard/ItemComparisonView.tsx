@@ -71,7 +71,7 @@ function PriceStoreCard({
         className={
           isCheapest
             ? 'w-44 md:w-52 bg-card ring-1 ring-primary/30 relative overflow-visible'
-            : 'w-44 md:w-52 bg-card border border-[#1e293b] hover:border-[#334155] relative overflow-visible'
+            : 'w-44 md:w-52 bg-card border border-border hover:border-[#334155] relative overflow-visible'
         }
       >
         {isCheapest && (
@@ -125,7 +125,7 @@ function PriceStoreCard({
               {formatDistance(distance)}
             </span>
             {price.products?.pack_size && (
-              <Badge variant="outline" className="border-[#1e293b] text-xs h-4 px-1.5">
+              <Badge variant="outline" className="border-border text-xs h-4 px-1.5">
                 <Tag className="h-2.5 w-2.5 mr-0.5" />
                 {formatPackSize(price.products?.pack_size ?? '')}
               </Badge>

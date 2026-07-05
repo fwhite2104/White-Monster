@@ -172,7 +172,7 @@ export function PriceList({
             onClick={() => setShowAll((prev) => !prev)}
             aria-expanded={showAll}
             aria-controls="price-list"
-            className="group w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-[#1e293b] bg-card hover:bg-[#0f172a] text-sm font-medium text-muted-foreground hover:text-foreground transition-all duration-200 cursor-pointer hover:border-[#334155]"
+            className="group w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-border bg-card hover:bg-[#0f172a] text-sm font-medium text-muted-foreground hover:text-foreground transition-all duration-200 cursor-pointer hover:border-[#334155]"
           >
             {showAll ? (
               <>

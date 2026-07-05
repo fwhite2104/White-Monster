@@ -124,7 +124,7 @@ export function LocationBanner({
     >
       <div
         className={cn(
-          'flex items-center gap-3 rounded-xl px-4 py-3 border border-[#1e293b]',
+          'flex items-center gap-3 rounded-xl px-4 py-3 border border-border',
           isSuccess && 'bg-primary/5 ring-primary/15 card-shadow-sm border-l-2 border-primary',
           isError && 'bg-destructive/5 ring-destructive/15',
           status === 'idle' && 'bg-card',
@@ -244,7 +244,7 @@ export function LocationBanner({
               <button
                 key={loc.label}
                 onClick={() => handleSuggestionClick(loc)}
-                className="inline-flex items-center gap-1.5 h-11 px-3 rounded-lg bg-card border border-[#1e293b] hover:ring-primary/30 hover:bg-primary/5 transition-all duration-200 text-sm text-foreground"
+                className="inline-flex items-center gap-1.5 h-11 px-3 rounded-lg bg-card border border-border hover:ring-primary/30 hover:bg-primary/5 transition-all duration-200 text-sm text-foreground"
               >
                 <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
                 {loc.suburb}
