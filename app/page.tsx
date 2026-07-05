@@ -19,6 +19,7 @@ import { DataFreshnessBanner } from '@/components/dashboard/DataFreshnessBanner'
 import { ReportPriceCard } from '@/components/dashboard/ReportPriceCard'
 import { ItemComparisonView } from '@/components/dashboard/ItemComparisonView'
 import { BottomTabNav, type TabKey } from '@/components/dashboard/BottomTabNav'
+import { PriceAlertList } from '@/components/dashboard/PriceAlertList'
 
 import { FirstVisitScreen } from '@/components/dashboard/FirstVisitScreen'
 import { MapErrorBoundary } from '@/components/shared/MapErrorBoundary'
@@ -170,30 +171,6 @@ export default function Home() {
     )
   }
 
-  // Always render map shell on lg+ so it doesn't unmount during loading/empty states (map flicker bug).
-  const mapContent = (
-    <aside className="hidden lg:block lg:col-span-5 xl:col-span-4 h-full">
-      <div className="sticky top-20 h-[calc(100vh-6rem)]">
-        <MapErrorBoundary>
-          <StoreMapBlock
-            stores={storesWithDistance}
-            userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
-            highlightedStoreId={highlightedStoreId}
-            onMarkerClick={handleMarkerClick}
-            selectedStore={selectedStore}
-            selectedStorePrice={selectedStorePrice}
-            isSelectedCheapest={isSelectedCheapest}
-            onReportPrice={handleMapInfoReportPrice}
-            onClose={() => setSelectedStore(null)}
-            lat={lat}
-            lng={lng}
-            cheapestStoreId={bestPrice?.store_id ?? null}
-          />
-        </MapErrorBoundary>
-      </div>
-    </aside>
-  )
-
   return (
     <div className="min-h-full flex flex-col">
       <Header onReportPrice={() => setShowUploadForm(true)} />
@@ -227,8 +204,48 @@ export default function Home() {
 
         <DataFreshnessBanner status={freshnessStatus} timeAgo={freshnessTimeAgo} />
 
+        {(activeTab === 'list' || activeTab === 'deals') && !loading && !error && (
+          <>
+            {bestPrice && nextBestPrice && (Number(nextBestPrice.price) - Number(bestPrice.price)) > 0 && (
+              <BestDealBanner
+                bestPrice={bestPrice}
+                nextBestPrice={nextBestPrice}
+                totalPrices={prices.length}
+                maxSavings={maxSavings}
+              />
+            )}
+            <HeroCard
+              bestPrice={bestPrice}
+              nextBestPrice={nextBestPrice}
+              totalResults={prices.length}
+              onReportPrice={() => setShowUploadForm(true)}
+            />
+          </>
+        )}
+
+        <div className="hidden lg:block mb-6">
+          <div className="h-[calc(100vh-6rem)] max-h-[600px]">
+            <MapErrorBoundary>
+              <StoreMapBlock
+                stores={storesWithDistance}
+                userLocation={location ? { lat: location.lat, lng: location.lng } : undefined}
+                highlightedStoreId={highlightedStoreId}
+                onMarkerClick={handleMarkerClick}
+                selectedStore={selectedStore}
+                selectedStorePrice={selectedStorePrice}
+                isSelectedCheapest={isSelectedCheapest}
+                onReportPrice={handleMapInfoReportPrice}
+                onClose={() => setSelectedStore(null)}
+                lat={lat}
+                lng={lng}
+                cheapestStoreId={bestPrice?.store_id ?? null}
+              />
+            </MapErrorBoundary>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
-          <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+          <div className="lg:col-span-8 space-y-6">
             {(activeTab === 'list' || activeTab === 'deals') && (
               <FilterDrawer
                 sort={sort}
@@ -271,25 +288,6 @@ export default function Home() {
             {activeTab === 'list' && (
               <div role="tabpanel" id="tabpanel-list" aria-labelledby="tab-list">
                 {!loading && !error && (
-                  <>
-                    {bestPrice && nextBestPrice && (Number(nextBestPrice.price) - Number(bestPrice.price)) > 0 && (
-                      <BestDealBanner
-                        bestPrice={bestPrice}
-                        nextBestPrice={nextBestPrice}
-                        totalPrices={prices.length}
-                        maxSavings={maxSavings}
-                      />
-                    )}
-                    <HeroCard
-                      bestPrice={bestPrice}
-                      nextBestPrice={nextBestPrice}
-                      totalResults={prices.length}
-                      onReportPrice={() => setShowUploadForm(true)}
-                    />
-                  </>
-                )}
-
-                {!loading && !error && prices.length > 0 && (
                   <ReportPriceCard onReportPrice={() => setShowUploadForm(true)} variant="desktop" />
                 )}
 
@@ -341,25 +339,6 @@ export default function Home() {
 
             {activeTab === 'deals' && (
               <div role="tabpanel" id="tabpanel-deals" aria-labelledby="tab-deals">
-                {!loading && !error && (
-                  <>
-                    {bestPrice && nextBestPrice && (Number(nextBestPrice.price) - Number(bestPrice.price)) > 0 && (
-                      <BestDealBanner
-                        bestPrice={bestPrice}
-                        nextBestPrice={nextBestPrice}
-                        totalPrices={prices.length}
-                        maxSavings={maxSavings}
-                      />
-                    )}
-                    <HeroCard
-                      bestPrice={bestPrice}
-                      nextBestPrice={nextBestPrice}
-                      totalResults={prices.length}
-                      onReportPrice={() => setShowUploadForm(true)}
-                    />
-                  </>
-                )}
-
                 {loading && (
                   <div className="space-y-4">
                     <LoadingSkeleton variant="hero" />
@@ -442,7 +421,29 @@ export default function Home() {
             )}
           </div>
 
-          {mapContent}
+          <aside className="hidden lg:block lg:col-span-4">
+            <div className="sticky top-20 space-y-4">
+              {(activeTab === 'list' || activeTab === 'deals') && (
+                <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-4">
+                  <FilterDrawer
+                    sort={sort}
+                    onSortChange={setSort}
+                    variant={variant}
+                    onVariantChange={setVariant}
+                    packSize={packSize}
+                    onPackSizeChange={setPackSize}
+                    radius={radius}
+                    onRadiusChange={setRadius}
+                    open={filterDrawerOpen}
+                    onOpenChange={setFilterDrawerOpen}
+                  />
+                </div>
+              )}
+              <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-4">
+                <PriceAlertList />
+              </div>
+            </div>
+          </aside>
         </div>
 
         {!loading && !error && stores.length > 0 && (
