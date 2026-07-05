@@ -53,7 +53,7 @@ function HeroSkeleton() {
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-      className="overflow-hidden rounded-xl bg-card border border-[#1e293b] p-5 sm:p-6"
+      className="overflow-hidden rounded-xl bg-card border border-border p-5 sm:p-6"
     >
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div className="flex-1 space-y-3">
