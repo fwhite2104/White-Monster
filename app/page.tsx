@@ -1,250 +1,129 @@
-'use client'
+"use client"
 
-import { useState, useCallback, useMemo, useRef } from 'react'
-import { useGeolocation } from '@/hooks/use-geolocation'
-import { CORK_CENTER, DEFAULT_FILTERS } from '@/lib/constants'
-import type { Price } from '@/lib/types'
-import { usePriceQuery } from '@/hooks/use-price-query'
-import { Header } from '@/components/shared/Header'
-import { Footer } from '@/components/shared/Footer'
-import { BestDealSlimBanner } from '@/components/dashboard/BestDealSlimBanner'
-import { FilterBar } from '@/components/dashboard/FilterBar'
-import { PriceDetailPanel } from '@/components/dashboard/PriceDetailPanel'
-import { PriceList } from '@/components/dashboard/PriceList'
-import { LoadingSkeleton } from '@/components/dashboard/LoadingSkeleton'
-import { LastUpdated } from '@/components/dashboard/LastUpdated'
-import { StoreUploadForm } from '@/components/dashboard/StoreUploadForm'
-import { LocationBanner } from '@/components/dashboard/LocationBanner'
-import { DataFreshnessBanner } from '@/components/dashboard/DataFreshnessBanner'
-import { ReportPriceCard } from '@/components/dashboard/ReportPriceCard'
+import { useState } from "react"
+import { CirclePlus } from "lucide-react"
+import { useGeolocation } from "@/hooks/use-geolocation"
+import { usePriceQuery } from "@/hooks/use-price-query"
+import { Header } from "@/components/app/Header"
+import { LocationSection } from "@/components/app/LocationSection"
+import { BestDealBanner } from "@/components/app/BestDealBanner"
+import { FilterBar } from "@/components/app/FilterBar"
+import { PriceList } from "@/components/app/PriceList"
+import { PriceDetailView } from "@/components/app/PriceDetailView"
+import { ReportPriceModal } from "@/components/app/ReportPriceModal"
+import type { Price } from "@/lib/types"
 
-import { FirstVisitScreen } from '@/components/dashboard/FirstVisitScreen'
-import {
-  LocationDeniedState,
-  LocationTimeoutState,
-  LocationUnavailableState,
-  NoResultsState,
-  ApiErrorState,
-  StaleDataWarning,
-} from '@/components/dashboard/StateScreens'
-import { MapPin } from 'lucide-react'
-
-export default function Home() {
-  const geo = useGeolocation()
-  const { location, status, locationLabel, requestLocation, setManualLocation } = geo
-
-  const lat = Number.isFinite(location?.lat) ? location!.lat : CORK_CENTER.lat
-  const lng = Number.isFinite(location?.lng) ? location!.lng : CORK_CENTER.lng
-
+export default function HomePage() {
+  const { location } = useGeolocation()
   const {
-    prices, loading, error, lastUpdated,
-    radius, setRadius, sort, setSort, variant, setVariant,
-    packSize, setPackSize, refetch,
-    bestPrice, nextBestPrice,
-    freshnessStatus, freshnessTimeAgo,
-  } = usePriceQuery({ lat, lng })
+    prices,
+    loading,
+    error,
+    bestPrice,
+    nextBestPrice,
+    radius,
+    setRadius,
+    sort,
+    setSort,
+    variant,
+    setVariant,
+    packSize,
+    setPackSize,
+    refetch,
+  } = usePriceQuery({
+    lat: location?.lat ?? 51.8985,
+    lng: location?.lng ?? -8.4756,
+  })
 
-  const [showUploadForm, setShowUploadForm] = useState(false)
   const [selectedPrice, setSelectedPrice] = useState<Price | null>(null)
-  const searchInputRef = useRef<HTMLInputElement | null>(null)
-  const [reportStoreName, setReportStoreName] = useState<string | undefined>(undefined)
-  const [reportPromptShown, setReportPromptShown] = useState(false)
-  const [firstVisitDismissed, setFirstVisitDismissed] = useState(false)
+  const [reportModalOpen, setReportModalOpen] = useState(false)
 
-  const handleRetryLocation = useCallback(() => {
-    requestLocation()
-  }, [requestLocation])
-
-  const handleSearchInputRef = useCallback((ref: HTMLInputElement | null) => {
-    searchInputRef.current = ref
-  }, [])
-
-  const handleExpandRadius = useCallback(() => {
-    setRadius(Math.min(radius + 10, 50))
-  }, [radius, setRadius])
-
-  const handleResetFilters = useCallback(() => {
-    setSort(DEFAULT_FILTERS.sort)
-    setVariant(DEFAULT_FILTERS.variant)
-    setPackSize(DEFAULT_FILTERS.packSize)
-    setRadius(DEFAULT_FILTERS.radius)
-  }, [setSort, setVariant, setPackSize, setRadius])
-
-  const handlePriceClick = useCallback((price: Price) => {
+  const handleSelectPrice = (price: Price) => {
     setSelectedPrice(price)
-  }, [])
+  }
 
-  const handleUploadFormOpenChange = useCallback((open: boolean) => {
-    setShowUploadForm(open)
-    if (!open) {
-      setReportStoreName(undefined)
-    }
-  }, [])
-
-  const activeFilterCount = useMemo(
-    () =>
-      [
-        sort !== DEFAULT_FILTERS.sort,
-        variant !== DEFAULT_FILTERS.variant,
-        packSize !== DEFAULT_FILTERS.packSize,
-        radius !== DEFAULT_FILTERS.radius,
-      ].filter(Boolean).length,
-    [sort, variant, packSize, radius],
-  )
-
-  if (status === 'idle' && location?.source === 'default' && !firstVisitDismissed) {
-    return (
-      <div className="min-h-full flex flex-col">
-        <Header onReportPrice={() => setShowUploadForm(true)} />
-        <FirstVisitScreen
-          onRequestLocation={requestLocation}
-          onManualSearch={() => setFirstVisitDismissed(true)}
-          onReportPrice={() => setShowUploadForm(true)}
-        />
-        <Footer />
-      </div>
-    )
+  const handleCloseDetail = () => {
+    setSelectedPrice(null)
   }
 
   return (
-    <div className="min-h-full flex flex-col">
-      <Header onReportPrice={() => setShowUploadForm(true)} />
+    <div className="min-h-screen bg-background">
+      <Header />
 
-      <main
-        id="main-content"
-        className="flex-1 max-w-7xl mx-auto w-full px-4 pt-4 pb-24 lg:pb-6 lg:pt-6 space-y-3"
-      >
-        {/* Location */}
-        <LocationBanner
-          status={status}
-          locationLabel={locationLabel}
-          onRetry={handleRetryLocation}
-          onManualSearch={() => setFirstVisitDismissed(true)}
-          onSelectLocation={(lat, lng, label) => {
-            setManualLocation(lat, lng, label)
-          }}
-          openManual={false}
-          onInputRef={handleSearchInputRef}
-        />
+      <LocationSection />
 
-        {/* Default location warning */}
-        {location?.source === 'default' && (
-          <div className="rounded-xl bg-muted/40 border border-border px-4 py-2.5 flex items-center gap-2 text-xs text-muted-foreground">
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
-            Showing prices near Cork city center — results may not reflect your location
-            <button onClick={() => setFirstVisitDismissed(true)} className="text-primary hover:underline ml-1">
-              Set location
-            </button>
-          </div>
-        )}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_480px]">
+        <div className="flex flex-col">
+          {bestPrice && <BestDealBanner bestPrice={bestPrice} nextBestPrice={nextBestPrice} />}
 
-        <DataFreshnessBanner status={freshnessStatus} timeAgo={freshnessTimeAgo} />
+          <FilterBar
+            sort={sort}
+            setSort={setSort}
+            variant={variant}
+            setVariant={setVariant}
+            packSize={packSize}
+            setPackSize={setPackSize}
+            radius={radius}
+            setRadius={setRadius}
+          />
 
-        {/* Slim best deal banner */}
-        {bestPrice && !loading && !error && (
-          <BestDealSlimBanner bestPrice={bestPrice} nextBestPrice={nextBestPrice} />
-        )}
+          <PriceList
+            prices={prices}
+            loading={loading}
+            error={error}
+            bestPrice={bestPrice}
+            onSelectPrice={handleSelectPrice}
+            onRetry={refetch}
+          />
+        </div>
 
-        {/* Inline filter bar */}
-        <FilterBar
-          sort={sort}
-          onSortChange={setSort}
-          variant={variant}
-          onVariantChange={setVariant}
-          packSize={packSize}
-          onPackSizeChange={setPackSize}
-          radius={radius}
-          onRadiusChange={setRadius}
-          activeFilterCount={activeFilterCount}
-          onReset={handleResetFilters}
-        />
-
-        {/* Stale data warning */}
-        {!loading && !error && <StaleDataWarning lastUpdated={lastUpdated} onReportPrice={() => setShowUploadForm(true)} />}
-
-        {/* Empty / error states */}
-        {prices.length === 0 && !loading && (
-          <>
-            {status === 'denied' && <LocationDeniedState onRetry={handleRetryLocation} onManualSearch={() => setFirstVisitDismissed(true)} />}
-            {status === 'timeout' && !loading && <LocationTimeoutState onRetry={handleRetryLocation} onManualSearch={() => setFirstVisitDismissed(true)} />}
-            {status === 'unavailable' && !loading && <LocationUnavailableState onManualSearch={() => setFirstVisitDismissed(true)} />}
-            {status === 'success' && <NoResultsState filters={{ variant, packSize, radius }} onResetFilters={handleResetFilters} onExpandRadius={handleExpandRadius} onReportPrice={() => setShowUploadForm(true)} />}
-          </>
-        )}
-
-        {/* Loading */}
-        {loading && (
-          <div className="space-y-4">
-            <LoadingSkeleton variant="hero" />
-            <LoadingSkeleton variant="card" count={3} />
-          </div>
-        )}
-
-        {/* Error */}
-        {!loading && error && <ApiErrorState message={error} onRetry={refetch} onReportPrice={() => setShowUploadForm(true)} />}
-
-        {/* Price list — desktop: lg:grid with detail panel | mobile: single col + panel */}
-        {!loading && !error && prices.length > 0 && (
-          <>
-            {/* Mobile: report price card */}
-            <ReportPriceCard onReportPrice={() => setShowUploadForm(true)} variant="desktop" />
-
-            <div className="lg:grid lg:grid-cols-12 lg:gap-6">
-              {/* Price list — full width on mobile, 8 cols on desktop */}
-              <div className="lg:col-span-8 space-y-3">
-                <div aria-live="polite" aria-atomic="true" aria-label="Price results">
-                  <PriceList
-                    prices={prices}
-                    userLat={location?.lat}
-                    userLng={location?.lng}
-                    highlightedStoreId={null}
-                    onStoreHover={() => {}}
-                    onStoreClick={handlePriceClick}
-                    onReportPrice={() => setShowUploadForm(true)}
-                    onWidenRadius={handleExpandRadius}
-                    reportPromptShown={reportPromptShown}
-                    onReportPromptSeen={() => setReportPromptShown(true)}
-                  />
-                </div>
-                <LastUpdated date={lastUpdated} />
-              </div>
-
-              {/* Detail panel — 4 cols desktop only */}
-              <div className="hidden lg:block lg:col-span-4">
-                <div className="sticky top-20">
-                  <PriceDetailPanel
-                    price={selectedPrice}
-                    userLat={location?.lat}
-                    userLng={location?.lng}
-                    open={!!selectedPrice}
-                    onClose={() => setSelectedPrice(null)}
-                  />
-                </div>
-              </div>
+        {/* Desktop detail panel */}
+        <div className="hidden lg:block sticky top-0 h-screen overflow-y-auto border-l border-border">
+          {selectedPrice ? (
+            <PriceDetailView
+              price={selectedPrice}
+              open={true}
+              onClose={handleCloseDetail}
+              onReportPrice={() => setReportModalOpen(true)}
+              userLat={location?.lat}
+              userLng={location?.lng}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-muted-foreground text-sm p-8 text-center">
+              Select a price to view details
             </div>
-          </>
-        )}
-      </main>
+          )}
+        </div>
+      </div>
 
-      <Footer />
+      {/* Mobile FAB */}
+      <button
+        onClick={() => setReportModalOpen(true)}
+        className="lg:hidden fixed bottom-6 right-6 z-50 size-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center"
+        aria-label="Report a price"
+      >
+        <CirclePlus className="size-6" />
+      </button>
 
-      {/* Mobile detail panel — slide-over */}
-      {!loading && !error && prices.length > 0 && (
-        <PriceDetailPanel
-          price={selectedPrice}
-          userLat={location?.lat}
-          userLng={location?.lng}
-          open={!!selectedPrice}
-          onClose={() => setSelectedPrice(null)}
-        />
-      )}
-
-      <StoreUploadForm
-        onSuccess={refetch}
-        externalOpen={showUploadForm}
-        onExternalOpenChange={handleUploadFormOpenChange}
-        prefillStoreName={reportStoreName}
+      <ReportPriceModal
+        open={reportModalOpen}
+        onOpenChange={setReportModalOpen}
+        prefillStoreName={selectedPrice?.stores?.name}
       />
+
+      {/* Mobile detail sheet */}
+      {selectedPrice && (
+        <div className="lg:hidden">
+          <PriceDetailView
+            price={selectedPrice}
+            open={!!selectedPrice}
+            onClose={handleCloseDetail}
+            onReportPrice={() => setReportModalOpen(true)}
+            userLat={location?.lat}
+            userLng={location?.lng}
+          />
+        </div>
+      )}
     </div>
   )
 }
