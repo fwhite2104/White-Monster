@@ -29,6 +29,7 @@ interface PriceCardProps {
   userLng?: number
   onHover?: () => void
   onReportPrice?: (storeId: string) => void
+  onClick?: (price: Price) => void
 }
 
 function getVariantLabel(product: { variant?: string; pack_size?: string }): string {
@@ -45,7 +46,7 @@ function formatPerCanPrice(price: Price): string | null {
   return Number(price.per_can_price ?? Number(price.price) / count).toFixed(2)
 }
 
-export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onReportPrice }: PriceCardProps) {
+export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onReportPrice, onClick }: PriceCardProps) {
   const shouldReduceMotion = useReducedMotion()
   const [alertOpen, setAlertOpen] = useState(false)
   const lat = Number.isFinite(userLat) ? (userLat as number) : CORK_CENTER.lat
@@ -97,6 +98,7 @@ export function PriceCard({ price, isCheapest, userLat, userLng, onHover, onRepo
           isCheapest && 'glow-primary',
         )}
         style={{ borderLeftColor: `var(--retailer-${store.retailer})` }}
+        onClick={onClick ? () => onClick(price) : undefined}
       >
         <div className="ps-5 pe-4 py-4">
           {/* Row 1: Price + Actions */}

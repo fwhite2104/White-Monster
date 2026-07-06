@@ -18,6 +18,7 @@ interface PriceListProps {
   userLng?: number
   highlightedStoreId?: string | null
   onStoreHover?: (storeId: string | null) => void
+  onStoreClick?: (price: Price) => void
   onReportPrice?: () => void
   onWidenRadius?: () => void
   reportPromptShown?: boolean
@@ -29,6 +30,7 @@ export function PriceList({
   userLat,
   userLng,
   onStoreHover,
+  onStoreClick,
   onReportPrice,
   onWidenRadius,
   reportPromptShown,
@@ -146,6 +148,7 @@ export function PriceList({
           userLat={userLat}
           userLng={userLng}
           onHover={() => onStoreHover?.(price.store_id)}
+          onClick={onStoreClick ? (p) => onStoreClick(p) : undefined}
         />
       </motion.div>
     )
