@@ -21,7 +21,10 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
-OVERPASS_TIMEOUT = 120  # seconds
+OVERPASS_TIMEOUT = 180  # seconds — some all-Ireland queries take a while
+
+# Ireland bounding box (lat_min, lon_min, lat_max, lon_max)
+IE_BBOX = (51.3, -10.5, 55.5, -5.5)
 
 # Retailers to seed, with their OSM brand tag and acceptable shop tags.
 # Londis and Costcutter are intentionally excluded (out of scope).
@@ -67,41 +70,91 @@ def log(message: str):
 
 
 def build_overpass_query(brand: str, shop_tags: List[str]) -> str:
-    """Build an Overpass QL query for a given brand and shop tags."""
+    """Build an Overpass QL query for a given brand and shop tags in Ireland."""
     shop_filter = "|".join(shop_tags)
-    # Query nodes, ways (out center), and relations (out center) in Ireland
+    lat_min, lon_min, lat_max, lon_max = IE_BBOX
+    # Query nodes only — the vast majority of Irish retail stores are mapped
+    # as nodes. Ways and relations for supermarkets are rare.
     return f"""
 [out:json][timeout:{OVERPASS_TIMEOUT}];
-area["ISO3166-1"="IE"]->.searchArea;
-(
-  nwr["brand"="{brand}"]["shop"~"^{shop_filter}$"](area.searchArea);
-);
-out center;
+node["brand"="{brand}"]["shop"~"^{shop_filter}$"]({lat_min},{lon_min},{lat_max},{lon_max});
+out;
 """
 
 
 def query_overpass(brand: str, shop_tags: List[str]) -> List[Dict]:
-    """Query Overpass API and return raw elements."""
+    """Query Overpass API and return raw elements.
+
+    Tries the primary query (brand + shop tag). If the shop-tag filter
+    causes a timeout, falls back to brand-only query to still get stores
+    with missing or non-standard shop tags.
+    """
     query = build_overpass_query(brand, shop_tags)
     log(f"Querying Overpass for '{brand}' (shop={shop_tags})...")
 
-    try:
-        resp = requests.post(
-            OVERPASS_URL,
-            data={"data": query},
-            timeout=OVERPASS_TIMEOUT,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        elements = data.get("elements", [])
-        log(f"  Found {len(elements)} elements for '{brand}'")
-        return elements
-    except requests.exceptions.Timeout:
-        log(f"  Timeout querying '{brand}' — skipping")
-        return []
-    except requests.exceptions.RequestException as e:
-        log(f"  Error querying '{brand}': {e}")
-        return []
+    for attempt in range(3):
+        try:
+            resp = requests.post(
+                OVERPASS_URL,
+                data={"data": query},
+                headers={
+                    "Accept": "application/json",
+                    "User-Agent": "MonsterCork/1.0 (Price Comparison Bot; +https://monster-cork.vercel.app)",
+                },
+                timeout=OVERPASS_TIMEOUT,
+            )
+
+            if resp.status_code == 429:
+                wait = (attempt + 1) * 10
+                log(f"  Rate limited (429) — waiting {wait}s before retry")
+                time.sleep(wait)
+                continue
+
+            resp.raise_for_status()
+            data = resp.json()
+            elements = data.get("elements", [])
+            log(f"  Found {len(elements)} elements for '{brand}'")
+            return elements
+
+        except requests.exceptions.Timeout:
+            log(f"  Timeout on attempt {attempt + 1} for '{brand}'")
+            if attempt < 2:
+                time.sleep(5)
+                continue
+            # Try brand-only query as fallback
+            log(f"  Retrying '{brand}' without shop-tag filter...")
+            try:
+                fallback_query = f"""
+[out:json][timeout:{OVERPASS_TIMEOUT}];
+node["brand"="{brand}"]({IE_BBOX[0]},{IE_BBOX[1]},{IE_BBOX[2]},{IE_BBOX[3]});
+out;
+"""
+                resp = requests.post(
+                    OVERPASS_URL,
+                    data={"data": fallback_query},
+                    headers={
+                        "Accept": "application/json",
+                        "User-Agent": "MonsterCork/1.0",
+                    },
+                    timeout=OVERPASS_TIMEOUT,
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    elements = data.get("elements", [])
+                    log(f"  Brand-only fallback found {len(elements)} elements for '{brand}'")
+                    return elements
+            except Exception as fe:
+                log(f"  Fallback also failed: {fe}")
+
+        except requests.exceptions.RequestException as e:
+            log(f"  Error on attempt {attempt + 1}: {e}")
+            if attempt < 2:
+                time.sleep(5)
+                continue
+            break
+
+    log(f"  All attempts failed for '{brand}'")
+    return []
 
 
 def extract_stores(brand: str, retailer: str, elements: List[Dict]) -> List[Dict]:
