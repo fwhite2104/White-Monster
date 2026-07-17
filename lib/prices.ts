@@ -24,13 +24,11 @@ export function expandNationalPrices(
   existingResults: PriceEntry[],
 ): PriceEntry[] {
   const validStores = allStores.filter(
-    (s) =>
-      Number.isFinite(s.lat) &&
-      Number.isFinite(s.lng) &&
-      s.lat >= -90 &&
-      s.lat <= 90 &&
-      s.lng >= -180 &&
-      s.lng <= 180,
+    (s) => {
+      const lat = Number(s.lat)
+      const lng = Number(s.lng)
+      return Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
+    },
   )
   const physicalStores = validStores.filter((s) => !s.name.includes('(National)'))
   const nationalStores = validStores.filter((s) => s.name.includes('(National)'))
@@ -114,7 +112,7 @@ export function mergeUserPrices(
   // Filter by distance to user
   const nearbyUserPrices = userPrices.filter((up) => {
     const s = up.stores
-    if (!s || !Number.isFinite(s.lat) || !Number.isFinite(s.lng)) return false
+    if (!s || !Number.isFinite(Number(s.lat)) || !Number.isFinite(Number(s.lng))) return false
     const dist = calculateDistance(lat, lng, s.lat, s.lng)
     return dist <= radiusMeters
   })

@@ -30,7 +30,7 @@ const userIcon = L.divIcon({
 
 function StoreMarker({ price }: { price: Price }) {
   const store = price.stores
-  if (!store || !Number.isFinite(store.lat) || !Number.isFinite(store.lng)) return null
+  if (!store || !Number.isFinite(Number(store.lat)) || !Number.isFinite(Number(store.lng))) return null
 
   const color = getRetailerColor(store.retailer)
   const icon = L.divIcon({
