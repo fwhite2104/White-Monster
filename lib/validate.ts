@@ -1,20 +1,16 @@
 import { MIN_RADIUS_KM, MAX_RADIUS_KM, getPackCount, PACK_SIZES } from './constants'
 
-export function validateLat(value: unknown, field = 'lat'): number {
+function validateNumeric(value: unknown, field: string, min: number, max: number): number {
   if (value == null) throw new Error(`Invalid ${field}: must be a valid number`)
   const num = typeof value === 'string' ? parseFloat(value) : Number(value)
   if (!Number.isFinite(num)) throw new Error(`Invalid ${field}: must be a valid number`)
-  if (num < -90 || num > 90) throw new Error(`Invalid ${field}: must be between -90 and 90`)
+  if (num < min || num > max) throw new Error(`Invalid ${field}: must be between ${min} and ${max}`)
   return num
 }
 
-export function validateLng(value: unknown, field = 'lng'): number {
-  if (value == null) throw new Error(`Invalid ${field}: must be a valid number`)
-  const num = typeof value === 'string' ? parseFloat(value) : Number(value)
-  if (!Number.isFinite(num)) throw new Error(`Invalid ${field}: must be a valid number`)
-  if (num < -180 || num > 180) throw new Error(`Invalid ${field}: must be between -180 and 180`)
-  return num
-}
+export function validateLat(value: unknown) { return validateNumeric(value, 'lat', -90, 90) }
+
+export function validateLng(value: unknown) { return validateNumeric(value, 'lng', -180, 180) }
 
 export function validateRadius(value: unknown, field = 'radius'): number {
   if (value == null) throw new Error(`Invalid ${field}: must be a valid number`)

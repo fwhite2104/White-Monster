@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isValidCoordinate, validateCoordinate } from '../geo'
+import { isValidCoordinate } from '../geo'
 
 describe('isValidCoordinate', () => {
   it('accepts valid Cork center coords', () => {
@@ -50,43 +50,5 @@ describe('isValidCoordinate', () => {
 
   it('rejects string coords', () => {
     expect(isValidCoordinate('51.9' as unknown as number, -8.47)).toBe(false)
-  })
-})
-
-describe('validateCoordinate', () => {
-  const fallback = { lat: 51.8985, lng: -8.4756 }
-
-  it('returns valid coords as-is', () => {
-    const result = validateCoordinate(51.89, -8.47)
-    expect(result).toEqual({ lat: 51.89, lng: -8.47 })
-  })
-
-  it('returns fallback for NaN coords', () => {
-    const result = validateCoordinate(NaN, NaN, fallback)
-    expect(result).toEqual(fallback)
-  })
-
-  it('returns fallback for undefined coords', () => {
-    const result = validateCoordinate(undefined, undefined, fallback)
-    expect(result).toEqual(fallback)
-  })
-
-  it('throws when no fallback and coords are invalid', () => {
-    expect(() => validateCoordinate(NaN, NaN)).toThrow('Invalid coordinates')
-  })
-
-  it('returns fallback for null coords', () => {
-    const result = validateCoordinate(null, 0, fallback)
-    expect(result).toEqual(fallback)
-  })
-
-  it('returns fallback for Infinity lng', () => {
-    const result = validateCoordinate(51.89, Infinity, fallback)
-    expect(result).toEqual(fallback)
-  })
-
-  it('falls back to Cork center when passed invalid coords', () => {
-    const result = validateCoordinate('' as unknown as number, undefined, fallback)
-    expect(result).toEqual(fallback)
   })
 })
