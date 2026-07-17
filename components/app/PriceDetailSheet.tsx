@@ -30,6 +30,7 @@ export function PriceDetailSheet({ price, open, onClose, onReportPrice }: PriceD
         <Dialog.Content
           className="fixed inset-x-0 bottom-0 lg:inset-y-0 lg:right-0 lg:left-auto lg:w-[400px] max-h-[85vh] lg:max-h-none rounded-t-2xl lg:rounded-none bg-background border-t lg:border-l lg:border-t-0 border-border p-5 shadow-2xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom lg:data-[state=closed]:slide-out-to-right lg:data-[state=open]:slide-in-from-right"
           aria-describedby="price-detail-description"
+          data-testid="price-detail-sheet"
         >
           <div className="flex items-center justify-between mb-4">
             <Dialog.Title className="text-lg font-semibold">Price details</Dialog.Title>

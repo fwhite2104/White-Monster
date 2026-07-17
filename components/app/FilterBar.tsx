@@ -40,6 +40,7 @@ function FilterSelect({
         <Select.Trigger
           className="inline-flex items-center justify-between gap-2 px-3 py-2 text-sm rounded-lg bg-card border border-border hover:bg-card/80 focus:outline-none focus:ring-2 focus:ring-ring min-w-[140px]"
           aria-label={label}
+          data-testid={`filter-${label.toLowerCase().replace(/\s+/g, '-')}`}
         >
           <Select.Value placeholder={`Select ${label.toLowerCase()}`}>
             {selected?.label ?? value}

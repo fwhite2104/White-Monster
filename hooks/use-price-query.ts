@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useReducer } from 'react'
 import { useQueryStates, parseAsString, parseAsInteger } from 'nuqs'
 import { DEFAULT_RADIUS_KM } from '@/lib/constants'
 import type { Price } from '@/lib/types'
@@ -68,35 +68,32 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
     error: null,
   })
 
-  const filtersRef = useRef(filters)
-  useEffect(() => {
-    filtersRef.current = filters
-  }, [filters])
+  const runFetch = useCallback(
+    async (signal?: AbortSignal) => {
+      dispatch({ type: 'start' })
 
-  const runFetch = useCallback(async (signal?: AbortSignal) => {
-    const currentFilters = filtersRef.current
-    dispatch({ type: 'start' })
+      try {
+        const res = await fetch(
+          `/api/prices?lat=${lat}&lng=${lng}&radius=${filters.radius}&variant=${filters.variant}&sort=${filters.sort}&pack_size=${filters.pack_size}`,
+          { signal }
+        )
 
-    try {
-      const res = await fetch(
-        `/api/prices?lat=${lat}&lng=${lng}&radius=${currentFilters.radius}&variant=${currentFilters.variant}&sort=${currentFilters.sort}&pack_size=${currentFilters.pack_size}`,
-        { signal }
-      )
+        if (!res.ok) throw new Error('Failed to fetch prices')
 
-      if (!res.ok) throw new Error('Failed to fetch prices')
-
-      const data = await res.json()
-      dispatch({ type: 'success', prices: data.prices || [] })
-    } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        dispatch({ type: 'error', error: 'Request timed out. Please try again.' })
-      } else {
-        dispatch({ type: 'error', error: err instanceof Error ? err.message : 'Something went wrong' })
+        const data = await res.json()
+        dispatch({ type: 'success', prices: data.prices || [] })
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          dispatch({ type: 'error', error: 'Request timed out. Please try again.' })
+        } else {
+          dispatch({ type: 'error', error: err instanceof Error ? err.message : 'Something went wrong' })
+        }
+      } finally {
+        dispatch({ type: 'done' })
       }
-    } finally {
-      dispatch({ type: 'done' })
-    }
-  }, [lat, lng])
+    },
+    [lat, lng, filters.radius, filters.variant, filters.sort, filters.pack_size]
+  )
 
   useEffect(() => {
     const controller = new AbortController()

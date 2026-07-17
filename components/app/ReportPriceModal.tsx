@@ -82,6 +82,7 @@ export function ReportPriceModal({ open, onOpenChange, prefillStoreName }: Repor
         <Dialog.Content
           className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-md rounded-2xl bg-background border border-border p-5 shadow-2xl outline-none"
           aria-describedby="report-price-description"
+          data-testid="report-price-modal"
         >
           <div className="flex items-center justify-between mb-4">
             <Dialog.Title className="text-lg font-semibold">Report a price</Dialog.Title>
@@ -205,8 +206,9 @@ export function ReportPriceFab({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="lg:hidden fixed bottom-6 right-6 z-50 size-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center"
+      className="fixed bottom-6 right-6 z-50 size-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center"
       aria-label="Report a price"
+      data-testid="report-fab"
     >
       <CirclePlus className="size-6" />
     </button>

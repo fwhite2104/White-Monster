@@ -18,6 +18,7 @@ export function PriceCard({ price, isBest, onClick }: PriceCardProps) {
   return (
     <button
       onClick={onClick}
+      data-testid="price-card"
       className="w-full text-left px-4 py-3 rounded-xl card-shadow-sm bg-card hover:bg-card/80 transition-colors"
       aria-label={`${store?.name ?? 'Unknown store'}: ${product?.name ?? 'Monster'} for €${numericPrice.toFixed(2)}`}
     >

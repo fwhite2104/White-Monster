@@ -35,11 +35,10 @@ export default defineConfig({
         ]),
   ],
 
-  webServer: process.env.CI
-    ? {
-        command: 'bun run build && bun run start',
-        port: 3000,
-        reuseExistingServer: true,
-      }
-    : undefined,
+  webServer: {
+    command: 'bun run build && bun run start',
+    port: 3000,
+    reuseExistingServer: true,
+    timeout: 120000,
+  },
 })
