@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { CORK_CENTER } from '@/lib/constants'
+import { CORK_CENTER, LOCATION_MAX_AGE_MS } from '@/lib/constants'
 import { isValidCoordinate } from '@/lib/geo'
 
 export type LocationSource = 'gps' | 'manual' | 'cached' | 'default'
@@ -63,6 +63,10 @@ function loadCachedLocation(): { location: LocationInfo; timestamp: number; deni
     if (!raw) return null
     const parsed = JSON.parse(raw) as { lat: number; lng: number; accuracy?: number; timestamp?: number; denied?: boolean }
     if (typeof parsed.lat !== 'number' || typeof parsed.lng !== 'number') return null
+    if (typeof parsed.timestamp === 'number' && Date.now() - parsed.timestamp > LOCATION_MAX_AGE_MS) {
+      localStorage.removeItem(STORAGE_KEY)
+      return null
+    }
     return {
       location: {
         lat: parsed.lat,

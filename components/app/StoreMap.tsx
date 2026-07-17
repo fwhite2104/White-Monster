@@ -21,6 +21,13 @@ const iconBase = L.divIcon({
   iconAnchor: [8, 8],
 })
 
+const userIcon = L.divIcon({
+  className: '',
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+  html: `<div style="width:20px;height:20px;border-radius:50%;background:oklch(0.72 0.22 145);border:3px solid rgba(255,255,255,0.9);box-shadow:0 0 0 3px rgba(0,0,0,0.15),0 2px 6px rgba(0,0,0,0.3)"></div>`,
+})
+
 function StoreMarker({ price }: { price: Price }) {
   const store = price.stores
   if (!store || !Number.isFinite(store.lat) || !Number.isFinite(store.lng)) return null
@@ -71,8 +78,6 @@ export function StoreMap({ prices, userLat, userLng, radiusKm }: StoreMapProps) 
     })
   }, [prices])
 
-  const hasStores = storeMarkers.length > 0
-
   return (
     <div className="w-full h-[300px] md:h-[400px] rounded-xl overflow-hidden border border-border">
       <MapContainer
@@ -88,6 +93,11 @@ export function StoreMap({ prices, userLat, userLng, radiusKm }: StoreMapProps) 
 
         <MapController lat={userLat} lng={userLng} />
 
+        {/* User location marker */}
+        <Marker position={[userLat, userLng]} icon={userIcon}>
+          <Popup>Your location</Popup>
+        </Marker>
+
         {/* Radius circle */}
         <Circle
           center={[userLat, userLng]}
@@ -102,16 +112,9 @@ export function StoreMap({ prices, userLat, userLng, radiusKm }: StoreMapProps) 
         />
 
         {/* Store markers */}
-        {hasStores && storeMarkers.map((price) => (
+        {storeMarkers.map((price) => (
           <StoreMarker key={price.stores!.id} price={price} />
         ))}
-
-        {/* Fallback: show center marker even when no stores */}
-        {!hasStores && (
-          <Marker position={[userLat, userLng]} icon={iconBase}>
-            <Popup>Your location</Popup>
-          </Marker>
-        )}
       </MapContainer>
     </div>
   )
