@@ -18,16 +18,8 @@ describe('getPackCount', () => {
     expect(getPackCount('8_pack')).toBe(8)
   })
 
-  it('returns 10 for 10_pack', () => {
-    expect(getPackCount('10_pack')).toBe(10)
-  })
-
-  it('returns 12 for 12_pack', () => {
-    expect(getPackCount('12_pack')).toBe(12)
-  })
-
-  it('returns 24 for 24_pack', () => {
-    expect(getPackCount('24_pack')).toBe(24)
+  it('returns 9 for 9_pack', () => {
+    expect(getPackCount('9_pack')).toBe(9)
   })
 
   it('falls back to 1 for invalid values', () => {
@@ -56,16 +48,8 @@ describe('formatPackSize', () => {
     expect(formatPackSize('8_pack')).toBe('8-Pack')
   })
 
-  it('formats 10_pack as "10-Pack"', () => {
-    expect(formatPackSize('10_pack')).toBe('10-Pack')
-  })
-
-  it('formats 12_pack as "12-Pack"', () => {
-    expect(formatPackSize('12_pack')).toBe('12-Pack')
-  })
-
-  it('formats 24_pack as "24-Pack"', () => {
-    expect(formatPackSize('24_pack')).toBe('24-Pack')
+  it('formats 9_pack as "9-Pack"', () => {
+    expect(formatPackSize('9_pack')).toBe('9-Pack')
   })
 
   it('passes through unknown values', () => {

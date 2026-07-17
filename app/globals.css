@@ -50,7 +50,7 @@
   --primary-foreground: #052e16;
   --secondary: oklch(0.78 0.18 195);
   --secondary-foreground: #042f2e;
-  --muted: rgba(255, 255, 255, 0.06);
+  --muted: oklch(0.18 0.015 255);
   --muted-foreground: #94a3b8;
   --accent: oklch(0.72 0.22 145);
   --accent-foreground: #052e16;
