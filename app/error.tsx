@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Button } from '@/components/ui/button'
 
 export default function Error({
   error,
@@ -16,7 +15,6 @@ export default function Error({
 
   return (
     <div className="min-h-full flex flex-col items-center justify-center gap-6 p-8 text-center bg-background text-foreground">
-      {/* Inline SVG lightning bolt — Monster brand icon */}
       <div className="flex items-center justify-center size-16 rounded-2xl bg-primary/10 ring-1 ring-primary/20">
         <svg
           viewBox="0 0 24 24"
@@ -48,13 +46,12 @@ export default function Error({
         )}
       </div>
 
-      <Button
+      <button
         onClick={reset}
-        size="lg"
-        className="min-w-[140px]"
+        className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium min-w-[140px]"
       >
         Try again
-      </Button>
+      </button>
     </div>
   )
 }

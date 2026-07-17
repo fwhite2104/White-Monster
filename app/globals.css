@@ -1,8 +1,5 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
-/* maplibre CSS loaded at layout level so it applies across dynamic imports (ssr:false) */
-@import "maplibre-gl/dist/maplibre-gl.css";
 
 @custom-variant dark (&:is(.dark *, [data-theme="dark"] *));
 
@@ -12,7 +9,7 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-heading: var(--font-sans);
-  
+
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -22,11 +19,6 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
-  --color-primary-light: var(--primary-light);
-  --color-primary-dark: var(--primary-dark);
-  --color-brand-glow: var(--brand-glow);
-  --color-brand-muted: var(--brand-muted);
-  --color-brand-surface: var(--brand-surface);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -41,61 +33,14 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
-  /* Semantic tokens */
-  --color-surface-primary: var(--color-surface-primary);
-  --color-surface-secondary: var(--color-surface-secondary);
-  --color-surface-tertiary: var(--color-surface-tertiary);
-  --color-text-primary: var(--color-text-primary);
-  --color-text-secondary: var(--color-text-secondary);
-  --color-interactive-default: var(--color-interactive-default);
-  --color-interactive-foreground: var(--color-interactive-foreground);
-  --color-interactive-hover: var(--color-interactive-hover);
-  --color-interactive-muted: var(--color-interactive-muted);
-  --color-border-default: var(--color-border-default);
-  --color-border-strong: var(--color-border-strong);
-  --color-danger: var(--color-danger);
+  --radius-md: var(--radius);
 
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
-
-  /* Z-index scale — semantic layering tokens */
-  --z-base: 0;
-  --z-local: 10;
-  --z-over: 20;
-  --z-bar: 30;
-  --z-chrome: 40;
-  --z-fab: 50;
   --z-header: 60;
-  --z-popover: 70;
-  --z-overlay: 80;
   --z-dialog: 90;
-
-  --animate-scan-line: scan-line 2s ease-in-out infinite;
-  --animate-neon-pulse: neon-pulse 2s ease-in-out infinite;
-  --animate-particle-float: particle-float 8s ease-in-out infinite;
-
-  /* Retailer colour tokens */
-  --color-retailer-tesco: var(--retailer-tesco);
-  --color-retailer-lidl: var(--retailer-lidl);
-  --color-retailer-aldi: var(--retailer-aldi);
-  --color-retailer-supervalu: var(--retailer-supervalu);
-  --color-retailer-dunnes: var(--retailer-dunnes);
-  --color-retailer-centra: var(--retailer-centra);
-  --color-retailer-spar: var(--retailer-spar);
-  --color-retailer-dealz: var(--retailer-dealz);
-  --color-retailer-londis: var(--retailer-londis);
-  --color-retailer-costcutter: var(--retailer-costcutter);
-  --color-retailer-other: var(--retailer-other);
 }
 
 :root {
-  /* Glassmorphism + neon cyberpunk palette */
-  --background: oklch(0.08 0.02 265);
+  --background: oklch(0.12 0.02 255);
   --foreground: #f8fafc;
   --card: rgba(255, 255, 255, 0.05);
   --card-foreground: #f8fafc;
@@ -103,8 +48,6 @@
   --popover-foreground: #f8fafc;
   --primary: oklch(0.72 0.22 145);
   --primary-foreground: #052e16;
-  --primary-light: oklch(0.8 0.2 145);
-  --primary-dark: oklch(0.6 0.2 145);
   --secondary: oklch(0.78 0.18 195);
   --secondary-foreground: #042f2e;
   --muted: rgba(255, 255, 255, 0.06);
@@ -123,7 +66,7 @@
   --chart-5: oklch(0.5 0.12 145);
   --radius: 0.75rem;
 
-  /* Retailer colour tokens — mapped from lib/constants.ts RETAILERS */
+  /* Retailer colours — used by getRetailerColor() in lib/constants.ts */
   --retailer-tesco: #EE1C2E;
   --retailer-lidl: #0050AA;
   --retailer-aldi: #00247D;
@@ -136,96 +79,15 @@
   --retailer-costcutter: #009639;
   --retailer-other: #6B7280;
 
-  /* Glow shadow tokens */
-  --glow-primary: 0 0 20px oklch(0.72 0.22 145 / 0.35), 0 0 60px oklch(0.72 0.22 145 / 0.15);
-  --glow-secondary: 0 0 20px oklch(0.78 0.18 195 / 0.35), 0 0 60px oklch(0.78 0.18 195 / 0.15);
-  
-
-  /* Semantic tokens — map to primitives for consistent usage */
-  --color-surface-primary: var(--background);
-  --color-surface-secondary: var(--card);
-  --color-surface-tertiary: var(--secondary);
-  --color-text-primary: var(--foreground);
-  --color-text-secondary: var(--muted-foreground);
-  --color-interactive-default: var(--primary);
-  --color-interactive-foreground: var(--primary-foreground);
-  --color-interactive-hover: var(--primary-light);
-  --color-interactive-muted: var(--muted);
-  --color-border-default: var(--border);
-  --color-border-strong: var(--ring);
-  --color-danger: var(--destructive);
-
-  /* Brand accent variants — green glow on dark OLED */
-  --brand-glow: rgba(34, 197, 94, 0.15);
-  --brand-glow-strong: rgba(34, 197, 94, 0.3);
-  --brand-muted: rgba(34, 197, 94, 0.08);
-  --brand-surface: rgba(34, 197, 94, 0.06);
-
-  /* Card elevation scale — shadow + subtle border (preferred over ring-*) */
+  /* Card elevation — shadow + subtle border */
   --shadow-card-sm: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-card-md: 0 4px 12px rgba(0, 0, 0, 0.55), 0 2px 4px rgba(0, 0, 0, 0.4);
   --shadow-card-lg: 0 10px 24px rgba(0, 0, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.45);
-  /* Legacy shadow aliases for backward compat */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.55), 0 2px 4px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.45);
 
-  /* Emil Kowalski custom easing curves */
+  /* Press/hover timing */
+  --duration-press: 160ms;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-
-  /* Emil Kowalski animation durations */
-  --duration-press: 160ms;
-  --duration-tooltip: 125ms;
-  --duration-dropdown: 200ms;
-  --duration-modal: 300ms;
-  --duration-exit: 200ms;
-  --duration-enter: 400ms;
-
-  /* Spacing rhythm */
-  --space-xs: 0.25rem;
-  --space-sm: 0.5rem;
-  --space-md: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2rem;
-  --space-2xl: 3rem;
-  --space-3xl: 4rem;
-  --space-4xl: 5rem;
-
-  /* =========================================
-     TYPE SCALE — premium fintech/consumer app
-     ========================================= */
-  /* Display: hero prices, big savings figures */
-  --text-display: clamp(2rem, 4vw, 3.5rem);
-  --text-display-sm: clamp(1.5rem, 3vw, 2.25rem);
-  /* Heading: section titles, card headers */
-  --text-heading-lg: 1.5rem;
-  --text-heading-md: 1.25rem;
-  --text-heading-sm: 1.125rem;
-  /* Body: secondary info, metadata */
-  --text-body: 0.875rem;
-  --text-body-sm: 0.8125rem;
-  /* Mono price: all price figures */
-  --text-price-hero: clamp(2rem, 4vw, 3rem);
-  --text-price-lg: 1.5rem;
-  --text-price-md: 1.125rem;
-  --text-price-base: 1rem;
-  --text-price-sm: 0.875rem;
-  --text-price-xs: 0.75rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not(.dark):not([data-theme]) {
-    --background: oklch(0.08 0.02 265);
-    --foreground: #f8fafc;
-    --card: rgba(255, 255, 255, 0.05);
-    --card-foreground: #f8fafc;
-    --primary: oklch(0.72 0.22 145);
-    --primary-foreground: #052e16;
-    --border: rgba(255, 255, 255, 0.1);
-    --input: rgba(255, 255, 255, 0.08);
-    --ring: oklch(0.72 0.22 145);
-  }
 }
 
 @layer base {
@@ -258,7 +120,7 @@
     transition: transform var(--duration-press) var(--ease-out);
   }
 
-  /* Hover: opacity shift only — scale transforms cause layout shift on cards with nested buttons */
+  /* Hover: opacity shift only */
   @media (hover: hover) and (pointer: fine) {
     button:hover:not(:disabled):not([data-framer-motion-effect]),
     a:hover:not(:disabled):not([data-framer-motion-effect]),
@@ -274,69 +136,6 @@
   }
   100% {
     transform: translateX(100%);
-  }
-}
-
-@keyframes scan-line {
-  0% {
-    top: 0%;
-  }
-  50% {
-    top: 100%;
-  }
-  100% {
-    top: 0%;
-  }
-}
-
-@keyframes neon-pulse {
-  0%, 100% {
-    box-shadow: 0 0 8px oklch(0.72 0.22 145 / 0.4), 0 0 24px oklch(0.72 0.22 145 / 0.15);
-    border-color: oklch(0.72 0.22 145 / 0.5);
-  }
-  50% {
-    box-shadow: 0 0 16px oklch(0.72 0.22 145 / 0.7), 0 0 48px oklch(0.72 0.22 145 / 0.3);
-    border-color: oklch(0.72 0.22 145 / 0.9);
-  }
-}
-
-@keyframes particle-float {
-  0%, 100% {
-    transform: translateY(0) translateX(0) scale(1);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.6;
-  }
-  50% {
-    transform: translateY(-40vh) translateX(20px) scale(1.2);
-    opacity: 0.3;
-  }
-  90% {
-    opacity: 0;
-  }
-}
-
-@keyframes neon-border-cycle {
-  0%, 100% {
-    border-color: oklch(0.72 0.22 145 / 0.6);
-    box-shadow: 0 0 12px oklch(0.72 0.22 145 / 0.25), 0 0 40px oklch(0.72 0.22 145 / 0.1);
-  }
-  50% {
-    border-color: oklch(0.78 0.18 195 / 0.6);
-    box-shadow: 0 0 12px oklch(0.78 0.18 195 / 0.25), 0 0 40px oklch(0.78 0.18 195 / 0.1);
-  }
-}
-
-/* Scanner tab indicator slide animation */
-@keyframes tab-indicator-slide {
-  from {
-    transform: scaleX(0.6);
-    opacity: 0;
-  }
-  to {
-    transform: scaleX(1);
-    opacity: 1;
   }
 }
 
@@ -378,80 +177,24 @@
     display: none;
   }
 
-  /* Price typography — mono tabular-nums for all price figures
-     Use these on any element showing a monetary value */
-  .price-hero {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums slashed-zero;
-    letter-spacing: -0.02em;
-  }
+  /* Price typography — mono tabular-nums for all price figures */
   .price-lg {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums slashed-zero;
   }
-  .price-md {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums slashed-zero;
-  }
-  .price-base {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums slashed-zero;
-  }
 
-  /* Display text — hero headings */
-  .text-display {
-    font-size: var(--text-display);
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1.05;
-    text-wrap: balance;
-  }
-  .text-display-sm {
-    font-size: var(--text-display-sm);
-    font-weight: 700;
-    letter-spacing: -0.025em;
-    line-height: 1.1;
-    text-wrap: balance;
-  }
-
-  /* Card elevation — shadow + 1px border (preferred over flat ring-1 cards) */
+  /* Card elevation — shadow + 1px border */
   .card-shadow-sm {
     box-shadow: var(--shadow-card-sm);
-    border: 1px solid var(--color-border-default);
+    border: 1px solid var(--border);
   }
   .card-shadow-md {
     box-shadow: var(--shadow-card-md);
-    border: 1px solid var(--color-border-default);
+    border: 1px solid var(--border);
   }
   .card-shadow-lg {
     box-shadow: var(--shadow-card-lg);
-    border: 1px solid var(--color-border-default);
-  }
-
-  .glass {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .glass-strong {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-  }
-
-  .glow-primary {
-    box-shadow: var(--glow-primary);
-  }
-
-  .glow-secondary {
-    box-shadow: var(--glow-secondary);
-  }
-
-  .neon-border-cycle {
-    animation: neon-border-cycle 3s ease-in-out infinite;
+    border: 1px solid var(--border);
   }
 }
 
@@ -460,4 +203,3 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
-

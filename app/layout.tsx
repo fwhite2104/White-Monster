@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Fira_Sans, Fira_Code } from "next/font/google";
-import { Toaster } from "@/components/ui/sonner";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 
 const firaSans = Fira_Sans({
@@ -65,8 +65,7 @@ export default function RootLayout({
         >
           Skip to content
         </a>
-        {children}
-        <Toaster richColors position="bottom-center" />
+        <NuqsAdapter>{children}</NuqsAdapter>
       </body>
     </html>
   );

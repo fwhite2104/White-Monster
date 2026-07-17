@@ -1,9 +1,16 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
+import { useQueryStates, parseAsString, parseAsInteger } from 'nuqs'
 import { DEFAULT_RADIUS_KM } from '@/lib/constants'
-import { getTimeAgo } from '@/lib/geo'
-import type { Price, Store } from '@/lib/types'
+import type { Price } from '@/lib/types'
+
+const priceParams = {
+  variant: parseAsString.withDefault('zero_sugar'),
+  pack_size: parseAsString.withDefault('4_pack'),
+  sort: parseAsString.withDefault('price'),
+  radius: parseAsInteger.withDefault(DEFAULT_RADIUS_KM),
+}
 
 interface UsePriceQueryOptions {
   lat: number
@@ -12,184 +19,132 @@ interface UsePriceQueryOptions {
 
 interface UsePriceQueryReturn {
   prices: Price[]
-  stores: Store[]
   loading: boolean
   error: string | null
-  lastUpdated: string | null
-  freshnessStatus: 'fresh' | 'stale' | 'outdated'
-  freshnessTimeAgo: string
   radius: number
-  setRadius: (r: number) => void
   sort: string
-  setSort: (s: string) => void
   variant: string
-  setVariant: (v: string) => void
   packSize: string
+  setRadius: (r: number) => void
+  setSort: (s: string) => void
+  setVariant: (v: string) => void
   setPackSize: (p: string) => void
   refetch: () => Promise<void>
-  storesWithDistance: (Store & { distance: number })[]
   bestPrice: Price | null
-  nextBestPrice: Price | null
-  maxSavings: { amount: number; packSize: string } | null
+}
+
+type State = {
+  prices: Price[]
+  loading: boolean
+  error: string | null
+}
+
+type Action =
+  | { type: 'start' }
+  | { type: 'success'; prices: Price[] }
+  | { type: 'error'; error: string }
+  | { type: 'done' }
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case 'start':
+      return { ...state, loading: true, error: null }
+    case 'success':
+      return { ...state, prices: action.prices }
+    case 'error':
+      return { ...state, error: action.error }
+    case 'done':
+      return { ...state, loading: false }
+    default:
+      return state
+  }
 }
 
 export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQueryReturn {
-  const [prices, setPrices] = useState<Price[]>([])
-  const [stores, setStores] = useState<Store[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
-  const [freshnessStatus, setFreshnessStatus] = useState<'fresh' | 'stale' | 'outdated'>('fresh')
-  const [freshnessTimeAgo, setFreshnessTimeAgo] = useState('')
-  const [radius, setRadius] = useState(DEFAULT_RADIUS_KM)
-  const [sort, setSort] = useState('price')
-  const [variant, setVariant] = useState('zero_sugar')
-  const [packSize, setPackSize] = useState('4_pack')
+  const [filters, setFilters] = useQueryStates(priceParams)
+  const [state, dispatch] = useReducer(reducer, {
+    prices: [],
+    loading: true,
+    error: null,
+  })
 
-  const fetchData = useCallback(async (signal?: AbortSignal) => {
-    const [pricesRes, storesRes] = await Promise.all([
-      fetch(
-        `/api/prices?lat=${lat}&lng=${lng}&radius=${radius}&variant=${variant}&sort=${sort}&pack_size=${packSize}`,
+  const filtersRef = useRef(filters)
+  useEffect(() => {
+    filtersRef.current = filters
+  }, [filters])
+
+  const runFetch = useCallback(async (signal?: AbortSignal) => {
+    const currentFilters = filtersRef.current
+    dispatch({ type: 'start' })
+
+    try {
+      const res = await fetch(
+        `/api/prices?lat=${lat}&lng=${lng}&radius=${currentFilters.radius}&variant=${currentFilters.variant}&sort=${currentFilters.sort}&pack_size=${currentFilters.pack_size}`,
         { signal }
-      ),
-      fetch(`/api/stores?lat=${lat}&lng=${lng}&radius=${radius}`, { signal }),
-    ])
+      )
 
-    if (!pricesRes.ok) throw new Error('Failed to fetch prices')
-    if (!storesRes.ok) throw new Error('Failed to fetch stores')
+      if (!res.ok) throw new Error('Failed to fetch prices')
 
-    const pricesData = await pricesRes.json()
-    const storesData = await storesRes.json()
-
-    setPrices(pricesData.prices || [])
-    setStores(storesData.stores || [])
-
-    const scrapedAt = pricesData.meta?.last_scraped_at ?? null
-    setLastUpdated(scrapedAt)
-
-    if (scrapedAt) {
-      const hours = (Date.now() - new Date(scrapedAt).getTime()) / (1000 * 60 * 60)
-      if (hours >= 168) {
-        setFreshnessStatus('outdated')
-        setFreshnessTimeAgo(getTimeAgo(scrapedAt))
-      } else if (hours >= 48) {
-        setFreshnessStatus('stale')
-        setFreshnessTimeAgo(getTimeAgo(scrapedAt))
+      const data = await res.json()
+      dispatch({ type: 'success', prices: data.prices || [] })
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        dispatch({ type: 'error', error: 'Request timed out. Please try again.' })
       } else {
-        setFreshnessStatus('fresh')
-        setFreshnessTimeAgo('')
+        dispatch({ type: 'error', error: err instanceof Error ? err.message : 'Something went wrong' })
       }
-    } else {
-      setFreshnessStatus('fresh')
-      setFreshnessTimeAgo('')
+    } finally {
+      dispatch({ type: 'done' })
     }
-  }, [lat, lng, radius, sort, variant, packSize])
+  }, [lat, lng])
 
   useEffect(() => {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), 15000)
 
-    setLoading(true)
-    setError(null)
-
-    fetchData(controller.signal)
-      .catch((err) => {
-        if (err instanceof DOMException && err.name === 'AbortError') {
-          setError('Request timed out. Please try again.')
-        } else {
-          setError(err instanceof Error ? err.message : 'Something went wrong')
-        }
-      })
-      .finally(() => {
-        setLoading(false)
-      })
+    runFetch(controller.signal).finally(() => clearTimeout(timer))
 
     return () => {
       controller.abort()
       clearTimeout(timer)
     }
-  }, [fetchData])
+  }, [runFetch])
 
-  // Safe manual refetch — manages loading/error state and never throws,
-  // unlike raw fetchData (used by retry buttons and post-submit refresh)
   const refetch = useCallback(async () => {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), 15000)
-    setLoading(true)
-    setError(null)
     try {
-      await fetchData(controller.signal)
-    } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        setError('Request timed out. Please try again.')
-      } else {
-        setError(err instanceof Error ? err.message : 'Something went wrong')
-      }
+      await runFetch(controller.signal)
     } finally {
-      setLoading(false)
       clearTimeout(timer)
     }
-  }, [fetchData])
+  }, [runFetch])
 
-  const storesWithDistance = useMemo(
-    () =>
-      stores.map((s) => {
-        const price = prices.find((p) => p.store_id === s.id)
-        return { ...s, distance: price?.distance ?? 0 }
-      }),
-    [stores, prices]
+  const setFilter = useCallback(
+    (key: keyof typeof filters, value: string | number) => {
+      setFilters({ [key]: value })
+    },
+    [setFilters]
   )
 
-  // Cheapest prices regardless of the active sort order (sort may be distance/name)
-  const pricesByPrice = useMemo(
-    () => [...prices].sort((a, b) => Number(a.price) - Number(b.price)),
-    [prices]
-  )
-  const bestPrice = pricesByPrice.length > 0 ? pricesByPrice[0] : null
-  const nextBestPrice = pricesByPrice.length > 1 ? pricesByPrice[1] : null
-
-  const maxSavings = useMemo(() => {
-    if (pricesByPrice.length < 2) return null
-    const byPack = new Map<string, Price[]>()
-    for (const p of pricesByPrice) {
-      const ps = p.products?.pack_size ?? 'single'
-      const list = byPack.get(ps) ?? []
-      list.push(p)
-      byPack.set(ps, list)
-    }
-    let best: { amount: number; packSize: string } | null = null
-    for (const [ps, list] of byPack) {
-      if (list.length < 2) continue
-      const cheapest = Number(list[0].price)
-      const mostExpensive = Number(list[list.length - 1].price)
-      const diff = mostExpensive - cheapest
-      if (diff > 0 && (!best || diff > best.amount)) {
-        best = { amount: diff, packSize: ps }
-      }
-    }
-    return best
-  }, [pricesByPrice])
+  const bestPrice = useMemo(() => {
+    if (state.prices.length === 0) return null
+    return [...state.prices].sort((a, b) => Number(a.price) - Number(b.price))[0]
+  }, [state.prices])
 
   return {
-    prices,
-    stores,
-    loading,
-    error,
-    lastUpdated,
-    freshnessStatus,
-    freshnessTimeAgo,
-    radius,
-    setRadius,
-    sort,
-    setSort,
-    variant,
-    setVariant,
-    packSize,
-    setPackSize,
+    prices: state.prices,
+    loading: state.loading,
+    error: state.error,
+    radius: filters.radius,
+    sort: filters.sort,
+    variant: filters.variant,
+    packSize: filters.pack_size,
+    setRadius: (r) => setFilter('radius', r),
+    setSort: (s) => setFilter('sort', s),
+    setVariant: (v) => setFilter('variant', v),
+    setPackSize: (p) => setFilter('pack_size', p),
     refetch,
-    storesWithDistance,
     bestPrice,
-    nextBestPrice,
-    maxSavings,
   }
 }
