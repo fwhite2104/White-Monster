@@ -134,11 +134,15 @@ def _extract_variant(product_name: str) -> str | None:
     if "nitro super dry" in lowered or ("nitro" in lowered and "super dry" in lowered):
         return "nitro_super_dry"
 
+    # Ultra Strawberry Dreams (check before generic strawberry → zero_sugar)
+    if "strawberry dreams" in lowered:
+        return "strawberry_dreams"
+
     # Zero Sugar (also handles Tesco's "Z/Sgr" abbreviation)
     if "zero sugar" in lowered or "white zero" in lowered or "z/sgr" in lowered:
         return "zero_sugar"
 
-    # Strawberry Flavour Energy → Ultra Strawberry Dreams (zero_sugar)
+    # Strawberry Flavour Energy → zero_sugar
     if "strawberry" in lowered:
         return "zero_sugar"
 

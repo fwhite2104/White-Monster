@@ -34,10 +34,16 @@ export const MONSTER_VARIANTS = [
   { value: 'khaotic', label: 'Monster Khaotic', size: 500, category: 'full_sugar' },
   { value: 'viking_berry', label: 'Monster Viking Berry', size: 250, category: 'full_sugar' },
   { value: 'juice_monster_apple', label: 'Monster Juice Monster Apple', size: 500, category: 'full_sugar' },
+  { value: 'aussie_lemonade', label: 'Monster Aussie Lemonade', size: 500, category: 'full_sugar' },
+  { value: 'strawberry_dreams', label: 'Monster Ultra Strawberry Dreams', size: 500, category: 'zero_sugar' },
   { value: 'hydro_watermelon', label: 'Monster Hydro Watermelon', size: 550, category: 'hydro_rehab' },
   { value: 'rehab_lemon_tea', label: 'Monster Rehab Lemon Tea', size: 500, category: 'hydro_rehab' },
   { value: 'rehab_green_tea', label: 'Monster Rehab Green Tea', size: 500, category: 'hydro_rehab' },
 ]
+
+export const MONSTER_FAVOURITES = [
+  'ultra_white', 'ultra_rosa', 'original', 'mango_loco', 'strawberry_dreams', 'aussie_lemonade',
+] as const
 
 export const DEFAULT_RADIUS_KM = 10
 export const MAX_RADIUS_KM = 50

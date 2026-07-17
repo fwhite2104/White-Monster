@@ -2,7 +2,8 @@
 
 import * as Select from "@radix-ui/react-select"
 import { ChevronDown, Check } from "lucide-react"
-import { MONSTER_VARIANTS, PACK_SIZES, formatPackSize } from "@/lib/constants"
+import { PACK_SIZES, formatPackSize } from "@/lib/constants"
+import { VariantPicker } from "./VariantPicker"
 
 interface FilterBarProps {
   variant: string
@@ -86,18 +87,15 @@ export function FilterBar({
   radius,
   setRadius,
 }: FilterBarProps) {
-  const variantOptions = MONSTER_VARIANTS.map((v) => ({ value: v.value, label: v.label }))
   const packOptions = PACK_SIZES.map((p) => ({ value: p, label: formatPackSize(p) }))
 
   return (
     <div className="px-4 py-3 border-b border-border bg-card/30">
       <div className="max-w-7xl mx-auto flex flex-wrap items-end gap-3">
-        <FilterSelect
-          label="Variant"
-          value={variant}
-          onChange={setVariant}
-          options={variantOptions}
-        />
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-muted-foreground">Variant</label>
+          <VariantPicker value={variant} onChange={setVariant} />
+        </div>
         <FilterSelect
           label="Pack size"
           value={packSize}

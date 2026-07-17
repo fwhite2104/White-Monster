@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getPackCount, formatPackSize } from '@/lib/constants'
+import { getPackCount, formatPackSize, MONSTER_VARIANTS, MONSTER_FAVOURITES } from '@/lib/constants'
 
 describe('getPackCount', () => {
   it('returns 1 for single', () => {
@@ -58,5 +58,30 @@ describe('formatPackSize', () => {
 
   it('passes through empty string', () => {
     expect(formatPackSize('')).toBe('')
+  })
+})
+
+describe('MONSTER_VARIANTS', () => {
+  it('includes strawberry_dreams', () => {
+    const slugs = MONSTER_VARIANTS.map((v) => v.value)
+    expect(slugs).toContain('strawberry_dreams')
+  })
+
+  it('includes aussie_lemonade', () => {
+    const slugs = MONSTER_VARIANTS.map((v) => v.value)
+    expect(slugs).toContain('aussie_lemonade')
+  })
+})
+
+describe('MONSTER_FAVOURITES', () => {
+  it('each favourite exists in MONSTER_VARIANTS', () => {
+    const slugs = new Set(MONSTER_VARIANTS.map((v) => v.value))
+    for (const slug of MONSTER_FAVOURITES) {
+      expect(slugs.has(slug)).toBe(true)
+    }
+  })
+
+  it('contains exactly 6 variants', () => {
+    expect(MONSTER_FAVOURITES.length).toBe(6)
   })
 })
