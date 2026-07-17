@@ -13,7 +13,7 @@ interface PriceListProps {
 export function PriceList({ prices, loading, error, bestPrice, onSelectPrice, onRetry }: PriceListProps) {
   if (loading) {
     return (
-      <div className="space-y-3 p-4">
+      <div className="space-y-3 pb-4">
         {Array.from({ length: 5 }).map((_, i) => (
           <div
             key={i}
@@ -41,7 +41,7 @@ export function PriceList({ prices, loading, error, bestPrice, onSelectPrice, on
 
   if (prices.length === 0) {
     return (
-      <div className="p-8 text-center">
+      <div className="py-12 text-center">
         <p className="text-muted-foreground">No prices found in this area.</p>
         <p className="text-sm text-muted-foreground mt-1">Try expanding your search radius.</p>
       </div>
@@ -49,7 +49,7 @@ export function PriceList({ prices, loading, error, bestPrice, onSelectPrice, on
   }
 
   return (
-    <div className="space-y-3 p-4">
+    <div className="space-y-3 pb-4">
       {prices.map((price) => (
         <PriceCard
           key={price.id}

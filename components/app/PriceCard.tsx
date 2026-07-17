@@ -19,7 +19,7 @@ export function PriceCard({ price, isBest, onClick }: PriceCardProps) {
     <button
       onClick={onClick}
       data-testid="price-card"
-      className="w-full text-left px-4 py-3 rounded-xl card-shadow-sm bg-card hover:bg-card/80 transition-colors"
+      className="w-full text-left px-4 py-3 rounded-xl card-shadow-sm bg-card hover:bg-card/80 hover:border-primary/20 transition-all"
       aria-label={`${store?.name ?? 'Unknown store'}: ${product?.name ?? 'Monster'} for €${numericPrice.toFixed(2)}`}
     >
       <div className="flex items-start justify-between gap-3">

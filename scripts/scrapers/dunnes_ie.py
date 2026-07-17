@@ -1,21 +1,17 @@
 """
 Dunnes Stores Ireland scraper for Monster Energy drink prices.
 
-Dunnes uses a React SPA with all product data embedded in
-window.__PRELOADED_STATE__ as JSON. Product details are in
-productCardDictionary keyed by product IDs from searchResults.
-CSS selectors don't work because the server-rendered HTML has
-no product cards. curl_cffi with impersonate="chrome" bypasses
-Cloudflare. Search for "monster" (not "monster white").
+Firecrawl is the primary scraping method. curl_cffi (TLS impersonation)
+is kept as a fallback for when Firecrawl is unavailable — though Dunnes
+Cloudflare typically blocks it.
 
-When Cloudflare blocks curl_cffi, the scraper falls back to Firecrawl
-for resilience.
+Regex parsing is used instead of structured extraction to minimise
+Firecrawl credit usage (1 credit/page vs 5 credits/page).
 """
 
 from curl_cffi import requests as curl_requests
 import re
 import json
-import time
 from typing import List, Dict
 from base import BaseScraper
 
@@ -27,8 +23,7 @@ CLOUDFLARE_MARKERS = [
     "cf-challenge-running",
 ]
 
-# Firecrawl fallback URL for Dunnes (used when Cloudflare blocks curl_cffi).
-DUNNES_FIRECRAWL_URL = (
+DUNNES_SEARCH_URL = (
     "https://www.dunnesstoresgrocery.com/sm/delivery/rsid/258/results?q=monster"
 )
 
@@ -52,6 +47,35 @@ class DunnesIEScraper(BaseScraper):
         })
 
     def scrape(self, query: str = "monster", pack_size: str = "all") -> List[Dict]:
+        # Primary: Firecrawl with regex parsing (1 credit/page).
+        results = self._firecrawl_scrape(pack_size)
+        if results:
+            return results
+
+        # Fallback: curl_cffi with __PRELOADED_STATE__ extraction.
+        self._log("Firecrawl returned no results — trying curl_cffi fallback")
+        return self._curl_scrape(query, pack_size)
+
+    def _firecrawl_scrape(self, pack_size: str) -> List[Dict]:
+        """Scrape via Firecrawl with regex parsing (cheaper than structured extraction)."""
+        try:
+            from firecrawl_ie import FirecrawlScraper
+
+            scraper = FirecrawlScraper(
+                retailer="dunnes",
+                search_url=DUNNES_SEARCH_URL,
+                use_structured_extraction=False,
+            )
+            results = scraper.scrape(pack_size=pack_size)
+            if results:
+                self._log(f"Firecrawl found {len(results)} products")
+                return results
+        except Exception as e:
+            self._log(f"Firecrawl scrape failed: {e}")
+        return []
+
+    def _curl_scrape(self, query: str, pack_size: str) -> List[Dict]:
+        """Fallback: curl_cffi with __PRELOADED_STATE__ extraction."""
         self._log(f"Searching: {query} (pack_size={pack_size})")
         url = self.SEARCH_URL.format(query=query)
 
@@ -60,16 +84,9 @@ class DunnesIEScraper(BaseScraper):
                 lambda: self.session.get(url, timeout=self.timeout)
             )
 
-            # Check for Cloudflare challenge before generic status handling.
-            # Cloudflare may return 200 with a challenge page, 403, or 503.
             if self._is_cloudflare_challenge(response.text):
-                self._log("[DUNNES] Cloudflare detected — falling back to Firecrawl")
-                firecrawl_results = self._firecrawl_fallback()
-                if firecrawl_results:
-                    filtered = self._filter_by_pack_size(firecrawl_results, pack_size)
-                    self._log(f"Firecrawl fallback found {len(filtered)} Monster products")
-                    return filtered
-                self._log("[DUNNES_HARD_FAIL] Both curl_cffi and Firecrawl failed")
+                self._log("Cloudflare blocked — no fallback available")
+                self.cloudflare_blocked = True
                 return []
 
             if not response.ok:
@@ -78,28 +95,11 @@ class DunnesIEScraper(BaseScraper):
 
             results = self._extract_products(response.text)
             filtered = self._filter_by_pack_size(results, pack_size)
-            self._log(f"Found {len(filtered)} Monster products (pack_size={pack_size})")
+            self._log(f"curl_cffi found {len(filtered)} products (pack_size={pack_size})")
             return filtered
 
         except Exception as e:
-            self._log(f"Error after retries: {e}")
-            return []
-
-    def _firecrawl_fallback(self) -> List[Dict]:
-        """Attempt to scrape Dunnes via Firecrawl when Cloudflare blocks curl_cffi."""
-        try:
-            from firecrawl_ie import with_firecrawl_fallback
-            results, source = with_firecrawl_fallback(
-                scraper_fn=lambda: [],
-                retailer="dunnes",
-                firecrawl_search_url=DUNNES_FIRECRAWL_URL,
-                use_structured_extraction=True,
-            )
-            if source == "firecrawl_fallback":
-                self._log(f"Firecrawl fallback found {len(results)} products")
-            return results
-        except Exception as e:
-            self._log(f"Firecrawl fallback error: {e}")
+            self._log(f"curl_cffi error: {e}")
             return []
 
     def _extract_products(self, html: str) -> List[Dict]:
@@ -109,9 +109,7 @@ class DunnesIEScraper(BaseScraper):
             self._log("No __PRELOADED_STATE__ found")
             return []
 
-        sr_match = re.search(
-            r'"searchResults":\[([^\]]*)\]', html[state_idx:]
-        )
+        sr_match = re.search(r'"searchResults":\[([^\]]*)\]', html[state_idx:])
         if not sr_match:
             self._log("No searchResults found")
             return []
@@ -131,12 +129,9 @@ class DunnesIEScraper(BaseScraper):
             product = self._extract_product(html, pcd_idx, pid)
             if product:
                 results.append(product)
-
         return results
 
-    def _extract_product(
-        self, html: str, search_start: int, product_id: str
-    ) -> Dict | None:
+    def _extract_product(self, html: str, search_start: int, product_id: str) -> Dict | None:
         pid_key = f'"{product_id}":'
         idx = html.find(pid_key, search_start)
         if idx == -1:
@@ -167,7 +162,6 @@ class DunnesIEScraper(BaseScraper):
             return None
 
         name = product.get("name", "")
-        brand = product.get("brand", "")
         if not self._validate_monster_product(name):
             return None
 
@@ -188,12 +182,7 @@ class DunnesIEScraper(BaseScraper):
         if price <= 0 or price > 100:
             return None
 
-        return {
-            "product_name": name,
-            "price": price,
-            "currency": "EUR",
-            "retailer": "dunnes",
-        }
+        return {"product_name": name, "price": price, "currency": "EUR", "retailer": "dunnes"}
 
     @staticmethod
     def _is_cloudflare_challenge(html: str) -> bool:

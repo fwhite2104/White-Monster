@@ -11,7 +11,7 @@ export function BestPriceBanner({ price }: BestPriceBannerProps) {
   const numericPrice = Number(price.price)
 
   return (
-    <div className="mx-4 mb-4 p-4 rounded-xl bg-primary/10 border border-primary/20">
+    <div className="mb-4 p-4 rounded-xl bg-primary/10 border border-primary/20">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs font-medium text-primary uppercase tracking-wide">Best Price</p>

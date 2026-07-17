@@ -183,17 +183,8 @@
     font-variant-numeric: tabular-nums slashed-zero;
   }
 
-  /* Card elevation — shadow + 1px border */
+  /* Shadow omitted — invisible on dark backgrounds */
   .card-shadow-sm {
-    box-shadow: var(--shadow-card-sm);
-    border: 1px solid var(--border);
-  }
-  .card-shadow-md {
-    box-shadow: var(--shadow-card-md);
-    border: 1px solid var(--border);
-  }
-  .card-shadow-lg {
-    box-shadow: var(--shadow-card-lg);
     border: 1px solid var(--border);
   }
 }
