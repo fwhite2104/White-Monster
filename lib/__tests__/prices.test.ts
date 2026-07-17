@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { summarizeNationalPrices } from '@/lib/prices'
-import type { PriceEntry } from '@/lib/prices'
+import { summarizeNationalPrices, createNationalPriceFromSummary, computeBestPrice } from '@/lib/prices'
+import type { PriceEntry, NationalSummary, StoreLocationSummary } from '@/lib/prices'
 import type { StoreData, ProductData } from '@/lib/types'
 
 function makeStore(overrides: Partial<StoreData> = {}): StoreData {
@@ -197,5 +197,110 @@ describe('summarizeNationalPrices', () => {
 
     const summaries = summarizeNationalPrices(entries)
     expect(summaries[0].nearestDistance).toBe(200)
+  })
+})
+
+describe('createNationalPriceFromSummary', () => {
+  it('constructs a Price with real product info and nearest distance', () => {
+    const summary: NationalSummary = {
+      retailer: 'dunnes',
+      price: 1.50,
+      nearestDistance: 300,
+      storeCount: 5,
+      hasClubcardPricing: false,
+      clubcardPrice: null,
+      perCanPrice: 1.50,
+      products: {
+        id: 'prod-ultra-white',
+        name: 'Monster Ultra White',
+        variant: 'ultra_white',
+        size_ml: 250,
+        image_url: '',
+        pack_size: 'single',
+      },
+      storeLocations: [],
+    }
+
+    const price = createNationalPriceFromSummary(summary)
+    expect(price.id).toBe('dunnes')
+    expect(price.store_id).toBe('dunnes')
+    expect(price.product_id).toBe('prod-ultra-white')
+    expect(price.price).toBe(1.50)
+    expect(price.distance).toBe(300)
+    expect(price.source).toBe('scraper')
+    expect(price.products?.name).toBe('Monster Ultra White')
+    expect(price.products?.variant).toBe('ultra_white')
+    expect(price.stores?.retailer).toBe('dunnes')
+  })
+
+  it('passes through clubcard pricing', () => {
+    const summary: NationalSummary = {
+      retailer: 'tesco',
+      price: 2.00,
+      nearestDistance: 500,
+      storeCount: 3,
+      hasClubcardPricing: true,
+      clubcardPrice: 1.70,
+      products: { id: 'p1', name: 'Test', variant: 'original', size_ml: 500, image_url: '', pack_size: 'single' },
+      storeLocations: [],
+    }
+
+    const price = createNationalPriceFromSummary(summary)
+    expect(price.has_clubcard_pricing).toBe(true)
+    expect(price.clubcard_price).toBe(1.70)
+  })
+})
+
+describe('computeBestPrice', () => {
+  function makePrice(price: number, id = 'p1'): any {
+    return { id, price, source: 'scraper' }
+  }
+
+  const product: ProductData = { id: 'prod', name: 'Test', variant: 'ultra_white', size_ml: 250, image_url: '', pack_size: 'single' }
+
+  function makeSummary(retailer: string, price: number): NationalSummary {
+    return {
+      retailer, price, nearestDistance: 500, storeCount: 2,
+      hasClubcardPricing: false, clubcardPrice: null, products: product, storeLocations: [],
+    }
+  }
+
+  it('returns null for empty inputs', () => {
+    expect(computeBestPrice([], [])).toBeNull()
+  })
+
+  it('returns cheapest regular price when no summaries', () => {
+    const result = computeBestPrice([makePrice(2.00), makePrice(1.50, 'p2')], [])
+    expect(result?.price).toBe(1.50)
+  })
+
+  it('returns synthetic Price from cheapest summary when no regular prices', () => {
+    const result = computeBestPrice([], [makeSummary('dunnes', 1.30)])
+    expect(result?.price).toBe(1.30)
+    expect(result?.stores?.retailer).toBe('dunnes')
+  })
+
+  it('prefers cheaper summary over regular price', () => {
+    const result = computeBestPrice(
+      [makePrice(1.80)],
+      [makeSummary('dunnes', 1.30)],
+    )
+    expect(result?.price).toBe(1.30)
+  })
+
+  it('prefers cheaper regular price over summary', () => {
+    const result = computeBestPrice(
+      [makePrice(1.20)],
+      [makeSummary('dunnes', 1.30)],
+    )
+    expect(result?.price).toBe(1.20)
+  })
+
+  it('returns regular price when tied', () => {
+    const result = computeBestPrice(
+      [makePrice(1.50, 'p2')],
+      [makeSummary('dunnes', 1.50)],
+    )
+    expect(result?.id).toBe('p2')
   })
 })

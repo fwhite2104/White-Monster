@@ -5,6 +5,7 @@ import { useQueryStates, parseAsString, parseAsInteger } from 'nuqs'
 import { DEFAULT_RADIUS_KM } from '@/lib/constants'
 import type { Price } from '@/lib/types'
 import type { NationalSummary } from '@/lib/prices'
+import { computeBestPrice } from '@/lib/prices'
 
 const priceParams = {
   variant: parseAsString.withDefault('zero_sugar'),
@@ -128,66 +129,7 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
     [setFilters]
   )
 
-  const bestPrice = useMemo(() => {
-    if (state.prices.length === 0 && state.nationalSummaries.length === 0) return null
-    const cheapestPrice = state.prices.length > 0
-      ? [...state.prices].sort((a, b) => Number(a.price) - Number(b.price))[0]
-      : null
-    const cheapestSummary = state.nationalSummaries.length > 0
-      ? [...state.nationalSummaries].sort((a, b) => Number(a.price) - Number(b.price))[0]
-      : null
-
-    if (!cheapestPrice && cheapestSummary) {
-      return {
-        id: cheapestSummary.retailer,
-        store_id: '',
-        product_id: '',
-        price: cheapestSummary.price,
-        source: 'scraper' as const,
-        scraped_at: '',
-        created_at: '',
-        distance: cheapestSummary.nearestDistance,
-        stores: {
-          id: cheapestSummary.retailer,
-          name: cheapestSummary.retailer,
-          retailer: cheapestSummary.retailer,
-          address: '',
-          suburb: '',
-          lat: 0,
-          lng: 0,
-          is_active: true,
-          created_at: '',
-          updated_at: '',
-        },
-      } as Price
-    }
-    if (!cheapestSummary) return cheapestPrice
-
-    return Number(cheapestPrice!.price) <= Number(cheapestSummary.price)
-      ? cheapestPrice
-      : {
-          id: cheapestSummary.retailer,
-          store_id: '',
-          product_id: '',
-          price: cheapestSummary.price,
-          source: 'scraper' as const,
-          scraped_at: '',
-          created_at: '',
-          distance: cheapestSummary.nearestDistance,
-          stores: {
-            id: cheapestSummary.retailer,
-            name: cheapestSummary.retailer,
-            retailer: cheapestSummary.retailer,
-            address: '',
-            suburb: '',
-            lat: 0,
-            lng: 0,
-            is_active: true,
-            created_at: '',
-            updated_at: '',
-          },
-        } as Price
-  }, [state.prices, state.nationalSummaries])
+  const bestPrice = useMemo(() => computeBestPrice(state.prices, state.nationalSummaries), [state.prices, state.nationalSummaries])
 
   return {
     prices: state.prices,

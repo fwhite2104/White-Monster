@@ -4,6 +4,7 @@ import { PriceCard } from '@/components/app/PriceCard'
 import { NationalPriceCard } from '@/components/app/NationalPriceCard'
 import type { Price } from '@/lib/types'
 import type { NationalSummary } from '@/lib/prices'
+import { createNationalPriceFromSummary } from '@/lib/prices'
 
 interface PriceListProps {
   prices: Price[]
@@ -71,37 +72,7 @@ export function PriceList({ prices, nationalSummaries = [], loading, error, best
           key={summary.retailer}
           summary={summary}
           isBest={Number(summary.price) === lowestPriceOverall}
-          onClick={() => {
-            // Create a minimal Price object from the summary for the detail sheet
-            const price: Price = {
-              id: summary.retailer,
-              store_id: '',
-              product_id: '',
-              price: summary.price,
-              source: 'scraper',
-              scraped_at: '',
-              created_at: '',
-              distance: summary.nearestDistance,
-              per_can_price: summary.perCanPrice,
-              base_price: summary.basePrice,
-              drs_deposit: summary.drsDeposit,
-              clubcard_price: summary.clubcardPrice,
-              has_clubcard_pricing: summary.hasClubcardPricing,
-              stores: {
-                id: summary.retailer,
-                name: summary.retailer.charAt(0).toUpperCase() + summary.retailer.slice(1),
-                retailer: summary.retailer,
-                address: '',
-                suburb: '',
-                lat: 0,
-                lng: 0,
-                is_active: true,
-                created_at: '',
-                updated_at: '',
-              },
-            }
-            onSelectPrice(price)
-          }}
+          onClick={() => onSelectPrice(createNationalPriceFromSummary(summary))}
         />
       ))}
       {prices

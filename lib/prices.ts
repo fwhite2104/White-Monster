@@ -1,4 +1,5 @@
-import type { PriceWithJoins, StoreData } from './types'
+import type { PriceWithJoins, StoreData, ProductData } from './types'
+import type { Price } from './types'
 import { calculateDistance } from './geo'
 
 export type PriceEntry = PriceWithJoins & {
@@ -42,6 +43,7 @@ export interface NationalSummary {
   perCanPrice?: number
   basePrice?: number
   drsDeposit?: number
+  products: ProductData
   storeLocations: StoreLocationSummary[]
 }
 
@@ -95,11 +97,62 @@ export function summarizeNationalPrices(entries: PriceEntry[]): NationalSummary[
       perCanPrice: first.per_can_price,
       basePrice: first.base_price,
       drsDeposit: first.drs_deposit,
+      products: first.products,
       storeLocations,
     })
   }
 
   return summaries.sort((a, b) => a.price - b.price)
+}
+
+export function createNationalPriceFromSummary(summary: NationalSummary): Price {
+  const retailerLabel = summary.retailer.charAt(0).toUpperCase() + summary.retailer.slice(1)
+  return {
+    id: summary.retailer,
+    store_id: summary.retailer,
+    product_id: summary.products.id,
+    price: summary.price,
+    source: 'scraper',
+    scraped_at: '',
+    created_at: '',
+    distance: summary.nearestDistance,
+    per_can_price: summary.perCanPrice,
+    base_price: summary.basePrice,
+    drs_deposit: summary.drsDeposit,
+    clubcard_price: summary.clubcardPrice,
+    has_clubcard_pricing: summary.hasClubcardPricing,
+    stores: {
+      id: summary.retailer,
+      name: retailerLabel,
+      retailer: summary.retailer,
+      address: '',
+      suburb: '',
+      lat: 0,
+      lng: 0,
+      is_active: true,
+      created_at: '',
+      updated_at: '',
+    },
+    products: { ...summary.products, is_active: true, created_at: '' },
+  }
+}
+
+export function computeBestPrice(prices: Price[], summaries: NationalSummary[]): Price | null {
+  if (prices.length === 0 && summaries.length === 0) return null
+
+  const cheapestPrice = prices.length > 0
+    ? [...prices].sort((a, b) => Number(a.price) - Number(b.price))[0]
+    : null
+  const cheapestSummary = summaries.length > 0
+    ? [...summaries].sort((a, b) => Number(a.price) - Number(b.price))[0]
+    : null
+
+  if (!cheapestPrice && cheapestSummary) return createNationalPriceFromSummary(cheapestSummary)
+  if (!cheapestSummary) return cheapestPrice
+
+  return Number(cheapestPrice!.price) <= Number(cheapestSummary.price)
+    ? cheapestPrice
+    : createNationalPriceFromSummary(cheapestSummary)
 }
 
 /**
