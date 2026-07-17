@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useReducer } from 'react'
 import { useQueryStates, parseAsString, parseAsInteger } from 'nuqs'
 import { DEFAULT_RADIUS_KM } from '@/lib/constants'
 import type { Price } from '@/lib/types'
+import type { NationalSummary } from '@/lib/prices'
 
 const priceParams = {
   variant: parseAsString.withDefault('zero_sugar'),
@@ -19,6 +20,7 @@ interface UsePriceQueryOptions {
 
 interface UsePriceQueryReturn {
   prices: Price[]
+  nationalSummaries: NationalSummary[]
   loading: boolean
   error: string | null
   radius: number
@@ -35,13 +37,14 @@ interface UsePriceQueryReturn {
 
 type State = {
   prices: Price[]
+  nationalSummaries: NationalSummary[]
   loading: boolean
   error: string | null
 }
 
 type Action =
   | { type: 'start' }
-  | { type: 'success'; prices: Price[] }
+  | { type: 'success'; prices: Price[]; nationalSummaries: NationalSummary[] }
   | { type: 'error'; error: string }
   | { type: 'done' }
 
@@ -50,7 +53,7 @@ function reducer(state: State, action: Action): State {
     case 'start':
       return { ...state, loading: true, error: null }
     case 'success':
-      return { ...state, prices: action.prices }
+      return { ...state, prices: action.prices, nationalSummaries: action.nationalSummaries }
     case 'error':
       return { ...state, error: action.error }
     case 'done':
@@ -64,6 +67,7 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
   const [filters, setFilters] = useQueryStates(priceParams)
   const [state, dispatch] = useReducer(reducer, {
     prices: [],
+    nationalSummaries: [],
     loading: true,
     error: null,
   })
@@ -81,7 +85,7 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
         if (!res.ok) throw new Error('Failed to fetch prices')
 
         const data = await res.json()
-        dispatch({ type: 'success', prices: data.prices || [] })
+        dispatch({ type: 'success', prices: data.prices || [], nationalSummaries: data.nationalSummaries || [] })
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') {
           dispatch({ type: 'error', error: 'Request timed out. Please try again.' })
@@ -125,12 +129,69 @@ export function usePriceQuery({ lat, lng }: UsePriceQueryOptions): UsePriceQuery
   )
 
   const bestPrice = useMemo(() => {
-    if (state.prices.length === 0) return null
-    return [...state.prices].sort((a, b) => Number(a.price) - Number(b.price))[0]
-  }, [state.prices])
+    if (state.prices.length === 0 && state.nationalSummaries.length === 0) return null
+    const cheapestPrice = state.prices.length > 0
+      ? [...state.prices].sort((a, b) => Number(a.price) - Number(b.price))[0]
+      : null
+    const cheapestSummary = state.nationalSummaries.length > 0
+      ? [...state.nationalSummaries].sort((a, b) => Number(a.price) - Number(b.price))[0]
+      : null
+
+    if (!cheapestPrice && cheapestSummary) {
+      return {
+        id: cheapestSummary.retailer,
+        store_id: '',
+        product_id: '',
+        price: cheapestSummary.price,
+        source: 'scraper' as const,
+        scraped_at: '',
+        created_at: '',
+        distance: cheapestSummary.nearestDistance,
+        stores: {
+          id: cheapestSummary.retailer,
+          name: cheapestSummary.retailer,
+          retailer: cheapestSummary.retailer,
+          address: '',
+          suburb: '',
+          lat: 0,
+          lng: 0,
+          is_active: true,
+          created_at: '',
+          updated_at: '',
+        },
+      } as Price
+    }
+    if (!cheapestSummary) return cheapestPrice
+
+    return Number(cheapestPrice!.price) <= Number(cheapestSummary.price)
+      ? cheapestPrice
+      : {
+          id: cheapestSummary.retailer,
+          store_id: '',
+          product_id: '',
+          price: cheapestSummary.price,
+          source: 'scraper' as const,
+          scraped_at: '',
+          created_at: '',
+          distance: cheapestSummary.nearestDistance,
+          stores: {
+            id: cheapestSummary.retailer,
+            name: cheapestSummary.retailer,
+            retailer: cheapestSummary.retailer,
+            address: '',
+            suburb: '',
+            lat: 0,
+            lng: 0,
+            is_active: true,
+            created_at: '',
+            updated_at: '',
+          },
+        } as Price
+  }, [state.prices, state.nationalSummaries])
 
   return {
     prices: state.prices,
+    nationalSummaries: state.nationalSummaries,
     loading: state.loading,
     error: state.error,
     radius: filters.radius,

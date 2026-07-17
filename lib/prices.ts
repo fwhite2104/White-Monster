@@ -1,12 +1,105 @@
 import type { PriceWithJoins, StoreData } from './types'
 import { calculateDistance } from './geo'
 
-export type PriceEntry = PriceWithJoins & { distance: number }
+export type PriceEntry = PriceWithJoins & {
+  distance: number
+  per_can_price?: number
+  base_price?: number
+  drs_deposit?: number
+  clubcard_price?: number | null
+  has_clubcard_pricing?: boolean
+}
 
 export interface UserPriceRecord extends PriceWithJoins {
   notes: string | null
   expires_at: string
   created_at: string
+}
+
+/** A retail location within a national-price collapse group. */
+export interface StoreLocationSummary {
+  id: string
+  name: string
+  address?: string
+  suburb?: string
+  lat: number
+  lng: number
+  distance: number
+}
+
+/**
+ * Collapsed summary of one nationally-priced retailer's prices.
+ * Used by the PriceList to render a single card per retailer
+ * instead of N duplicate cards (one per store).
+ */
+export interface NationalSummary {
+  retailer: string
+  price: number
+  nearestDistance: number
+  storeCount: number
+  hasClubcardPricing: boolean
+  clubcardPrice: number | null
+  perCanPrice?: number
+  basePrice?: number
+  drsDeposit?: number
+  storeLocations: StoreLocationSummary[]
+}
+
+/**
+ * Collapse expanded national price entries into one summary per retailer.
+ * Each summary contains the nearest distance across all stores and a count
+ * of how many stores the national price applies to in the user's range.
+ */
+export function summarizeNationalPrices(entries: PriceEntry[]): NationalSummary[] {
+  const byRetailer = new Map<string, PriceEntry[]>()
+
+  for (const entry of entries) {
+    const retailer = entry.stores.retailer
+    const list = byRetailer.get(retailer) ?? []
+    list.push(entry)
+    byRetailer.set(retailer, list)
+  }
+
+  const summaries: NationalSummary[] = []
+
+  for (const [retailer, group] of byRetailer) {
+    // Deduplicate stores by ID within the group
+    const seenStores = new Map<string, StoreLocationSummary>()
+    for (const entry of group) {
+      const store = entry.stores
+      if (seenStores.has(store.id)) continue
+      seenStores.set(store.id, {
+        id: store.id,
+        name: store.name,
+        address: store.address,
+        suburb: store.suburb,
+        lat: store.lat,
+        lng: store.lng,
+        distance: entry.distance,
+      })
+    }
+
+    const storeLocations = Array.from(seenStores.values())
+    const nearestDistance = Math.min(...storeLocations.map((s) => s.distance))
+
+    // Use the first entry's price and product info
+    const first = group[0]
+
+    summaries.push({
+      retailer,
+      price: first.price,
+      nearestDistance,
+      storeCount: storeLocations.length,
+      hasClubcardPricing: first.has_clubcard_pricing ?? false,
+      clubcardPrice: first.clubcard_price ?? null,
+      perCanPrice: first.per_can_price,
+      basePrice: first.base_price,
+      drsDeposit: first.drs_deposit,
+      storeLocations,
+    })
+  }
+
+  return summaries.sort((a, b) => a.price - b.price)
 }
 
 /**

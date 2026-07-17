@@ -1,0 +1,47 @@
+name: Monthly Store Location Seed
+
+on:
+  schedule:
+    - cron: '0 6 1 * *'   # 1st of each month at 06:00 UTC
+  workflow_dispatch:        # Allow manual trigger
+
+permissions:
+  contents: read
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r scripts/scrapers/requirements.txt
+      - name: Run Overpass seed
+        id: seed
+        run: |
+          cd scripts
+          python seed-stores-from-overpass.py 2>&1 | tee seed-output.log
+          exit ${PIPESTATUS[0]}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      - name: Sanitize logs on failure
+        if: failure()
+        run: |
+          if [ -f scripts/seed-output.log ]; then
+            sed -i \
+              -e "s|${SUPABASE_SERVICE_KEY}|REDACTED|g" \
+              -e "s|${SUPABASE_URL}|REDACTED|g" \
+              scripts/seed-output.log
+          fi
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seed-logs
+          path: scripts/seed-output.log

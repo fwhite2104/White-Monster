@@ -22,6 +22,7 @@ export default function HomePage() {
   const { location } = useGeolocation()
   const {
     prices,
+    nationalSummaries,
     loading,
     error,
     bestPrice,
@@ -62,6 +63,7 @@ export default function HomePage() {
 
         <PriceList
           prices={prices}
+          nationalSummaries={nationalSummaries}
           loading={loading}
           error={error}
           bestPrice={bestPrice}
@@ -77,6 +79,7 @@ export default function HomePage() {
               userLat={location?.lat ?? 51.8985}
               userLng={location?.lng ?? -8.4756}
               radiusKm={radius}
+              userAccuracy={location?.accuracy}
             />
           </section>
         )}

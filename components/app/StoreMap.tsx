@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from 'react'
 import { MapContainer, TileLayer, Marker, Circle, Popup, useMap } from 'react-leaflet'
+import MarkerClusterGroup from 'react-leaflet-cluster'
 import L from 'leaflet'
 import type { Price } from '@/lib/types'
 import { getRetailerColor } from '@/lib/constants'
@@ -12,12 +13,11 @@ interface StoreMapProps {
   userLat: number
   userLng: number
   radiusKm: number
+  userAccuracy?: number
 }
 
 const PRIMARY = 'oklch(0.72 0.22 145)'
 
-// Inline styles for divIcon markers — Leaflet manages the DOM, so <style> is
-// the reliable way to inject keyframe animations without a CSS-in-JS library.
 const pulseKeyframes = `
 @keyframes pulse-ring {
   0% { transform: scale(1); opacity: 0.5; }
@@ -50,9 +50,20 @@ function storeIcon(retailer: string): L.DivIcon {
   const letter = retailer.charAt(0).toUpperCase()
   return L.divIcon({
     className: '',
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-    html: `<div style="width:32px;height:32px;border-radius:50%;background:${color};border:2px solid rgba(255,255,255,0.85);box-shadow:0 2px 6px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;line-height:1;font-family:system-ui,-apple-system,sans-serif">${letter}</div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+    html: `<div style="width:28px;height:28px;border-radius:50%;background:${color};border:2px solid rgba(255,255,255,0.9);box-shadow:0 2px 6px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;line-height:1;font-family:system-ui,-apple-system,sans-serif">${letter}</div>`,
+  })
+}
+
+function createClusterIcon(cluster: L.MarkerCluster): L.DivIcon {
+  const count = cluster.getChildCount()
+  const size = count < 10 ? 36 : count < 100 ? 44 : 52
+  return L.divIcon({
+    className: '',
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${PRIMARY};border:3px solid rgba(255,255,255,0.8);box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:${size < 44 ? 13 : 15}px;font-weight:700;color:#fff;line-height:1;font-family:system-ui,-apple-system,sans-serif">${count}</div>`,
   })
 }
 
@@ -86,6 +97,11 @@ function StoreMarker({ price }: { price: Price }) {
           {price.distance !== undefined && (
             <p className="text-xs text-muted-foreground">
               {(Number(price.distance) / 1000).toFixed(1)} km away
+            </p>
+          )}
+          {price.per_can_price !== undefined && price.per_can_price > 0 && (
+            <p className="text-xs text-muted-foreground">
+              €{Number(price.per_can_price).toFixed(2)} per can
             </p>
           )}
           <a
@@ -144,7 +160,7 @@ function Legend() {
 // Main
 // ---------------------------------------------------------------------------
 
-export function StoreMap({ prices, userLat, userLng, radiusKm }: StoreMapProps) {
+export function StoreMap({ prices, userLat, userLng, radiusKm, userAccuracy }: StoreMapProps) {
   const storeMarkers = useMemo(() => {
     const seen = new Set<string>()
     return prices.filter((p) => {
@@ -156,7 +172,7 @@ export function StoreMap({ prices, userLat, userLng, radiusKm }: StoreMapProps) 
   }, [prices])
 
   return (
-    <div className="relative w-full h-[320px] md:h-[460px] rounded-xl overflow-hidden border border-border">
+    <div className="relative w-full min-h-[360px] md:min-h-[480px] h-[360px] md:h-[480px] rounded-xl overflow-hidden border border-border">
       <style>{pulseKeyframes}</style>
 
       <MapContainer
@@ -177,6 +193,22 @@ export function StoreMap({ prices, userLat, userLng, radiusKm }: StoreMapProps) 
           <Popup>Your location</Popup>
         </Marker>
 
+        {/* GPS accuracy circle */}
+        {userAccuracy !== undefined && userAccuracy > 0 && (
+          <Circle
+            center={[userLat, userLng]}
+            radius={userAccuracy}
+            pathOptions={{
+              color: PRIMARY,
+              fillColor: PRIMARY,
+              fillOpacity: 0.06,
+              weight: 1,
+              opacity: 0.3,
+              dashArray: '4 4',
+            }}
+          />
+        )}
+
         {/* Radius circle */}
         <Circle
           center={[userLat, userLng]}
@@ -190,10 +222,18 @@ export function StoreMap({ prices, userLat, userLng, radiusKm }: StoreMapProps) 
           }}
         />
 
-        {/* Store markers */}
-        {storeMarkers.map((price) => (
-          <StoreMarker key={price.stores!.id} price={price} />
-        ))}
+        {/* Store markers with clustering */}
+        <MarkerClusterGroup
+          chunkedLoading
+          maxClusterRadius={60}
+          spiderfyOnMaxZoom={true}
+          showCoverageOnHover={false}
+          iconCreateFunction={createClusterIcon}
+        >
+          {storeMarkers.map((price) => (
+            <StoreMarker key={price.stores!.id} price={price} />
+          ))}
+        </MarkerClusterGroup>
       </MapContainer>
 
       <Legend />

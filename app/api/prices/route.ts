@@ -19,7 +19,7 @@ import {
   validatePrice,
   validateOptionalString,
 } from '@/lib/validate'
-import { expandNationalPrices, mergeUserPrices, type PriceEntry, type UserPriceRecord } from '@/lib/prices'
+import { expandNationalPrices, mergeUserPrices, summarizeNationalPrices, type PriceEntry, type UserPriceRecord, type NationalSummary } from '@/lib/prices'
 import type { PriceWithJoins, StoreData } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
@@ -206,9 +206,7 @@ export async function GET(request: NextRequest) {
       const { base_price, drs_deposit } = splitPrice(totalPrice, rowPackSize)
         const perCanPrice = getPackCount(rowPackSize) > 1 ? totalPrice / getPackCount(rowPackSize) : totalPrice
       const storeRetailer = row.stores.retailer
-      const clubcardPrice = (row as unknown as Record<string, unknown>).clubcard_price !== undefined
-        ? (row as unknown as Record<string, unknown>).clubcard_price
-        : null
+      const clubcardPrice: number | null = row.clubcard_price ?? null
       const hasClubcardPricing = storeRetailer === 'tesco' && clubcardPrice !== null
 
       return {
@@ -260,6 +258,10 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // Collapse national retailers into summaries for the PriceList.
+    // The full expanded prices (mappedNational) stay in allPrices for the map.
+    const nationalSummaries: NationalSummary[] = summarizeNationalPrices(mappedNational)
+
     const allPrices = [...prices, ...mappedNational, ...mappedUser]
 
     const bestPriceByStoreProduct = new Map<string, typeof prices[0]>()
@@ -290,6 +292,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       prices: deduped,
+      nationalSummaries,
       meta: {
         total: deduped.length,
         radius: radiusKm,

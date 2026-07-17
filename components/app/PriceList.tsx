@@ -1,8 +1,13 @@
-import { PriceCard } from "./PriceCard"
-import type { Price } from "@/lib/types"
+'use client'
+
+import { PriceCard } from '@/components/app/PriceCard'
+import { NationalPriceCard } from '@/components/app/NationalPriceCard'
+import type { Price } from '@/lib/types'
+import type { NationalSummary } from '@/lib/prices'
 
 interface PriceListProps {
   prices: Price[]
+  nationalSummaries?: NationalSummary[]
   loading: boolean
   error: string | null
   bestPrice: Price | null
@@ -10,7 +15,7 @@ interface PriceListProps {
   onRetry: () => void
 }
 
-export function PriceList({ prices, loading, error, bestPrice, onSelectPrice, onRetry }: PriceListProps) {
+export function PriceList({ prices, nationalSummaries = [], loading, error, bestPrice, onSelectPrice, onRetry }: PriceListProps) {
   if (loading) {
     return (
       <div className="space-y-3 pb-4">
@@ -39,7 +44,10 @@ export function PriceList({ prices, loading, error, bestPrice, onSelectPrice, on
     )
   }
 
-  if (prices.length === 0) {
+  // Determine which retailers are covered by national summaries
+  const nationalRetailers = new Set(nationalSummaries.map((s) => s.retailer))
+
+  if (prices.length === 0 && nationalSummaries.length === 0) {
     return (
       <div className="py-12 text-center">
         <p className="text-muted-foreground">No prices found in this area.</p>
@@ -48,16 +56,64 @@ export function PriceList({ prices, loading, error, bestPrice, onSelectPrice, on
     )
   }
 
+  // Find the best price among all items (including summaries) for the "Best Price" badge
+  const lowestSummaryPrice = nationalSummaries.length > 0
+    ? Math.min(...nationalSummaries.map((s) => Number(s.price)))
+    : Infinity
+  const lowestPriceOverall = prices.length > 0
+    ? Math.min(...prices.map((p) => Number(p.price)), lowestSummaryPrice)
+    : lowestSummaryPrice
+
   return (
     <div className="space-y-3 pb-4">
-      {prices.map((price) => (
-        <PriceCard
-          key={price.id}
-          price={price}
-          isBest={bestPrice?.id === price.id}
-          onClick={() => onSelectPrice(price)}
+      {nationalSummaries.map((summary) => (
+        <NationalPriceCard
+          key={summary.retailer}
+          summary={summary}
+          isBest={Number(summary.price) === lowestPriceOverall}
+          onClick={() => {
+            // Create a minimal Price object from the summary for the detail sheet
+            const price: Price = {
+              id: summary.retailer,
+              store_id: '',
+              product_id: '',
+              price: summary.price,
+              source: 'scraper',
+              scraped_at: '',
+              created_at: '',
+              distance: summary.nearestDistance,
+              per_can_price: summary.perCanPrice,
+              base_price: summary.basePrice,
+              drs_deposit: summary.drsDeposit,
+              clubcard_price: summary.clubcardPrice,
+              has_clubcard_pricing: summary.hasClubcardPricing,
+              stores: {
+                id: summary.retailer,
+                name: summary.retailer.charAt(0).toUpperCase() + summary.retailer.slice(1),
+                retailer: summary.retailer,
+                address: '',
+                suburb: '',
+                lat: 0,
+                lng: 0,
+                is_active: true,
+                created_at: '',
+                updated_at: '',
+              },
+            }
+            onSelectPrice(price)
+          }}
         />
       ))}
+      {prices
+        .filter((p) => !nationalRetailers.has(p.stores?.retailer ?? ''))
+        .map((price) => (
+          <PriceCard
+            key={price.id}
+            price={price}
+            isBest={bestPrice?.id === price.id || Number(price.price) === lowestPriceOverall}
+            onClick={() => onSelectPrice(price)}
+          />
+        ))}
     </div>
   )
 }
