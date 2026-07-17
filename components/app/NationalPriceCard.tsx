@@ -1,7 +1,6 @@
 'use client'
 
 import { RetailerBadge } from './RetailerBadge'
-import { formatPackSize } from '@/lib/constants'
 import type { NationalSummary } from '@/lib/prices'
 
 interface NationalPriceCardProps {

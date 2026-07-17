@@ -1,4 +1,4 @@
-import { MIN_RADIUS_KM, MAX_RADIUS_KM, getPackCount, PACK_SIZES } from './constants'
+import { MIN_RADIUS_KM, MAX_RADIUS_KM, getPackCount } from './constants'
 
 function validateNumeric(value: unknown, field: string, min: number, max: number): number {
   if (value == null) throw new Error(`Invalid ${field}: must be a valid number`)

@@ -4,7 +4,7 @@ import { useGeolocation } from "@/hooks/use-geolocation"
 import { MapPin, Loader2, Crosshair } from "lucide-react"
 
 export function LocationSection() {
-  const { location, status, loading, error, locationLabel, requestLocation } = useGeolocation()
+  const { location, loading, error, locationLabel, requestLocation } = useGeolocation()
 
   const isGps = location?.source === 'gps'
 

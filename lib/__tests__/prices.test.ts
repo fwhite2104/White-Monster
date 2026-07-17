@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { summarizeNationalPrices, createNationalPriceFromSummary, computeBestPrice } from '@/lib/prices'
-import type { PriceEntry, NationalSummary, StoreLocationSummary } from '@/lib/prices'
+import type { PriceEntry, NationalSummary } from '@/lib/prices'
 import type { StoreData, ProductData } from '@/lib/types'
 
 function makeStore(overrides: Partial<StoreData> = {}): StoreData {
@@ -252,8 +252,8 @@ describe('createNationalPriceFromSummary', () => {
 })
 
 describe('computeBestPrice', () => {
-  function makePrice(price: number, id = 'p1'): any {
-    return { id, price, source: 'scraper' }
+  function makePrice(price: number, id = 'p1'): import('@/lib/types').Price {
+    return { id, store_id: id, product_id: 'p', price, source: 'scraper', scraped_at: '', created_at: '' }
   }
 
   const product: ProductData = { id: 'prod', name: 'Test', variant: 'ultra_white', size_ml: 250, image_url: '', pack_size: 'single' }
