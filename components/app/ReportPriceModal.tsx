@@ -9,9 +9,11 @@ interface ReportPriceModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   prefillStoreName?: string
+  lat: number
+  lng: number
 }
 
-export function ReportPriceModal({ open, onOpenChange, prefillStoreName }: ReportPriceModalProps) {
+export function ReportPriceModal({ open, onOpenChange, prefillStoreName, lat, lng }: ReportPriceModalProps) {
   const [storeName, setStoreName] = useState(prefillStoreName ?? '')
   const [variant, setVariant] = useState('zero_sugar')
   const [packSize, setPackSize] = useState('single')
@@ -50,10 +52,12 @@ export function ReportPriceModal({ open, onOpenChange, prefillStoreName }: Repor
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          store_name: storeName.trim(),
+          storeName: storeName.trim(),
           variant,
-          pack_size: packSize,
+          packSize,
           price: numericPrice,
+          lat,
+          lng,
           notes: notes.trim() || undefined,
         }),
       })

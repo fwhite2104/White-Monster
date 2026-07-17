@@ -1,7 +1,7 @@
 'use client'
 
 import * as Dialog from "@radix-ui/react-dialog"
-import { X, MapPin, ExternalLink } from "lucide-react"
+import { X } from "lucide-react"
 import { RetailerBadge } from "./RetailerBadge"
 import { formatPackSize, getPackCount } from "@/lib/constants"
 import type { Price } from "@/lib/types"
@@ -96,26 +96,12 @@ export function PriceDetailSheet({ price, open, onClose, onReportPrice }: PriceD
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={onReportPrice}
-                className="w-full px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium"
-              >
-                Report a price at this store
-              </button>
-              {store?.lat && store?.lng && (
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${store.lat},${store.lng}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-card border border-border font-medium"
-                >
-                  <MapPin className="size-4" />
-                  Open in Maps
-                  <ExternalLink className="size-3.5" />
-                </a>
-              )}
-            </div>
+            <button
+              onClick={onReportPrice}
+              className="w-full px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium"
+            >
+              Report a price at this store
+            </button>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

@@ -75,6 +75,8 @@ export default function HomePage() {
         open={reportOpen}
         onOpenChange={setReportOpen}
         prefillStoreName={selectedPrice?.stores?.name}
+        lat={location?.lat ?? 51.8985}
+        lng={location?.lng ?? -8.4756}
       />
 
       <ReportPriceFab onClick={() => setReportOpen(true)} />
