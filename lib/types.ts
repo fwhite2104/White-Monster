@@ -49,27 +49,6 @@ export interface Price {
   has_clubcard_pricing?: boolean
 }
 
-export interface PriceWithDistance extends Price {
-  distance: number
-}
-
-export interface StoreWithDistance extends Store {
-  distance: number
-}
-
-export interface UserPrice {
-  id: string
-  store_id: string
-  product_id: string
-  price: number
-  uploaded_by_ip?: string
-  notes?: string
-  expires_at: string
-  created_at: string
-  stores?: Store
-  products?: Product
-}
-
 export interface StoreData {
   id: string
   name: string
@@ -98,15 +77,4 @@ export interface PriceWithJoins {
   scraped_at: string
   stores: StoreData
   products: ProductData
-}
-
-export interface UserFavorite {
-  id: string
-  session_id: string
-  product_id: string
-  store_id: string | null
-  notes: string | null
-  created_at: string
-  products?: Product
-  stores?: Store
 }
