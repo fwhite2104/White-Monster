@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import dynamic from "next/dynamic"
 import { Header } from "@/components/app/Header"
 import { LocationSection } from "@/components/app/LocationSection"
 import { BestPriceBanner } from "@/components/app/BestPriceBanner"
@@ -11,6 +12,11 @@ import { ReportPriceModal, ReportPriceFab } from "@/components/app/ReportPriceMo
 import { useGeolocation } from "@/hooks/use-geolocation"
 import { usePriceQuery } from "@/hooks/use-price-query"
 import type { Price } from "@/lib/types"
+
+const StoreMap = dynamic(
+  () => import("@/components/app/StoreMap").then((m) => m.StoreMap),
+  { ssr: false, loading: () => <div className="h-[300px] md:h-[400px] rounded-xl bg-muted shimmer-bar" /> }
+)
 
 export default function HomePage() {
   const { location } = useGeolocation()
@@ -62,6 +68,18 @@ export default function HomePage() {
           onSelectPrice={setSelectedPrice}
           onRetry={refetch}
         />
+
+        {!loading && !error && prices.length > 0 && (
+          <section className="pb-4" aria-label="Store locations">
+            <h2 className="text-sm font-medium text-muted-foreground mb-3">Store locations</h2>
+            <StoreMap
+              prices={prices}
+              userLat={location?.lat ?? 51.8985}
+              userLng={location?.lng ?? -8.4756}
+              radiusKm={radius}
+            />
+          </section>
+        )}
       </main>
 
       <PriceDetailSheet
