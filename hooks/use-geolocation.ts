@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react'
 import { CORK_CENTER, LOCATION_MAX_AGE_MS } from '@/lib/constants'
-import { isValidCoordinate } from '@/lib/geo'
+import { isValidCoordinate, calculateDistance } from '@/lib/geo'
 
 export type LocationSource = 'gps' | 'manual' | 'cached' | 'default'
 export type LocationStatus = 'idle' | 'requesting' | 'success' | 'denied' | 'timeout' | 'unavailable' | 'error'
@@ -64,6 +64,11 @@ function loadCachedLocation(): { location: LocationInfo; timestamp: number; deni
     const parsed = JSON.parse(raw) as { lat: number; lng: number; accuracy?: number; timestamp?: number; denied?: boolean }
     if (typeof parsed.lat !== 'number' || typeof parsed.lng !== 'number') return null
     if (typeof parsed.timestamp === 'number' && Date.now() - parsed.timestamp > LOCATION_MAX_AGE_MS) {
+      localStorage.removeItem(STORAGE_KEY)
+      return null
+    }
+    // Discard locations far from Cork — likely IP-based geolocation error.
+    if (calculateDistance(parsed.lat, parsed.lng, CORK_CENTER.lat, CORK_CENTER.lng) > 100_000) {
       localStorage.removeItem(STORAGE_KEY)
       return null
     }

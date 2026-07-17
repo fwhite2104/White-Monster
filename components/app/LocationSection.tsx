@@ -7,7 +7,6 @@ export function LocationSection() {
   const { location, status, loading, error, locationLabel, requestLocation } = useGeolocation()
 
   const isGps = location?.source === 'gps'
-  const isDefault = location?.source === 'default'
 
   return (
     <section className="px-4 py-3 border-b border-border bg-card/30">
@@ -27,15 +26,15 @@ export function LocationSection() {
             {error && !loading && (
               <p className="text-xs text-destructive mt-1">{error}</p>
             )}
-            {!error && !loading && isDefault && (
+            {!error && !loading && !isGps && (
               <p className="text-xs text-muted-foreground mt-1">
-                Enable location to see prices near you.
+                {location?.source === 'default' ? 'Enable location to see prices near you.' : 'Tap Locate me to refresh your position.'}
               </p>
             )}
           </div>
         </div>
 
-        {(isDefault || status === 'denied' || status === 'unavailable' || status === 'timeout' || status === 'error') && (
+        {!isGps && (
           <button
             onClick={requestLocation}
             disabled={loading}
