@@ -14,50 +14,94 @@ interface StoreMapProps {
   radiusKm: number
 }
 
-/** Default Leaflet marker icons are broken in bundlers — build our own. */
-const iconBase = L.divIcon({
-  className: '',
-  iconSize: [16, 16],
-  iconAnchor: [8, 8],
-})
+const PRIMARY = 'oklch(0.72 0.22 145)'
+
+// Inline styles for divIcon markers — Leaflet manages the DOM, so <style> is
+// the reliable way to inject keyframe animations without a CSS-in-JS library.
+const pulseKeyframes = `
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.5); opacity: 0.2; }
+  100% { transform: scale(1); opacity: 0.5; }
+}
+@keyframes pulse-dot {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+`
+
+// ---------------------------------------------------------------------------
+// Icons
+// ---------------------------------------------------------------------------
 
 const userIcon = L.divIcon({
   className: '',
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
-  html: `<div style="width:20px;height:20px;border-radius:50%;background:oklch(0.72 0.22 145);border:3px solid rgba(255,255,255,0.9);box-shadow:0 0 0 3px rgba(0,0,0,0.15),0 2px 6px rgba(0,0,0,0.3)"></div>`,
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
+  html: `<div style="position:relative;width:28px;height:28px">
+    <div style="position:absolute;inset:0;border-radius:50%;border:3px solid ${PRIMARY};animation:pulse-ring 2s ease-in-out infinite"></div>
+    <div style="position:absolute;top:4px;left:4px;width:20px;height:20px;border-radius:50%;background:${PRIMARY};border:3px solid rgba(255,255,255,0.9);box-shadow:0 1px 4px rgba(0,0,0,0.3);animation:pulse-dot 2s ease-in-out infinite"></div>
+  </div>`,
 })
+
+function storeIcon(retailer: string): L.DivIcon {
+  const color = getRetailerColor(retailer)
+  const letter = retailer.charAt(0).toUpperCase()
+  return L.divIcon({
+    className: '',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    html: `<div style="width:32px;height:32px;border-radius:50%;background:${color};border:2px solid rgba(255,255,255,0.85);box-shadow:0 2px 6px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;line-height:1;font-family:system-ui,-apple-system,sans-serif">${letter}</div>`,
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
 
 function StoreMarker({ price }: { price: Price }) {
   const store = price.stores
   if (!store || !Number.isFinite(Number(store.lat)) || !Number.isFinite(Number(store.lng))) return null
 
-  const color = getRetailerColor(store.retailer)
-  const icon = L.divIcon({
-    ...iconBase,
-    html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid rgba(255,255,255,0.8);box-shadow:0 1px 3px rgba(0,0,0,0.4)"></div>`,
-  })
+  const icon = storeIcon(store.retailer)
+  const storeTypeLabel =
+    store.store_type
+      ? ({ supermarket: 'Supermarket', convenience: 'Convenience Store', petrol_station: 'Petrol Station', other: 'Other' } as const)[store.store_type]
+      : null
 
   return (
-    <Marker position={[store.lat, store.lng]} icon={icon}>
+    <Marker position={[Number(store.lat), Number(store.lng)]} icon={icon}>
       <Popup>
-        <div className="text-sm">
-          <p className="font-medium">{store.name}</p>
-          <p className="text-muted-foreground text-xs">
+        <div className="text-sm space-y-1.5 min-w-[180px]">
+          <p className="font-semibold text-sm">{store.name}</p>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: getRetailerColor(store.retailer) }} />
+            <span>{store.retailer.charAt(0).toUpperCase() + store.retailer.slice(1)}</span>
+            {storeTypeLabel && <><span>·</span><span>{storeTypeLabel}</span></>}
+          </div>
+          <p className="text-xs text-muted-foreground">
             {store.suburb ?? store.address ?? ''}
           </p>
           {price.distance !== undefined && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {(price.distance / 1000).toFixed(1)} km
+            <p className="text-xs text-muted-foreground">
+              {(Number(price.distance) / 1000).toFixed(1)} km away
             </p>
           )}
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block text-xs font-medium text-primary hover:underline mt-1"
+          >
+            Get Directions →
+          </a>
         </div>
       </Popup>
     </Marker>
   )
 }
 
-/** Recenters the map when the user location changes. */
 function MapController({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap()
   useEffect(() => {
@@ -66,8 +110,41 @@ function MapController({ lat, lng }: { lat: number; lng: number }) {
   return null
 }
 
+const LEGEND_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  bottom: 16,
+  left: 16,
+  zIndex: 1000,
+  pointerEvents: 'none',
+  background: 'rgba(0,0,0,0.6)',
+  backdropFilter: 'blur(4px)',
+  borderRadius: 8,
+  padding: '6px 10px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 4,
+}
+
+function Legend() {
+  return (
+    <div style={LEGEND_STYLE}>
+      <div className="flex items-center gap-2 text-xs text-white/90">
+        <span className="size-2.5 rounded-full shrink-0" style={{ background: PRIMARY, border: '1px solid rgba(255,255,255,0.7)' }} />
+        You
+      </div>
+      <div className="flex items-center gap-2 text-xs text-white/90">
+        <span className="size-2.5 rounded-full shrink-0" style={{ background: '#94a3b8', border: '1px solid rgba(255,255,255,0.5)' }} />
+        Store
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
 export function StoreMap({ prices, userLat, userLng, radiusKm }: StoreMapProps) {
-  // Deduplicate stores by id — keep the first price entry per store for its distance.
   const storeMarkers = useMemo(() => {
     const seen = new Set<string>()
     return prices.filter((p) => {
@@ -79,7 +156,9 @@ export function StoreMap({ prices, userLat, userLng, radiusKm }: StoreMapProps) 
   }, [prices])
 
   return (
-    <div className="w-full h-[300px] md:h-[400px] rounded-xl overflow-hidden border border-border">
+    <div className="relative w-full h-[320px] md:h-[460px] rounded-xl overflow-hidden border border-border">
+      <style>{pulseKeyframes}</style>
+
       <MapContainer
         center={[userLat, userLng]}
         zoom={13}
@@ -103,8 +182,8 @@ export function StoreMap({ prices, userLat, userLng, radiusKm }: StoreMapProps) 
           center={[userLat, userLng]}
           radius={radiusKm * 1000}
           pathOptions={{
-            color: 'oklch(0.72 0.22 145)',
-            fillColor: 'oklch(0.72 0.22 145)',
+            color: PRIMARY,
+            fillColor: PRIMARY,
             fillOpacity: 0.08,
             weight: 2,
             opacity: 0.4,
@@ -116,6 +195,8 @@ export function StoreMap({ prices, userLat, userLng, radiusKm }: StoreMapProps) 
           <StoreMarker key={price.stores!.id} price={price} />
         ))}
       </MapContainer>
+
+      <Legend />
     </div>
   )
 }
