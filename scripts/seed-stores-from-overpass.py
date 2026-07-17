@@ -190,17 +190,16 @@ def extract_stores(brand: str, retailer: str, elements: List[Dict]) -> List[Dict
         tags = el.get("tags", {})
         name = tags.get("name", "").strip()
         if not name:
-            # Some OSM nodes have brand but no name — use brand as fallback
-            fallback = f"{brand} {tags.get('addr:city', '')}".strip()
-            if not fallback:
-                continue
-            name = fallback
+            city = tags.get("addr:city", "").strip()
+            street = tags.get("addr:street", "").strip()
+            location = city or street or f"{lat:.2f},{lng:.2f}"
+            name = f"{brand} {location}"
 
-        # Deduplicate by name within this retailer
-        name_lower = name.lower()
-        if name_lower in seen_names:
+        # Deduplicate by retailer + lat/lng (round to 3 decimal places)
+        coord_key = f"{retailer}|{lat:.3f}|{lng:.3f}"
+        if coord_key in seen_names:
             continue
-        seen_names.add(name_lower)
+        seen_names.add(coord_key)
 
         # Build address from available addr:* tags
         parts = []
@@ -254,8 +253,7 @@ def upsert_stores(supabase, retailer: str, stores: List[Dict]) -> int:
                 .execute()
             )
 
-            if existing.data:
-                # Update existing — preserve is_active and is_approved flags
+            if existing and existing.data:
                 supabase.table("stores").update({
                     "lat": store["lat"],
                     "lng": store["lng"],
@@ -265,7 +263,6 @@ def upsert_stores(supabase, retailer: str, stores: List[Dict]) -> int:
                 }).eq("id", existing.data["id"]).execute()
                 upserted += 1
             else:
-                # Insert new
                 supabase.table("stores").insert({
                     "name": store["name"],
                     "retailer": retailer,
