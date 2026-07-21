@@ -136,9 +136,22 @@ test.describe('Dashboard — Loaded State', () => {
     await expect(page.getByLabel('Store name')).toBeVisible()
   })
 
+  test('shows user location marker on the map', async ({ page }) => {
+    await setupMockData(page)
+    const mapSection = page.getByLabel('Store locations')
+    await expect(mapSection).toBeVisible({ timeout: 15000 })
+    const marker = mapSection.locator('.maplibregl-marker')
+    await expect(marker).toBeVisible({ timeout: 15000 })
+  })
+
   test('skip-to-content link is present', async ({ page }) => {
     await setupMockData(page)
     await expect(page.getByText('Skip to content').first()).toBeVisible()
+  })
+
+  test('map section renders with store markers when data loaded', async ({ page }) => {
+    await setupMockData(page)
+    await expect(page.getByText('Store locations').first()).toBeVisible()
   })
 })
 

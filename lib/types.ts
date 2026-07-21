@@ -68,6 +68,15 @@ export interface ProductData {
   pack_size: string
 }
 
+/** A flattened map marker for a physical store. */
+export interface StoreMarker {
+  id: string
+  retailer: string
+  name: string
+  lat: number
+  lng: number
+}
+
 export interface PriceWithJoins {
   id: string
   store_id: string

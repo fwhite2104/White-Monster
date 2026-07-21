@@ -12,7 +12,7 @@ import { ReportPriceModal, ReportPriceFab } from "@/components/app/ReportPriceMo
 import { useGeolocation } from "@/hooks/use-geolocation"
 import { usePriceQuery } from "@/hooks/use-price-query"
 import { DEFAULT_CENTER } from "@/lib/constants"
-import type { Price } from "@/lib/types"
+import type { Price, StoreMarker } from "@/lib/types"
 
 const StoreMap = dynamic(
   () => import("@/components/map/StoreMapBlock").then((m) => m.StoreMapBlock),
@@ -20,7 +20,7 @@ const StoreMap = dynamic(
 )
 
 export default function HomePage() {
-  const { location } = useGeolocation()
+  const { location, setManualLocation } = useGeolocation()
 
   const userLat = useMemo(() => location?.lat ?? DEFAULT_CENTER.lat, [location?.lat])
   const userLng = useMemo(() => location?.lng ?? DEFAULT_CENTER.lng, [location?.lng])
@@ -44,6 +44,41 @@ export default function HomePage() {
     lat: userLat,
     lng: userLng,
   })
+  const storeMarkers = useMemo(() => {
+    const seen = new Set<string>()
+    const markers: StoreMarker[] = []
+
+    for (const p of prices) {
+      if (!seen.has(p.store_id) && p.stores?.lat && p.stores?.lng) {
+        seen.add(p.store_id)
+        markers.push({
+          id: p.store_id,
+          retailer: p.stores.retailer,
+          name: p.stores.name,
+          lat: p.stores.lat,
+          lng: p.stores.lng,
+        })
+      }
+    }
+
+    for (const s of nationalSummaries) {
+      for (const loc of s.storeLocations) {
+        if (!seen.has(loc.id) && loc.lat !== null && loc.lng !== null) {
+          seen.add(loc.id)
+          markers.push({
+            id: loc.id,
+            retailer: s.retailer,
+            name: loc.name,
+            lat: loc.lat,
+            lng: loc.lng,
+          })
+        }
+      }
+    }
+
+    return markers
+  }, [prices, nationalSummaries])
+
   const [selectedPrice, setSelectedPrice] = useState<Price | null>(null)
   const [reportOpen, setReportOpen] = useState(false)
 
@@ -90,15 +125,16 @@ export default function HomePage() {
           onShare={handleSharePrice}
         />
 
-        {!loading && !error && prices.length > 0 && (
+        {!loading && !error && storeMarkers.length > 0 && (
           <section className="pb-4" aria-label="Store locations">
             <h2 className="text-sm font-medium text-muted-foreground mb-3">Store locations</h2>
             <StoreMap
-              summaries={nationalSummaries}
+              markers={storeMarkers}
               userLat={userLat}
               userLng={userLng}
               radiusKm={radius}
               userAccuracy={location?.accuracy}
+              onLocationSelect={setManualLocation}
             />
           </section>
         )}
