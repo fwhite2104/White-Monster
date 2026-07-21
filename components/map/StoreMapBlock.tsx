@@ -30,7 +30,6 @@ export function StoreMapBlock({ summaries, userLat, userLng, radiusKm }: StoreMa
       style: 'https://tiles.openfreemap.org/styles/liberty',
       center: [userLng, userLat],
       zoom: 12,
-      attributionControl: true,
     })
 
     map.addControl(new maplibregl.NavigationControl(), 'top-right')
@@ -46,7 +45,7 @@ export function StoreMapBlock({ summaries, userLat, userLng, radiusKm }: StoreMa
           retailer: s.retailer,
           price: Number(s.price).toFixed(2),
           color: colorMap[s.retailer] ?? '#666',
-          clubcard: s.clubcard_price ? `€${Number(s.clubcard_price).toFixed(2)}` : null,
+          clubcard: s.clubcardPrice ? `€${Number(s.clubcardPrice).toFixed(2)}` : null,
         },
         geometry: { type: 'Point', coordinates: [userLng, userLat] },
       }))
