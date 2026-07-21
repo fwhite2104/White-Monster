@@ -11,6 +11,7 @@ import { PriceDetailSheet } from "@/components/app/PriceDetailSheet"
 import { ReportPriceModal, ReportPriceFab } from "@/components/app/ReportPriceModal"
 import { useGeolocation } from "@/hooks/use-geolocation"
 import { usePriceQuery } from "@/hooks/use-price-query"
+import { useOverpassMarkers } from "@/hooks/use-overpass-markers"
 import { DEFAULT_CENTER } from "@/lib/constants"
 import type { Price, StoreMarker } from "@/lib/types"
 
@@ -44,10 +45,20 @@ export default function HomePage() {
     lat: userLat,
     lng: userLng,
   })
+  // Fetch Overpass store locations as a fallback when price data is unavailable
+  const overpassEnabled = !loading && (error !== null || prices.length === 0)
+  const { markers: overpassMarkers, loading: overpassLoading } = useOverpassMarkers({
+    lat: userLat,
+    lng: userLng,
+    radiusKm: radius,
+    enabled: overpassEnabled,
+  })
+
   const storeMarkers = useMemo(() => {
     const seen = new Set<string>()
     const markers: StoreMarker[] = []
 
+    // First: add price-derived markers (have actual price data)
     for (const p of prices) {
       if (!seen.has(p.store_id) && p.stores?.lat && p.stores?.lng) {
         seen.add(p.store_id)
@@ -71,6 +82,7 @@ export default function HomePage() {
       }
     }
 
+    // Second: add national summary markers
     for (const s of nationalSummaries) {
       for (const loc of s.store_locations) {
         if (!seen.has(loc.id) && loc.lat !== null && loc.lng !== null) {
@@ -96,8 +108,16 @@ export default function HomePage() {
       }
     }
 
+    // Third: add Overpass markers for any retailers not covered by price data
+    for (const o of overpassMarkers) {
+      if (!seen.has(o.id)) {
+        seen.add(o.id)
+        markers.push(o)
+      }
+    }
+
     return markers
-  }, [prices, nationalSummaries])
+  }, [prices, nationalSummaries, overpassMarkers])
 
   const [selectedPrice, setSelectedPrice] = useState<Price | null>(null)
   const [reportOpen, setReportOpen] = useState(false)
@@ -145,9 +165,12 @@ export default function HomePage() {
           onShare={handleSharePrice}
         />
 
-        {!loading && !error && storeMarkers.length > 0 && (
+        {(storeMarkers.length > 0 || !loading) && (
           <section className="pb-4" aria-label="Store locations">
-            <h2 className="text-sm font-medium text-muted-foreground mb-3">Store locations</h2>
+            <h2 className="text-sm font-medium text-muted-foreground mb-3">
+              Store locations
+              {overpassLoading && <span className="text-xs text-muted-foreground ml-2">Loading nearby stores…</span>}
+            </h2>
             <StoreMap
               markers={storeMarkers}
               userLat={userLat}

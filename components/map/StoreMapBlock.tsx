@@ -105,7 +105,7 @@ export function StoreMapBlock({ markers, userLat, userLng, userAccuracy, onLocat
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!containerRef.current || markers.length === 0) return
+    if (!containerRef.current) return
 
     const map = new maplibregl.Map({
       container: containerRef.current,
@@ -125,6 +125,9 @@ export function StoreMapBlock({ markers, userLat, userLng, userAccuracy, onLocat
     new maplibregl.Marker({ color: '#22c55e' })
       .setLngLat([userLng, userLat])
       .addTo(map)
+
+    // If no store markers, skip store layers but keep tiles + user marker
+    if (markers.length === 0) return
 
     map.on('load', async () => {
       const colorMap = Object.fromEntries(
