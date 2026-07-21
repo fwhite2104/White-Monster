@@ -35,7 +35,7 @@ export async function middleware(request: NextRequest) {
     // Auth session refresh failed — continue without crashing
   }
 
-  supabaseResponse.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:; font-src 'self'; connect-src 'self' https://*.supabase.co https://*.vercel.app; frame-src 'none'; object-src 'none'")
+  supabaseResponse.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:; font-src 'self'; connect-src 'self' https://*.supabase.co https://*.vercel.app https://tiles.openfreemap.org; worker-src 'self' blob:; frame-src 'none'; object-src 'none'")
   supabaseResponse.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
   supabaseResponse.headers.set('X-Content-Type-Options', 'nosniff')
   supabaseResponse.headers.set('X-Frame-Options', 'DENY')
