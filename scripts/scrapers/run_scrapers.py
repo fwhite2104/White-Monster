@@ -163,7 +163,7 @@ def _extract_variant(product_name: str) -> str | None:
 
 
 def get_or_create_store(
-    supabase: Client, retailer: str, name: str, lat: float, lng: float, suburb: str
+    supabase: Client, retailer: str, name: str, lat: float | None, lng: float | None, suburb: str
 ) -> str:
     supabase.table("stores").upsert(
         {
@@ -274,14 +274,14 @@ def main():
         sys.exit(1)
 
     supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-    _log("=== Monster Cork Scraper ===")
+    _log("=== Monster Ireland Scraper ===")
     _STALE_ALERT_FIRED = False
 
     _log("--- Lidl Ireland ---")
     try:
         lidl_prices = LidlIEScraper().scrape()
         lidl_store = get_or_create_store(
-            supabase, "lidl", "Lidl Ireland (National)", 51.8985, -8.4756, "Cork City"
+            supabase, "lidl", "Lidl Ireland (National)", None, None, "Ireland (national)"
         )
         push_prices(supabase, lidl_prices, "lidl", lidl_store)
     except Exception as e:
@@ -292,7 +292,7 @@ def main():
     try:
         aldi_prices = AldiIEScraper().scrape()
         aldi_store = get_or_create_store(
-            supabase, "aldi", "Aldi Ireland (National)", 51.8985, -8.4756, "Cork City"
+            supabase, "aldi", "Aldi Ireland (National)", None, None, "Ireland (national)"
         )
         push_prices(supabase, aldi_prices, "aldi", aldi_store)
     except Exception as e:
@@ -303,7 +303,7 @@ def main():
     try:
         tesco_prices = TescoIEScraper().scrape()
         tesco_store = get_or_create_store(
-            supabase, "tesco", "Tesco Ireland (National)", 51.8985, -8.4756, "Cork City"
+            supabase, "tesco", "Tesco Ireland (National)", None, None, "Ireland (national)"
         )
         push_prices(supabase, tesco_prices, "tesco", tesco_store)
     except Exception as e:
@@ -312,7 +312,7 @@ def main():
 
     _log("--- SuperValu Ireland (Sports & Energy) ---")
     supervalu_store = get_or_create_store(
-        supabase, "supervalu", "SuperValu Ireland (National)", 51.8985, -8.4756, "Cork City"
+        supabase, "supervalu", "SuperValu Ireland (National)", None, None, "Ireland (national)"
     )
     try:
         supervalu_prices = SuperValuIEScraper().scrape()
@@ -335,7 +335,7 @@ def main():
     try:
         dunnes_prices = dunnes_scraper.scrape()
         dunnes_store = get_or_create_store(
-            supabase, "dunnes", "Dunnes Stores Ireland (National)", 51.8985, -8.4756, "Cork City"
+            supabase, "dunnes", "Dunnes Stores Ireland (National)", None, None, "Ireland (national)"
         )
         push_prices(supabase, dunnes_prices, "dunnes", dunnes_store)
     except Exception as e:
@@ -347,7 +347,7 @@ def main():
     try:
         centra_prices = CentraIEScraper().scrape()
         centra_store = get_or_create_store(
-            supabase, "centra", "Centra Ireland (National)", 51.8985, -8.4756, "Cork City"
+            supabase, "centra", "Centra Ireland (National)", None, None, "Ireland (national)"
         )
         push_prices(supabase, centra_prices, "centra", centra_store)
     except Exception as e:

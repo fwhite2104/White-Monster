@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimitDB, getClientIp } from '@/lib/rate-limit'
 import { calculateDistance } from '@/lib/geo'
 import {
-  CORK_CENTER,
+  DEFAULT_CENTER,
   DEFAULT_RADIUS_KM,
   RETAILERS,
 } from '@/lib/constants'
@@ -32,10 +32,10 @@ export async function GET(request: NextRequest) {
     }
 
     const latParam = searchParams.get('lat')
-    const lat = latParam !== null ? validateLat(latParam) : CORK_CENTER.lat
+    const lat = latParam !== null ? validateLat(latParam) : DEFAULT_CENTER.lat
 
     const lngParam = searchParams.get('lng')
-    const lng = lngParam !== null ? validateLng(lngParam) : CORK_CENTER.lng
+    const lng = lngParam !== null ? validateLng(lngParam) : DEFAULT_CENTER.lng
 
     const radiusParam = searchParams.get('radius')
     const radiusKm = radiusParam !== null ? validateRadius(radiusParam) : DEFAULT_RADIUS_KM

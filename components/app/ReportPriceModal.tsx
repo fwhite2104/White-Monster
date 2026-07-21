@@ -111,7 +111,7 @@ export function ReportPriceModal({ open, onOpenChange, prefillStoreName, lat, ln
                 type="text"
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
-                placeholder="e.g. Tesco Cork City"
+                placeholder="e.g. Tesco Dublin"
                 className="w-full px-3 py-2 rounded-lg bg-card border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 required
               />

@@ -8,7 +8,7 @@ export function Header() {
           <Zap className="size-5 fill-current" aria-hidden="true" />
         </div>
         <div>
-          <h1 className="text-lg font-semibold leading-tight">Monster Cork</h1>
+          <h1 className="text-lg font-semibold leading-tight">Monster Ireland</h1>
           <p className="text-xs text-muted-foreground">Find the cheapest Monster Energy near you</p>
         </div>
       </div>

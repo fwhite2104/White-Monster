@@ -40,7 +40,7 @@ class DunnesIEScraper(BaseScraper):
         self.session = curl_requests.Session(impersonate="chrome")
         self.session.headers.update({
             "User-Agent": (
-                "MonsterCork/1.0 (Price Comparison Bot; "
+                "MonsterIreland/1.0 (Price Comparison Bot; "
                 "+https://monster-cork.vercel.app)"
             ),
             "Accept-Language": "en-IE,en;q=0.9",

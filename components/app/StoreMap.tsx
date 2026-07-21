@@ -73,7 +73,7 @@ function createClusterIcon(cluster: L.MarkerCluster): L.DivIcon {
 
 function StoreMarker({ price }: { price: Price }) {
   const store = price.stores
-  if (!store || !Number.isFinite(Number(store.lat)) || !Number.isFinite(Number(store.lng))) return null
+  if (!store || !Number.isFinite(price.distance ?? 0) || !Number.isFinite(Number(store.lat)) || !Number.isFinite(Number(store.lng))) return null
 
   const icon = storeIcon(store.retailer)
   const storeTypeLabel =

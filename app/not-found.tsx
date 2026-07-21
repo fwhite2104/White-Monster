@@ -14,7 +14,7 @@ export default function NotFound() {
         href="/"
         className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium"
       >
-        Back to Monster Cork
+        Back to Monster Ireland
       </Link>
     </div>
   );

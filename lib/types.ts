@@ -55,8 +55,8 @@ export interface StoreData {
   retailer: string
   address: string
   suburb: string
-  lat: number
-  lng: number
+  lat: number | null
+  lng: number | null
 }
 
 export interface ProductData {

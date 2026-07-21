@@ -121,7 +121,7 @@ class AldiIEScraper(BaseScraper):
                 browser = p.chromium.launch(headless=True)
                 context = browser.new_context(
                     user_agent=(
-                        "MonsterCork/1.0 (Price Comparison Bot; "
+                        "MonsterIreland/1.0 (Price Comparison Bot; "
                         "+https://monster-cork.vercel.app)"
                     ),
                     locale="en-IE",
