@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { queryBrandStores } from '@/lib/overpass'
+import { queryBrandsGroup } from '@/lib/overpass'
+import type { Place } from '@/lib/map-types'
 import { RETAILERS } from '@/lib/constants'
 import { calculateDistance } from '@/lib/geo'
 import type { StoreMarker } from '@/lib/types'
@@ -56,44 +57,36 @@ export function useOverpassMarkers({
         const results: StoreMarker[] = []
         const seen = new Set<string>()
 
-        // Query each retailer in parallel
-        const queries = RETAILERS.map((r) =>
-          queryBrandStores(r.label, lat, lng, radiusMeters).catch(() => [] as never[]),
-        )
+        // Query ALL brands in ONE request to avoid Overpass rate limiting
+        const brandLabels = RETAILERS.map((r) => r.label)
+        // Build a map of OSM id → retailer value so we can match results back
+        // First, query all brands at once
+        const places = await queryBrandsGroup(brandLabels, lat, lng, radiusMeters)
+        const matched = matchBrandsToRetailers(places)
 
-        const settled = await Promise.allSettled(queries)
+        for (const place of matched) {
+          if (seen.has(place.id)) continue
+          seen.add(place.id)
 
-        for (let i = 0; i < settled.length; i++) {
-          const result = settled[i]
-          if (result.status !== 'fulfilled') continue
+          const distance = calculateDistance(lat, lng, place.lat, place.lng)
 
-          const retailer = RETAILERS[i]
-          const places = result.value as { id: string; name: string; lat: number; lng: number; address?: string }[]
-
-          for (const place of places) {
-            if (seen.has(place.id)) continue
-            seen.add(place.id)
-
-            const distance = calculateDistance(lat, lng, place.lat, place.lng)
-
-            results.push({
-              id: `osm_${place.id}`,
-              retailer: retailer.value,
-              name: place.name,
-              address: place.address ?? '',
-              suburb: '',
-              lat: place.lat,
-              lng: place.lng,
-              distance: Math.round(distance),
-              price: 0,
-              per_can_price: 0,
-              drs_deposit: 0,
-              clubcard_price: null,
-              has_clubcard_pricing: false,
-              pack_size: 'single',
-              source_type: 'per_store',
-            })
-          }
+          results.push({
+            id: `osm_${place.id}`,
+            retailer: place.retailer,
+            name: place.name,
+            address: place.address ?? '',
+            suburb: '',
+            lat: place.lat,
+            lng: place.lng,
+            distance: Math.round(distance),
+            price: 0,
+            per_can_price: 0,
+            drs_deposit: 0,
+            clubcard_price: null,
+            has_clubcard_pricing: false,
+            pack_size: 'single',
+            source_type: 'per_store',
+          })
         }
 
         if (!cancelledRef.current) {
@@ -120,4 +113,33 @@ export function useOverpassMarkers({
   }, [lat, lng, radiusKm, enabled])
 
   return { markers, loading, error }
+}
+
+interface MatchedPlace extends Place {
+  retailer: string
+}
+
+/**
+ * Match Overpass Place results back to known retailers by checking if
+ * the place name or brand tag contains the retailer label (case-insensitive).
+ */
+function matchBrandsToRetailers(places: Place[]): MatchedPlace[] {
+  const matched: MatchedPlace[] = []
+  const seen = new Set<string>()
+
+  for (const place of places) {
+    if (seen.has(place.id)) continue
+
+    const lowerName = place.name.toLowerCase()
+    for (const r of RETAILERS) {
+      if (r.value === 'other') continue
+      if (lowerName.includes(r.label.toLowerCase())) {
+        seen.add(place.id)
+        matched.push({ ...place, retailer: r.value })
+        break
+      }
+    }
+  }
+
+  return matched
 }

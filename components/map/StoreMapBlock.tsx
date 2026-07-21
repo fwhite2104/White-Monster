@@ -6,6 +6,12 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { RETAILERS } from '@/lib/constants'
 import type { StoreMarker } from '@/lib/types'
 
+export interface ActiveMarker {
+  id: string
+  lat: number
+  lng: number
+}
+
 interface StoreMapBlockProps {
   markers: StoreMarker[]
   userLat: number
@@ -13,6 +19,8 @@ interface StoreMapBlockProps {
   radiusKm: number
   userAccuracy?: number
   onLocationSelect?: (lat: number, lng: number) => void
+  /** When set, dims all markers except this one and flies to it */
+  activeMarker?: ActiveMarker | null
 }
 
 async function createLetterBadge(letter: string, color: string): Promise<ImageBitmap> {
@@ -101,8 +109,10 @@ export function buildPopupContent(m: StoreMarker): string {
   `
 }
 
-export function StoreMapBlock({ markers, userLat, userLng, userAccuracy, onLocationSelect }: StoreMapBlockProps) {
+export function StoreMapBlock({ markers, userLat, userLng, userAccuracy, onLocationSelect, activeMarker }: StoreMapBlockProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const mapRef = useRef<maplibregl.Map | null>(null)
+  const readyRef = useRef(false)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -130,6 +140,7 @@ export function StoreMapBlock({ markers, userLat, userLng, userAccuracy, onLocat
     if (markers.length === 0) return
 
     map.on('load', async () => {
+      readyRef.current = true
       const colorMap = Object.fromEntries(
         RETAILERS.map((r) => [r.value, r.color ?? '#666'])
       )
@@ -161,7 +172,9 @@ export function StoreMapBlock({ markers, userLat, userLng, userAccuracy, onLocat
 
       const features: GeoJSON.Feature[] = markers.map((m) => ({
         type: 'Feature',
+        id: m.id,
         properties: {
+          id: m.id,
           logo_id: `logo_${m.retailer}`,
           _marker_data: JSON.stringify(m),
         },
@@ -210,6 +223,9 @@ export function StoreMapBlock({ markers, userLat, userLng, userAccuracy, onLocat
           'icon-image': ['get', 'logo_id'],
           'icon-size': 0.4,
           'icon-allow-overlap': true,
+        },
+        paint: {
+          'icon-opacity': ['case', ['feature-state', 'dimmed'], 0.25, 1],
         },
       })
 
@@ -313,9 +329,35 @@ export function StoreMapBlock({ markers, userLat, userLng, userAccuracy, onLocat
     })
 
     return () => {
+      readyRef.current = false
+      mapRef.current = null
       map.remove()
     }
   }, [userLat, userLng, markers, userAccuracy, onLocationSelect])
+
+  // Dim/highlight active marker and fly to it
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !readyRef.current) return
+
+    // Clear all dimmed states first
+    map.removeFeatureState({ source: 'retailers' })
+
+    if (activeMarker) {
+      // Dim all features except the active one
+      const allFeatures = map.querySourceFeatures('retailers')
+      for (const f of allFeatures) {
+        // Skip cluster features and non-store features
+        if (f.properties?.point_count) continue
+        if (!f.id) continue
+        if (f.id === activeMarker.id) continue
+        map.setFeatureState({ source: 'retailers', id: f.id }, { dimmed: true })
+      }
+
+      // Fly to the active marker
+      map.flyTo({ center: [activeMarker.lng, activeMarker.lat], zoom: 14 })
+    }
+  }, [activeMarker])
 
   return (
     <div ref={containerRef} className="h-[300px] md:h-[400px] rounded-xl z-0" />

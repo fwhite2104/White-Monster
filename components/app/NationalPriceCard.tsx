@@ -1,15 +1,19 @@
 'use client'
 
+import { Info } from 'lucide-react'
 import { RetailerBadge } from './RetailerBadge'
 import type { NationalSummary } from '@/lib/prices'
 
 interface NationalPriceCardProps {
   summary: NationalSummary
   isBest?: boolean
+  /** Card click → highlight nearest store for this retailer on map. */
   onClick?: () => void
+  /** 'Details' button → open detail sheet. */
+  onViewDetails?: () => void
 }
 
-export function NationalPriceCard({ summary, isBest, onClick }: NationalPriceCardProps) {
+export function NationalPriceCard({ summary, isBest, onClick, onViewDetails }: NationalPriceCardProps) {
   const numericPrice = Number(summary.price)
   const perCan = summary.per_can_price ?? numericPrice
   const retailerLabel = summary.retailer.charAt(0).toUpperCase() + summary.retailer.slice(1)
@@ -17,10 +21,13 @@ export function NationalPriceCard({ summary, isBest, onClick }: NationalPriceCar
   const distanceKm = isNationwide ? null : (summary.nearest_distance / 1000).toFixed(1)
 
   return (
-    <button
-      onClick={onClick}
+    <div
       data-testid="national-price-card"
-      className="w-full text-left px-4 py-3 rounded-xl card-shadow-sm bg-card hover:bg-card/80 hover:border-primary/20 transition-all"
+      className="group relative w-full text-left px-4 py-3 rounded-xl card-shadow-sm bg-card hover:bg-card/80 hover:border-primary/20 transition-all cursor-pointer"
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.() } }}
       aria-label={`${retailerLabel}: €${numericPrice.toFixed(2)}`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -57,6 +64,17 @@ export function NationalPriceCard({ summary, isBest, onClick }: NationalPriceCar
           Best Price
         </div>
       )}
-    </button>
+      <div className="mt-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onViewDetails?.() }}
+          className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+          aria-label={`Details for ${retailerLabel}`}
+        >
+          <Info className="size-3" />
+          Details
+        </button>
+      </div>
+    </div>
   )
 }

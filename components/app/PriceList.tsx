@@ -12,12 +12,15 @@ interface PriceListProps {
   loading: boolean
   error: string | null
   bestPrice: Price | null
-  onSelectPrice: (price: Price) => void
+  /** Card click → highlight marker on map. Use store_id or first store location. */
+  onHighlight: (id: string) => void
+  /** 'Details' button → open detail sheet. */
+  onViewDetails: (price: Price) => void
   onRetry: () => void
   onShare?: (price: Price) => void
 }
 
-export function PriceList({ prices, nationalSummaries = [], loading, error, bestPrice, onSelectPrice, onRetry, onShare }: PriceListProps) {
+export function PriceList({ prices, nationalSummaries = [], loading, error, bestPrice, onHighlight, onViewDetails, onRetry, onShare }: PriceListProps) {
   if (loading) {
     return (
       <div className="space-y-3 pb-4">
@@ -68,14 +71,19 @@ export function PriceList({ prices, nationalSummaries = [], loading, error, best
 
   return (
     <div className="space-y-3 pb-4">
-      {nationalSummaries.map((summary) => (
-        <NationalPriceCard
-          key={summary.retailer}
-          summary={summary}
-          isBest={Number(summary.price) === lowestPriceOverall}
-          onClick={() => onSelectPrice(createNationalPriceFromSummary(summary))}
-        />
-      ))}
+      {nationalSummaries.map((summary) => {
+        // Highlight the first physical store for this retailer when card clicked
+        const firstLoc = summary.store_locations.find((l) => l.lat !== null && l.lng !== null)
+        return (
+          <NationalPriceCard
+            key={summary.retailer}
+            summary={summary}
+            isBest={Number(summary.price) === lowestPriceOverall}
+            onClick={() => firstLoc && onHighlight(firstLoc.id)}
+            onViewDetails={() => onViewDetails(createNationalPriceFromSummary(summary))}
+          />
+        )
+      })}
       {prices
         .filter((p) => !nationalRetailers.has(p.stores?.retailer ?? ''))
         .map((price) => (
@@ -83,7 +91,8 @@ export function PriceList({ prices, nationalSummaries = [], loading, error, best
             key={price.id}
             price={price}
             isBest={bestPrice?.id === price.id || Number(price.price) === lowestPriceOverall}
-            onClick={() => onSelectPrice(price)}
+            onClick={() => onHighlight(price.store_id)}
+            onViewDetails={() => onViewDetails(price)}
             onShare={onShare}
           />
         ))}

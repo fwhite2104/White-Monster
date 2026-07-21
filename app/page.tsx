@@ -14,6 +14,7 @@ import { usePriceQuery } from "@/hooks/use-price-query"
 import { useOverpassMarkers } from "@/hooks/use-overpass-markers"
 import { DEFAULT_CENTER } from "@/lib/constants"
 import type { Price, StoreMarker } from "@/lib/types"
+import type { ActiveMarker } from "@/components/map/StoreMapBlock"
 
 const StoreMap = dynamic(
   () => import("@/components/map/StoreMapBlock").then((m) => m.StoreMapBlock),
@@ -120,6 +121,7 @@ export default function HomePage() {
   }, [prices, nationalSummaries, overpassMarkers])
 
   const [selectedPrice, setSelectedPrice] = useState<Price | null>(null)
+  const [activeMarker, setActiveMarker] = useState<ActiveMarker | null>(null)
   const [reportOpen, setReportOpen] = useState(false)
 
   const handleSharePrice = useCallback(async (price: Price) => {
@@ -160,7 +162,17 @@ export default function HomePage() {
           loading={loading}
           error={error}
           bestPrice={bestPrice}
-          onSelectPrice={setSelectedPrice}
+          onHighlight={(id) => {
+            // Find marker coords in storeMarkers to fly to
+            const m = storeMarkers.find((sm) => sm.id === id)
+            setActiveMarker(m ? { id, lat: m.lat, lng: m.lng } : { id, lat: userLat, lng: userLng })
+          }}
+          onViewDetails={(price) => {
+            // Open details AND highlight marker
+            setSelectedPrice(price)
+            const m = storeMarkers.find((sm) => sm.id === price.store_id)
+            if (m) setActiveMarker({ id: m.id, lat: m.lat, lng: m.lng })
+          }}
           onRetry={refetch}
           onShare={handleSharePrice}
         />
@@ -178,6 +190,7 @@ export default function HomePage() {
               radiusKm={radius}
               userAccuracy={location?.accuracy}
               onLocationSelect={setManualLocation}
+              activeMarker={activeMarker}
             />
           </section>
         )}

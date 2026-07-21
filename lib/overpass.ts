@@ -160,3 +160,29 @@ export async function queryBrandStores(
 ): Promise<Place[]> {
   return postOverpass(buildQuery(lat, lng, radius, '', brandName))
 }
+
+/**
+ * Query Overpass for ALL given brand names in a single request.
+ * Uses a regex alternation so the server returns results for all brands
+ * at once — avoids rate limiting from per-brand parallel requests.
+ */
+export async function queryBrandsGroup(
+  brandNames: string[],
+  lat: number,
+  lng: number,
+  radius: number,
+): Promise<Place[]> {
+  const escaped = brandNames.map((b) => b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const pattern = escaped.join('|')
+  const center = `(around:${radius},${lat},${lng})`
+  const query = [
+    '[out:json][timeout:25];',
+    '(',
+    `  node[~"^(name|brand)$"~"${pattern}",i]${center};`,
+    `  way[~"^(name|brand)$"~"${pattern}",i]${center};`,
+    ');',
+    'out center tags 80;',
+  ].join('\n')
+
+  return postOverpass(query)
+}
