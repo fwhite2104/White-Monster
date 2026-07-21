@@ -14,9 +14,10 @@ interface PriceListProps {
   bestPrice: Price | null
   onSelectPrice: (price: Price) => void
   onRetry: () => void
+  onShare?: (price: Price) => void
 }
 
-export function PriceList({ prices, nationalSummaries = [], loading, error, bestPrice, onSelectPrice, onRetry }: PriceListProps) {
+export function PriceList({ prices, nationalSummaries = [], loading, error, bestPrice, onSelectPrice, onRetry, onShare }: PriceListProps) {
   if (loading) {
     return (
       <div className="space-y-3 pb-4">
@@ -83,6 +84,7 @@ export function PriceList({ prices, nationalSummaries = [], loading, error, best
             price={price}
             isBest={bestPrice?.id === price.id || Number(price.price) === lowestPriceOverall}
             onClick={() => onSelectPrice(price)}
+            onShare={onShare}
           />
         ))}
     </div>

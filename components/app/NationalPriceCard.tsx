@@ -11,10 +11,10 @@ interface NationalPriceCardProps {
 
 export function NationalPriceCard({ summary, isBest, onClick }: NationalPriceCardProps) {
   const numericPrice = Number(summary.price)
-  const perCan = summary.perCanPrice ?? numericPrice
+  const perCan = summary.per_can_price ?? numericPrice
   const retailerLabel = summary.retailer.charAt(0).toUpperCase() + summary.retailer.slice(1)
-  const isNationwide = !Number.isFinite(summary.nearestDistance)
-  const distanceKm = isNationwide ? null : (summary.nearestDistance / 1000).toFixed(1)
+  const isNationwide = !Number.isFinite(summary.nearest_distance)
+  const distanceKm = isNationwide ? null : (summary.nearest_distance / 1000).toFixed(1)
 
   return (
     <button
@@ -32,7 +32,7 @@ export function NationalPriceCard({ summary, isBest, onClick }: NationalPriceCar
               <span className="text-primary font-medium">Nationwide</span>
             ) : (
               <>{distanceKm} km away</>
-            )} · {summary.storeCount} {summary.storeCount === 1 ? 'store' : 'stores'}
+            )} · {summary.store_count} {summary.store_count === 1 ? 'store' : 'stores'}
           </p>
         </div>
         <div className="text-right shrink-0">
@@ -46,10 +46,10 @@ export function NationalPriceCard({ summary, isBest, onClick }: NationalPriceCar
           )}
         </div>
       </div>
-      {summary.hasClubcardPricing && summary.clubcardPrice != null && (
+      {summary.has_clubcard_pricing && summary.clubcard_price != null && (
         <div className="mt-1.5 flex items-center gap-1.5 text-xs">
           <span className="text-primary font-medium">Clubcard:</span>
-          <span>€{Number(summary.clubcardPrice).toFixed(2)} per can</span>
+          <span>€{Number(summary.clubcard_price).toFixed(2)} per can</span>
         </div>
       )}
       {isBest && (

@@ -19,8 +19,10 @@
 | Term | Definition |
 |------|------------|
 | **Collapsed card** | A single price list card representing one nationally-priced retailer. Shows retailer badge, price, distance to nearest store, and store count. Tapping opens the detail sheet. |
-| **Store popup** | Leaflet popup shown when tapping a map pin. Contains store name, address, distance, price per can, and external directions link. |
-| **Marker cluster** | A Leaflet plugin that groups nearby pins into a numbered cluster at zoomed-out levels. Clusters break apart as the user zooms in. |
+| **Store popup** | MapLibre GL popup shown when clicking a map pin. Contains store name, address, distance, price per can, and external directions link (Google Maps / Apple Maps). |
+| **Marker cluster** | MapLibre GL GeoJSON source clustering — groups nearby pins into a numbered cluster at zoomed-out levels. Clusters break apart as the user zooms in. |
+| **OpenFreeMap tiles** | Free vector map tiles served by the OpenFreeMap public instance. No API key, no registration, no rate limits. URL: `https://tiles.openfreemap.org/styles/liberty`. Self-hostable. |
+| **Overpass places query** | Live lookup of OSM places/POIs by tag (e.g. `shop=supermarket`) or brand name within a radius. Replaces static DB store coordinates for the map view. |
 
 ## Data pipeline
 

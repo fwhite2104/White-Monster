@@ -57,3 +57,6 @@ test-results/
 
 # Gitleaks output
 betterleaks-git.txt
+# AI agent metadata
+.pi/*
+!.pi/sandbox.json

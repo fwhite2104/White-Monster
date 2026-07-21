@@ -1,3 +1,4 @@
+import { Share2 } from "lucide-react"
 import { RetailerBadge } from "./RetailerBadge"
 import type { Price } from "@/lib/types"
 import { formatPackSize } from "@/lib/constants"
@@ -6,9 +7,10 @@ interface PriceCardProps {
   price: Price
   isBest?: boolean
   onClick?: () => void
+  onShare?: (price: Price) => void
 }
 
-export function PriceCard({ price, isBest, onClick }: PriceCardProps) {
+export function PriceCard({ price, isBest, onClick, onShare }: PriceCardProps) {
   const store = price.stores
   const product = price.products
   const numericPrice = Number(price.price)
@@ -46,6 +48,17 @@ export function PriceCard({ price, isBest, onClick }: PriceCardProps) {
           )}
           {packSize === 'single' && (
             <div className="text-xs text-muted-foreground">{formatPackSize(packSize)}</div>
+          )}
+          {onShare && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onShare(price) }}
+              className="mt-1.5 w-full flex items-center justify-center gap-1 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              aria-label={`Share ${product?.name ?? 'Monster'} price`}
+            >
+              <Share2 className="size-3" />
+              Share
+            </button>
           )}
         </div>
       </div>
