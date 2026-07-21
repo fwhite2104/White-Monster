@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { summarizeNationalPrices, createNationalPriceFromSummary, computeBestPrice, expandNationalPrices } from '@/lib/prices'
-import type { PriceEntry, NationalSummary } from '@/lib/prices'
+import { enrichPrice, summarizeNationalPrices, createNationalPriceFromSummary, computeBestPrice, expandNationalPrices, mergeUserPrices } from '@/lib/prices'
+import type { PriceEntry, NationalSummary, UserPriceRecord } from '@/lib/prices'
 import type { StoreData, ProductData, PriceWithJoins } from '@/lib/types'
 
 function makeStore(overrides: Partial<StoreData> = {}): StoreData {
@@ -225,8 +225,8 @@ describe('summarizeNationalPrices', () => {
     const dunnes = summaries[0]
     expect(dunnes.retailer).toBe('dunnes')
     expect(dunnes.price).toBe(1.50)
-    expect(dunnes.nearestDistance).toBe(300)
-    expect(dunnes.storeCount).toBe(3)
+    expect(dunnes.nearest_distance).toBe(300)
+    expect(dunnes.store_count).toBe(3)
   })
 
   it('returns one summary per retailer', () => {
@@ -255,17 +255,17 @@ describe('summarizeNationalPrices', () => {
     expect(summaries).toHaveLength(3)
 
     const dunnes = summaries.find((s) => s.retailer === 'dunnes')!
-    expect(dunnes.storeCount).toBe(1)
-    expect(dunnes.nearestDistance).toBe(500)
+    expect(dunnes.store_count).toBe(1)
+    expect(dunnes.nearest_distance).toBe(500)
 
     const tesco = summaries.find((s) => s.retailer === 'tesco')!
     expect(tesco.price).toBe(1.45)
-    expect(tesco.storeCount).toBe(1)
-    expect(tesco.nearestDistance).toBe(200)
+    expect(tesco.store_count).toBe(1)
+    expect(tesco.nearest_distance).toBe(200)
 
     const supervalu = summaries.find((s) => s.retailer === 'supervalu')!
     expect(supervalu.price).toBe(1.60)
-    expect(supervalu.storeCount).toBe(1)
+    expect(supervalu.store_count).toBe(1)
   })
 
   it('handles single store correctly', () => {
@@ -275,8 +275,8 @@ describe('summarizeNationalPrices', () => {
 
     const summaries = summarizeNationalPrices(entries)
     expect(summaries).toHaveLength(1)
-    expect(summaries[0].storeCount).toBe(1)
-    expect(summaries[0].nearestDistance).toBe(400)
+    expect(summaries[0].store_count).toBe(1)
+    expect(summaries[0].nearest_distance).toBe(400)
   })
 
   it('returns empty array for no entries', () => {
@@ -302,7 +302,7 @@ describe('summarizeNationalPrices', () => {
 
     const summaries = summarizeNationalPrices(entries)
     expect(summaries).toHaveLength(1)
-    expect(summaries[0].storeCount).toBe(1)
+    expect(summaries[0].store_count).toBe(1)
     // Price should come from the first entry
     expect(summaries[0].price).toBe(1.50)
   })
@@ -324,9 +324,9 @@ describe('summarizeNationalPrices', () => {
 
     const summaries = summarizeNationalPrices(entries)
     expect(summaries).toHaveLength(1)
-    expect(summaries[0].storeLocations).toHaveLength(2)
-    expect(summaries[0].storeLocations[0].name).toBe('Dunnes Douglas')
-    expect(summaries[0].storeLocations[1].name).toBe('Dunnes Wilton')
+    expect(summaries[0].store_locations).toHaveLength(2)
+    expect(summaries[0].store_locations[0].name).toBe('Dunnes Douglas')
+    expect(summaries[0].store_locations[1].name).toBe('Dunnes Wilton')
   })
 
   it('passes through clubcard pricing for Tesco', () => {
@@ -340,8 +340,8 @@ describe('summarizeNationalPrices', () => {
     ]
 
     const summaries = summarizeNationalPrices(entries)
-    expect(summaries[0].hasClubcardPricing).toBe(true)
-    expect(summaries[0].clubcardPrice).toBe(1.30)
+    expect(summaries[0].has_clubcard_pricing).toBe(true)
+    expect(summaries[0].clubcard_price).toBe(1.30)
   })
 
   it('uses the minimum distance across all entries', () => {
@@ -352,7 +352,7 @@ describe('summarizeNationalPrices', () => {
     ]
 
     const summaries = summarizeNationalPrices(entries)
-    expect(summaries[0].nearestDistance).toBe(200)
+    expect(summaries[0].nearest_distance).toBe(200)
   })
 })
 
@@ -361,11 +361,11 @@ describe('createNationalPriceFromSummary', () => {
     const summary: NationalSummary = {
       retailer: 'dunnes',
       price: 1.50,
-      nearestDistance: 300,
-      storeCount: 5,
-      hasClubcardPricing: false,
-      clubcardPrice: null,
-      perCanPrice: 1.50,
+      nearest_distance: 300,
+      store_count: 5,
+      has_clubcard_pricing: false,
+      clubcard_price: null,
+      per_can_price: 1.50,
       products: {
         id: 'prod-ultra-white',
         name: 'Monster Ultra White',
@@ -374,7 +374,7 @@ describe('createNationalPriceFromSummary', () => {
         image_url: '',
         pack_size: 'single',
       },
-      storeLocations: [],
+      store_locations: [],
     }
 
     const price = createNationalPriceFromSummary(summary)
@@ -393,12 +393,12 @@ describe('createNationalPriceFromSummary', () => {
     const summary: NationalSummary = {
       retailer: 'tesco',
       price: 2.00,
-      nearestDistance: 500,
-      storeCount: 3,
-      hasClubcardPricing: true,
-      clubcardPrice: 1.70,
+      nearest_distance: 500,
+      store_count: 3,
+      has_clubcard_pricing: true,
+      clubcard_price: 1.70,
       products: { id: 'p1', name: 'Test', variant: 'original', size_ml: 500, image_url: '', pack_size: 'single' },
-      storeLocations: [],
+      store_locations: [],
     }
 
     const price = createNationalPriceFromSummary(summary)
@@ -416,8 +416,8 @@ describe('computeBestPrice', () => {
 
   function makeSummary(retailer: string, price: number): NationalSummary {
     return {
-      retailer, price, nearestDistance: 500, storeCount: 2,
-      hasClubcardPricing: false, clubcardPrice: null, products: product, storeLocations: [],
+      retailer, price, nearest_distance: 500, store_count: 2,
+      has_clubcard_pricing: false, clubcard_price: null, products: product, store_locations: [],
     }
   }
 
@@ -458,5 +458,129 @@ describe('computeBestPrice', () => {
       [makeSummary('dunnes', 1.50)],
     )
     expect(result?.id).toBe('p2')
+  })
+})
+
+describe('enrichPrice', () => {
+  it('computes per_can_price, DRS, and clubcard fields correctly', () => {
+    const result = enrichPrice(5.00, '4_pack', 'tesco', 4.50)
+    expect(result.per_can_price).toBe(1.25) // 5.00 / 4
+    expect(result.drs_deposit).toBe(0.60) // 0.15 * 4
+    expect(result.base_price).toBe(4.40) // 5.00 - 0.60
+    expect(result.clubcard_price).toBe(4.50)
+    expect(result.has_clubcard_pricing).toBe(true)
+  })
+
+  it('sets has_clubcard_pricing false for non-Tesco retailers', () => {
+    const result = enrichPrice(2.00, 'single', 'dunnes')
+    expect(result.has_clubcard_pricing).toBe(false)
+    expect(result.clubcard_price).toBeNull()
+    expect(result.per_can_price).toBe(2.00)
+  })
+
+  it('handles single-can prices', () => {
+    const result = enrichPrice(1.50, 'single', 'aldi')
+    expect(result.per_can_price).toBe(1.50)
+    expect(result.drs_deposit).toBe(0.15)
+    expect(result.base_price).toBe(1.35)
+  })
+
+  it('computes per_can correctly for multipacks', () => {
+    const result = enrichPrice(12.00, '8_pack', 'lidl')
+    expect(result.per_can_price).toBe(1.50)
+    expect(result.drs_deposit).toBe(1.20) // 0.15 * 8
+  })
+
+  it('handles missing clubcard_price as null', () => {
+    const result = enrichPrice(2.00, 'single', 'tesco')
+    expect(result.clubcard_price).toBeNull()
+    expect(result.has_clubcard_pricing).toBe(false)
+  })
+
+  it('handles explicit null clubcard_price', () => {
+    const result = enrichPrice(2.00, 'single', 'tesco', null)
+    expect(result.clubcard_price).toBeNull()
+    expect(result.has_clubcard_pricing).toBe(false)
+  })
+})
+
+describe('mergeUserPrices', () => {
+  const CORK = { lat: 51.8985, lng: -8.4756 }
+  const RADIUS_M = 10_000
+
+  function makeUserPrice(overrides: Partial<UserPriceRecord> = {}): UserPriceRecord {
+    return {
+      id: 'up-1',
+      store_id: 'store-1',
+      product_id: 'prod-1',
+      price: 1.50,
+      source: 'user_reported',
+      scraped_at: '2026-07-17T00:00:00Z',
+      notes: null,
+      expires_at: '2026-07-24T00:00:00Z',
+      created_at: '2026-07-17T00:00:00Z',
+      stores: {
+        id: 'store-1',
+        name: 'Tesco Metro',
+        retailer: 'tesco',
+        address: 'St Patrick\'s St',
+        suburb: 'Cork City',
+        lat: 51.8985,
+        lng: -8.4756,
+      },
+      products: {
+        id: 'prod-1',
+        name: 'Monster Ultra White',
+        variant: 'ultra_white',
+        size_ml: 250,
+        image_url: '',
+        pack_size: 'single',
+      },
+      ...overrides,
+    }
+  }
+
+  it('filters user prices by distance', () => {
+    const farPrice = makeUserPrice({
+      id: 'far',
+      stores: { id: 'far-store', name: 'Tesco Dublin', retailer: 'tesco', address: '', suburb: 'Dublin', lat: 53.3, lng: -6.2 },
+    })
+    const results = mergeUserPrices([farPrice], CORK.lat, CORK.lng, RADIUS_M)
+    expect(results).toHaveLength(0)
+  })
+
+  it('includes nearby user prices', () => {
+    const nearPrice = makeUserPrice()
+    const results = mergeUserPrices([nearPrice], CORK.lat, CORK.lng, RADIUS_M)
+    expect(results).toHaveLength(1)
+    expect(results[0].price).toBe(1.50)
+    expect(results[0].source).toBe('user_reported')
+  })
+
+  it('aggregates by (store_id, variant, pack_size) keeping lowest price', () => {
+    const expensive = makeUserPrice({ id: 'up-2', price: 2.00 })
+    const cheap = makeUserPrice({ id: 'up-1', price: 1.50 })
+    const results = mergeUserPrices([expensive, cheap], CORK.lat, CORK.lng, RADIUS_M)
+    expect(results).toHaveLength(1)
+    expect(results[0].price).toBe(1.50)
+  })
+
+  it('uses more recent as tiebreaker for same price', () => {
+    const older = makeUserPrice({ id: 'up-1', price: 1.50, created_at: '2026-07-17T00:00:00Z' })
+    const newer = makeUserPrice({ id: 'up-2', price: 1.50, created_at: '2026-07-18T00:00:00Z' })
+    const results = mergeUserPrices([older, newer], CORK.lat, CORK.lng, RADIUS_M)
+    expect(results).toHaveLength(1)
+    expect(results[0].id).toBe('up-2')
+  })
+
+  it('drops user prices with null coordinates', () => {
+    const badPrice = makeUserPrice({ stores: { ...makeUserPrice().stores, lat: null as unknown as number, lng: null as unknown as number } })
+    const results = mergeUserPrices([badPrice], CORK.lat, CORK.lng, RADIUS_M)
+    expect(results).toHaveLength(0)
+  })
+
+  it('returns empty array for no user prices', () => {
+    const results = mergeUserPrices([], CORK.lat, CORK.lng, RADIUS_M)
+    expect(results).toHaveLength(0)
   })
 })

@@ -1,6 +1,8 @@
 import type { PriceWithJoins, StoreData, ProductData } from './types'
 import type { Price } from './types'
 import { calculateDistance } from './geo'
+import { getPackCount } from './constants'
+import { splitPrice } from './drs'
 
 export type PriceEntry = PriceWithJoins & {
   distance: number
@@ -15,6 +17,45 @@ export interface UserPriceRecord extends PriceWithJoins {
   notes: string | null
   expires_at: string
   created_at: string
+}
+
+/**
+ * Computed fields that are derived from raw price data.
+ * Shared by enrichPrice() to avoid duplication across mapping sites.
+ */
+export interface EnrichedPriceFields {
+  per_can_price: number
+  base_price: number
+  drs_deposit: number
+  clubcard_price: number | null
+  has_clubcard_pricing: boolean
+}
+
+/**
+ * Compute all derived price fields from raw inputs.
+ * Used in three places (RPC results, national expansion, user prices) —
+ * this is the single source of truth for the mapping.
+ */
+export function enrichPrice(
+  price: number,
+  packSize: string,
+  retailer: string,
+  clubcardPrice?: number | null,
+): EnrichedPriceFields {
+  const totalPrice = Number(price)
+  const packCount = getPackCount(packSize)
+  const perCanPrice = packCount > 1 ? totalPrice / packCount : totalPrice
+  const { base_price, drs_deposit } = splitPrice(totalPrice, packSize)
+  const cp = clubcardPrice ?? null
+  const hasClubcardPricing = retailer === 'tesco' && cp !== null
+
+  return {
+    per_can_price: perCanPrice,
+    base_price,
+    drs_deposit,
+    clubcard_price: cp,
+    has_clubcard_pricing: hasClubcardPricing,
+  }
 }
 
 /** A retail location within a national-price collapse group. */
@@ -36,15 +77,15 @@ export interface StoreLocationSummary {
 export interface NationalSummary {
   retailer: string
   price: number
-  nearestDistance: number
-  storeCount: number
-  hasClubcardPricing: boolean
-  clubcardPrice: number | null
-  perCanPrice?: number
-  basePrice?: number
-  drsDeposit?: number
+  nearest_distance: number
+  store_count: number
+  has_clubcard_pricing: boolean
+  clubcard_price: number | null
+  per_can_price?: number
+  base_price?: number
+  drs_deposit?: number
   products: ProductData
-  storeLocations: StoreLocationSummary[]
+  store_locations: StoreLocationSummary[]
 }
 
 /**
@@ -90,15 +131,15 @@ export function summarizeNationalPrices(entries: PriceEntry[]): NationalSummary[
     summaries.push({
       retailer,
       price: first.price,
-      nearestDistance,
-      storeCount: storeLocations.length,
-      hasClubcardPricing: first.has_clubcard_pricing ?? false,
-      clubcardPrice: first.clubcard_price ?? null,
-      perCanPrice: first.per_can_price,
-      basePrice: first.base_price,
-      drsDeposit: first.drs_deposit,
+      nearest_distance: nearestDistance,
+      store_count: storeLocations.length,
+      has_clubcard_pricing: first.has_clubcard_pricing ?? false,
+      clubcard_price: first.clubcard_price ?? null,
+      per_can_price: first.per_can_price,
+      base_price: first.base_price,
+      drs_deposit: first.drs_deposit,
       products: first.products,
-      storeLocations,
+      store_locations: storeLocations,
     })
   }
 
@@ -115,12 +156,12 @@ export function createNationalPriceFromSummary(summary: NationalSummary): Price 
     source: 'scraper',
     scraped_at: '',
     created_at: '',
-    distance: summary.nearestDistance,
-    per_can_price: summary.perCanPrice,
-    base_price: summary.basePrice,
-    drs_deposit: summary.drsDeposit,
-    clubcard_price: summary.clubcardPrice,
-    has_clubcard_pricing: summary.hasClubcardPricing,
+    distance: summary.nearest_distance,
+    per_can_price: summary.per_can_price,
+    base_price: summary.base_price,
+    drs_deposit: summary.drs_deposit,
+    clubcard_price: summary.clubcard_price,
+    has_clubcard_pricing: summary.has_clubcard_pricing,
     stores: {
       id: summary.retailer,
       name: retailerLabel,

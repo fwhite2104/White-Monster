@@ -62,7 +62,7 @@ export default function HomePage() {
     }
 
     for (const s of nationalSummaries) {
-      for (const loc of s.storeLocations) {
+      for (const loc of s.store_locations) {
         if (!seen.has(loc.id) && loc.lat !== null && loc.lng !== null) {
           seen.add(loc.id)
           markers.push({
@@ -111,7 +111,7 @@ export default function HomePage() {
         setRadius={setRadius}
       />
 
-      <main className="max-w-7xl mx-auto px-4">
+      <main id="main-content" className="max-w-7xl mx-auto px-4">
         <BestPriceBanner price={bestPrice} />
 
         <PriceList

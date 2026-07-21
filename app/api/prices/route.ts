@@ -1,14 +1,13 @@
 import { createServerClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimitDB, getClientIp } from '@/lib/rate-limit'
-import { splitPrice } from '@/lib/drs'
+import { enrichPrice } from '@/lib/prices'
 import {
   DEFAULT_CENTER,
   DEFAULT_RADIUS_KM,
   MONSTER_VARIANTS,
   RETAILERS,
   PACK_SIZES,
-  getPackCount,
 } from '@/lib/constants'
 import {
   validateLat,
@@ -21,6 +20,30 @@ import {
 } from '@/lib/validate'
 import { expandNationalPrices, mergeUserPrices, summarizeNationalPrices, type PriceEntry, type UserPriceRecord, type NationalSummary } from '@/lib/prices'
 import type { PriceWithJoins, StoreData } from '@/lib/types'
+
+/** The shape returned by the nearby_prices RPC. */
+interface NearbyPriceRow {
+  id: string
+  store_id: string
+  product_id: string
+  price: number
+  source: string
+  scraped_at: string
+  distance_meters: number
+  per_can_price: number
+  clubcard_price: number | null
+  store_name: string
+  store_retailer: string
+  store_address: string
+  store_suburb: string
+  store_lat: number
+  store_lng: number
+  product_name: string
+  product_variant: string
+  product_size_ml: number
+  product_image_url: string
+  product_pack_size: string
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -145,15 +168,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: userError.message }, { status: 500 })
     }
 
-    const prices = (rpcData ?? []).map((row: Record<string, unknown>) => {
-      const packSize = row.product_pack_size as string
-      const totalPrice = Number(row.price)
-      const { base_price, drs_deposit } = splitPrice(totalPrice, packSize)
-
-      const storeRetailer = row.store_retailer as string
-      const clubcardPrice = row.clubcard_price !== null ? row.clubcard_price : null
-      const hasClubcardPricing = storeRetailer === 'tesco' && clubcardPrice !== null
-
+    const rpcRows = (rpcData ?? []) as NearbyPriceRow[]
+    const prices = rpcRows.map((row) => {
+      const enriched = enrichPrice(row.price, row.product_pack_size, row.store_retailer, row.clubcard_price)
       return {
         id: row.id,
         store_id: row.store_id,
@@ -163,10 +180,10 @@ export async function GET(request: NextRequest) {
         scraped_at: row.scraped_at,
         distance: row.distance_meters,
         per_can_price: row.per_can_price,
-        base_price,
-        drs_deposit,
-        clubcard_price: clubcardPrice,
-        has_clubcard_pricing: hasClubcardPricing,
+        base_price: enriched.base_price,
+        drs_deposit: enriched.drs_deposit,
+        clubcard_price: enriched.clubcard_price,
+        has_clubcard_pricing: enriched.has_clubcard_pricing,
         stores: {
           id: row.store_id,
           name: row.store_name,
@@ -182,7 +199,7 @@ export async function GET(request: NextRequest) {
           variant: row.product_variant,
           size_ml: row.product_size_ml,
           image_url: row.product_image_url,
-          pack_size: packSize,
+          pack_size: row.product_pack_size,
         },
       }
     })
@@ -201,14 +218,7 @@ export async function GET(request: NextRequest) {
     )
 
     const mappedNational = expandedNational.map((row) => {
-      const rowPackSize = row.products.pack_size
-      const totalPrice = Number(row.price)
-      const { base_price, drs_deposit } = splitPrice(totalPrice, rowPackSize)
-        const perCanPrice = getPackCount(rowPackSize) > 1 ? totalPrice / getPackCount(rowPackSize) : totalPrice
-      const storeRetailer = row.stores.retailer
-      const clubcardPrice: number | null = row.clubcard_price ?? null
-      const hasClubcardPricing = storeRetailer === 'tesco' && clubcardPrice !== null
-
+      const enriched = enrichPrice(Number(row.price), row.products.pack_size, row.stores.retailer, row.clubcard_price)
       return {
         id: row.id,
         store_id: row.store_id,
@@ -217,11 +227,11 @@ export async function GET(request: NextRequest) {
         source: row.source,
         scraped_at: row.scraped_at,
         distance: row.distance,
-        per_can_price: perCanPrice,
-        base_price,
-        drs_deposit,
-        clubcard_price: clubcardPrice,
-        has_clubcard_pricing: hasClubcardPricing,
+        per_can_price: enriched.per_can_price,
+        base_price: enriched.base_price,
+        drs_deposit: enriched.drs_deposit,
+        clubcard_price: enriched.clubcard_price,
+        has_clubcard_pricing: enriched.has_clubcard_pricing,
         stores: row.stores,
         products: row.products,
       }
@@ -235,11 +245,7 @@ export async function GET(request: NextRequest) {
     )
 
     const mappedUser = userMerged.map((row) => {
-      const rowPackSize = row.products.pack_size
-      const totalPrice = Number(row.price)
-      const { base_price, drs_deposit } = splitPrice(totalPrice, rowPackSize)
-        const perCanPrice = getPackCount(rowPackSize) > 1 ? totalPrice / getPackCount(rowPackSize) : totalPrice
-
+      const enriched = enrichPrice(Number(row.price), row.products.pack_size, row.stores.retailer)
       return {
         id: row.id,
         store_id: row.store_id,
@@ -248,9 +254,9 @@ export async function GET(request: NextRequest) {
         source: row.source,
         scraped_at: row.scraped_at,
         distance: row.distance,
-        per_can_price: perCanPrice,
-        base_price,
-        drs_deposit,
+        per_can_price: enriched.per_can_price,
+        base_price: enriched.base_price,
+        drs_deposit: enriched.drs_deposit,
         clubcard_price: null,
         has_clubcard_pricing: false,
         stores: row.stores,
@@ -264,7 +270,7 @@ export async function GET(request: NextRequest) {
 
     const allPrices = [...prices, ...mappedNational, ...mappedUser]
 
-    const bestPriceByStoreProduct = new Map<string, typeof prices[0]>()
+    const bestPriceByStoreProduct = new Map<string, (typeof allPrices)[number]>()
     for (const p of allPrices) {
       const key = `${p.store_id}|${p.product_id}`
       const existing = bestPriceByStoreProduct.get(key)

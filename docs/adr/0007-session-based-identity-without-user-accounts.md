@@ -1,8 +1,10 @@
 # ADR-0007: Session-Based Identity Without User Accounts
 
-**Status**: Accepted  
+**Status**: Accepted (partially implemented)  
 **Date**: 2026-07-20  
 **Driver**: Users need to set price alerts, save favorites, and submit community prices without the friction of signing up for an account.
+
+> **Note (2026-07-20)**: As of this date, only `user_prices` is implemented. `user_favorites` and `price_alerts` are planned but not yet built. This ADR describes the intended architecture for all three, but only the community price submission flow is operational. See [issue-tracker.md](../agents/issue-tracker.md) for tracking.
 
 ## Context
 
