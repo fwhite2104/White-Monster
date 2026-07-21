@@ -128,7 +128,7 @@ export function StoreMapBlock({ markers, userLat, userLng, userAccuracy, onLocat
 
     // Expose map instance for E2E tests — set early so tests can access it even if tiles fail to load
     if (typeof window !== 'undefined') {
-      ;(window as any).__monsterMap = map
+      ;(window as unknown as Record<string, unknown>).__monsterMap = map
     }
 
     // Add user location marker immediately (DOM-based, doesn't need tiles)

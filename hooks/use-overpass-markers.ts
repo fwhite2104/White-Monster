@@ -39,14 +39,15 @@ export function useOverpassMarkers({
   const [error, setError] = useState<string | null>(null)
   const cancelledRef = useRef(false)
 
+  // When !enabled, return empty state without calling setState in an effect
+  const resultMarkers = enabled ? markers : []
+  const resultLoading = enabled ? loading : false
+  const resultError = enabled ? error : null
+
   useEffect(() => {
-    if (!enabled) {
-      setMarkers([])
-      return
-    }
+    if (!enabled) return
 
     cancelledRef.current = false
-    let didRun = false
 
     async function fetchAll() {
       setLoading(true)
@@ -57,10 +58,7 @@ export function useOverpassMarkers({
         const results: StoreMarker[] = []
         const seen = new Set<string>()
 
-        // Query ALL brands in ONE request to avoid Overpass rate limiting
         const brandLabels = RETAILERS.map((r) => r.label)
-        // Build a map of OSM id → retailer value so we can match results back
-        // First, query all brands at once
         const places = await queryBrandsGroup(brandLabels, lat, lng, radiusMeters)
         const matched = matchBrandsToRetailers(places)
 
@@ -91,12 +89,10 @@ export function useOverpassMarkers({
 
         if (!cancelledRef.current) {
           setMarkers(results)
-          didRun = true
         }
       } catch (err) {
         if (!cancelledRef.current) {
           setError(err instanceof Error ? err.message : 'Failed to load store locations')
-          didRun = true
         }
       } finally {
         if (!cancelledRef.current) {
@@ -112,7 +108,7 @@ export function useOverpassMarkers({
     }
   }, [lat, lng, radiusKm, enabled])
 
-  return { markers, loading, error }
+  return { markers: resultMarkers, loading: resultLoading, error: resultError }
 }
 
 interface MatchedPlace extends Place {

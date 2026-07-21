@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
 import { buildQuery, parseOverpassResponse, queryBrandStores } from '../overpass'
-import type { OverpassElement } from '../overpass'
 
 describe('buildQuery', () => {
   const lat = 51.8985
@@ -46,7 +45,7 @@ describe('buildQuery', () => {
 
 describe('parseOverpassResponse', () => {
   it('returns empty array for empty elements', () => {
-    expect(parseOverpassResponse({ elements: [] as any })).toEqual([])
+    expect(parseOverpassResponse({ elements: [] as unknown[] })).toEqual([])
   })
 
   it('returns empty array for null input', () => {

@@ -22,7 +22,7 @@ monster-cork/
 │       ├── stores/route.ts       # GET stores by distance
 │       └── health/route.ts       # Health + data freshness monitoring
 ├── components/
-│   ├── app/                      # App-specific components (12 files)
+│   ├── app/                      # App-specific components (11 files)
 │   │   ├── Header.tsx
 │   │   ├── LocationSection.tsx
 │   │   ├── FilterBar.tsx
@@ -33,8 +33,9 @@ monster-cork/
 │   │   ├── PriceDetailSheet.tsx
 │   │   ├── BestPriceBanner.tsx
 │   │   ├── ReportPriceModal.tsx
-│   │   ├── RetailerBadge.tsx
-│   │   └── StoreMap.tsx
+│   │   └── RetailerBadge.tsx
+│   ├── map/                      # MapLibre GL store map
+│   │   └── StoreMapBlock.tsx
 │   └── ui/                       # shadcn/ui primitives
 ├── hooks/                        # React hooks
 │   ├── use-geolocation.ts        # Browser GPS + localStorage caching + permissions
@@ -205,5 +206,5 @@ Single-context layout — `CONTEXT.md` at repo root + `docs/adr/`. See `docs/age
 - `next-env.d.ts` is in `.gitignore` — do not commit it
 - `.sisyphus/` at repo root is OpenCode session metadata, not project code
 - `ignoreScripts` + `trustedDependencies` in `package.json` is a Bun-specific workaround for `sharp` and `unrs-resolver`
-- `components/app/StoreMap.tsx` uses Leaflet with dynamic import and `ssr: false`
+- `components/map/StoreMapBlock.tsx` uses MapLibre GL with dynamic import and `ssr: false`
 - 35 SQL migrations in `supabase/migrations/` (001–035)

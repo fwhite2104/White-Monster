@@ -86,9 +86,22 @@ async function setupMockData(page: Page) {
   await expect(page.getByText(/€3\.99|€5\.50/).first()).toBeVisible({ timeout: 15000 })
 }
 
-async function getMapInstance(page: Page) {
+interface MapInstance {
+  hasCanvas: boolean
+  styleLoaded: boolean
+  hasMarkerLayer: boolean
+}
+
+async function getMapInstance(page: Page): Promise<MapInstance | null> {
   return page.evaluate(() => {
-    const map: any = (window as any).__monsterMap
+    const win = window as unknown as Record<string, unknown>
+    const map = win.__monsterMap as
+      | {
+          getCanvas(): HTMLCanvasElement
+          isStyleLoaded(): boolean
+          getLayer?(id: string): unknown
+        }
+      | undefined
     return map
       ? {
           hasCanvas: !!map.getCanvas(),
@@ -115,7 +128,10 @@ test.describe('Map — Marker Popups', () => {
     await page.waitForSelector('.maplibregl-canvas', { timeout: 15000 })
 
     // Wait for map instance to be available
-    await page.waitForFunction(() => !!(window as any).__monsterMap, { timeout: 10000 })
+    await page.waitForFunction(
+      () => !!(window as unknown as Record<string, unknown>).__monsterMap,
+      { timeout: 10000 },
+    )
 
     // Check if map style and marker layer are loaded
     const mapStatus = await getMapInstance(page)
@@ -126,7 +142,10 @@ test.describe('Map — Marker Popups', () => {
 
     // Calculate pixel position of the Dunnes store marker using the map's projection
     const clickTarget = await page.evaluate(() => {
-      const map: any = (window as any).__monsterMap
+      const win = window as unknown as Record<string, unknown>
+      const map = win.__monsterMap as
+        | { getCanvas(): HTMLCanvasElement; project(coords: [number, number]): { x: number; y: number } }
+        | undefined
       if (!map) return null
 
       const canvas = map.getCanvas()
@@ -163,10 +182,15 @@ test.describe('Map — Marker Popups', () => {
     await page.waitForSelector('.maplibregl-canvas', { timeout: 15000 })
 
     // Wait for map instance
-    await page.waitForFunction(() => !!(window as any).__monsterMap, { timeout: 10000 })
+    await page.waitForFunction(
+      () => !!(window as unknown as Record<string, unknown>).__monsterMap,
+      { timeout: 10000 },
+    )
 
     const canvasPos = await page.evaluate(() => {
-      const canvas = (window as any).__monsterMap?.getCanvas() as HTMLCanvasElement
+      const win = window as unknown as Record<string, unknown>
+      const map = win.__monsterMap as { getCanvas(): HTMLCanvasElement } | undefined
+      const canvas = map?.getCanvas()
       if (!canvas) return null
       const rect = canvas.getBoundingClientRect()
       return { left: rect.left + 5, top: rect.top + 5 }
