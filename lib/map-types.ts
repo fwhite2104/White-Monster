@@ -9,11 +9,6 @@ export interface Place {
   phone?: string
 }
 
-export interface Coord {
-  lat: number
-  lng: number
-}
-
 export interface GeocodeResult {
   lat: number
   lng: number
