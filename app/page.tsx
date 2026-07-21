@@ -55,8 +55,18 @@ export default function HomePage() {
           id: p.store_id,
           retailer: p.stores.retailer,
           name: p.stores.name,
+          address: p.stores.address ?? '',
+          suburb: p.stores.suburb ?? '',
           lat: p.stores.lat,
           lng: p.stores.lng,
+          distance: p.distance ?? 0,
+          price: Number(p.price),
+          per_can_price: p.per_can_price ?? Number(p.price),
+          drs_deposit: p.drs_deposit ?? 0,
+          clubcard_price: p.clubcard_price ?? null,
+          has_clubcard_pricing: p.has_clubcard_pricing ?? false,
+          pack_size: p.products?.pack_size ?? 'single',
+          source_type: 'per_store',
         })
       }
     }
@@ -69,8 +79,18 @@ export default function HomePage() {
             id: loc.id,
             retailer: s.retailer,
             name: loc.name,
+            address: loc.address ?? '',
+            suburb: loc.suburb ?? '',
             lat: loc.lat,
             lng: loc.lng,
+            distance: loc.distance,
+            price: Number(s.price),
+            per_can_price: s.per_can_price ?? Number(s.price),
+            drs_deposit: s.drs_deposit ?? 0,
+            clubcard_price: s.clubcard_price ?? null,
+            has_clubcard_pricing: s.has_clubcard_pricing ?? false,
+            pack_size: s.products.pack_size,
+            source_type: 'national',
           })
         }
       }

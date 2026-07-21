@@ -68,13 +68,24 @@ export interface ProductData {
   pack_size: string
 }
 
-/** A flattened map marker for a physical store. */
+/** A flattened map marker for a physical store, with price data for popups. */
 export interface StoreMarker {
   id: string
   retailer: string
   name: string
+  address: string
+  suburb: string
   lat: number
   lng: number
+  distance: number
+  price: number
+  per_can_price: number
+  drs_deposit: number
+  clubcard_price: number | null
+  has_clubcard_pricing: boolean
+  pack_size: string
+  /** 'national' when sourced from a national summary, 'per_store' when from a specific store price. */
+  source_type: 'national' | 'per_store'
 }
 
 export interface PriceWithJoins {
