@@ -57,7 +57,9 @@ export function PriceDetailSheet({ price, open, onClose, onReportPrice }: PriceD
                 {store?.suburb && <span>, {store.suburb}</span>}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                {((price.distance ?? 0) / 1000).toFixed(1)} km away
+                {Number.isFinite(price.distance ?? 0)
+                  ? `${((price.distance ?? 0) / 1000).toFixed(1)} km away`
+                  : 'Nationwide'}
               </p>
             </div>
 

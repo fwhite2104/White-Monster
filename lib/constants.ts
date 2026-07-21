@@ -1,4 +1,4 @@
-export const CORK_CENTER = { lat: 51.8985, lng: -8.4756 }
+export const DEFAULT_CENTER = { lat: 51.8985, lng: -8.4756 }
 
 export const RETAILERS = [
   { value: 'lidl', label: 'Lidl', color: '#0050AA' },

@@ -23,8 +23,8 @@ export interface StoreLocationSummary {
   name: string
   address?: string
   suburb?: string
-  lat: number
-  lng: number
+  lat: number | null
+  lng: number | null
   distance: number
 }
 
@@ -169,15 +169,17 @@ export function expandNationalPrices(
   radiusMeters: number,
   existingResults: PriceEntry[],
 ): PriceEntry[] {
-  const validStores = allStores.filter(
-    (s) => {
-      const lat = Number(s.lat)
-      const lng = Number(s.lng)
-      return Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
+  const physicalStores = allStores.filter(
+    (s): s is StoreData & { lat: number; lng: number } => {
+      if (s.name.includes('(National)')) return false
+      if (s.lat === null || s.lng === null) return false
+      const nLat = s.lat
+      const nLng = s.lng
+      return Number.isFinite(nLat) && Number.isFinite(nLng)
+        && nLat >= -90 && nLat <= 90 && nLng >= -180 && nLng <= 180
     },
   )
-  const physicalStores = validStores.filter((s) => !s.name.includes('(National)'))
-  const nationalStores = validStores.filter((s) => s.name.includes('(National)'))
+  const nationalStores = allStores.filter((s) => s.name.includes('(National)'))
 
   const storeByRetailer = new Map<string, typeof physicalStores>()
   for (const s of physicalStores) {
@@ -207,7 +209,9 @@ export function expandNationalPrices(
     if (retailerStores.length === 0) {
       const fallbackStore = nationalStores.find((s) => s.retailer === retailer)
       if (fallbackStore) {
-        const dist = calculateDistance(lat, lng, fallbackStore.lat, fallbackStore.lng)
+        const dist = fallbackStore.lat !== null && fallbackStore.lng !== null
+          ? calculateDistance(lat, lng, fallbackStore.lat, fallbackStore.lng)
+          : Infinity
         for (const np of nPrices) {
           results.push({ ...np, distance: dist })
         }
@@ -256,15 +260,18 @@ export function mergeUserPrices(
   radiusMeters: number,
 ): PriceEntry[] {
   // Filter by distance to user
-  const nearbyUserPrices = userPrices.filter((up) => {
-    const s = up.stores
-    if (!s || !Number.isFinite(Number(s.lat)) || !Number.isFinite(Number(s.lng))) return false
-    const dist = calculateDistance(lat, lng, s.lat, s.lng)
-    return dist <= radiusMeters
-  })
+  const nearbyUserPrices = userPrices.filter(
+    (up): up is UserPriceRecord & { stores: StoreData & { lat: number; lng: number } } => {
+      const s = up.stores
+      if (!s || s.lat === null || s.lng === null) return false
+      if (!Number.isFinite(s.lat) || !Number.isFinite(s.lng)) return false
+      return calculateDistance(lat, lng, s.lat, s.lng) <= radiusMeters
+    },
+  )
 
   // Aggregate by (store_id, variant, pack_size): lowest price, most recent as tiebreaker
-  const bestByRetailer = new Map<string, UserPriceRecord>()
+  type NearbyUserPrice = UserPriceRecord & { stores: StoreData & { lat: number; lng: number } }
+  const bestByRetailer = new Map<string, NearbyUserPrice>()
   for (const up of nearbyUserPrices) {
     const key = `${up.store_id}|${up.products.variant}|${up.products.pack_size}`
     const existing = bestByRetailer.get(key)

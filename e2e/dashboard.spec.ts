@@ -165,3 +165,56 @@ test.describe('Dashboard — Empty State', () => {
     await expect(page.getByText(/no prices found/i).first()).toBeVisible({ timeout: 15000 })
   })
 })
+
+test.describe('Dashboard — Dublin Geolocation', () => {
+  test('accepts Dublin geolocation and shows nearby prices', async ({ page }) => {
+    await page.context().grantPermissions(['geolocation'])
+    await page.context().setGeolocation({ latitude: 53.3498, longitude: -6.2603 })
+    await page.route('**/api/prices*', async (route) => {
+      await route.fulfill({
+        json: {
+          prices: [
+            {
+              id: 'dub-price-1',
+              store_id: 'dub-store-1',
+              product_id: 'prod-1',
+              price: '2.30',
+              source: 'scraper',
+              scraped_at: '2026-07-20T12:00:00Z',
+              stores: {
+                id: 'dub-store-1',
+                name: 'Tesco Dublin Henry St',
+                retailer: 'tesco',
+                address: 'Henry Street, Dublin',
+                suburb: 'Dublin City Centre',
+                lat: 53.3498,
+                lng: -6.2603,
+              },
+              products: {
+                id: 'prod-1',
+                name: 'Monster Energy Zero Ultra',
+                variant: 'zero_sugar',
+                size_ml: 500,
+                image_url: null,
+                pack_size: 'single',
+              },
+              distance: 500,
+              per_can_price: 2.30,
+            },
+          ],
+          meta: {
+            total: 1,
+            radius: 10,
+            variant: 'zero_sugar',
+            pack_size: '4_pack',
+            center: { lat: 53.3498, lng: -6.2603 },
+            sort: 'price',
+          },
+        },
+      })
+    })
+    await page.goto('/')
+    await expect(page.getByText('€2.30').first()).toBeVisible({ timeout: 15000 })
+    await expect(page.getByText('Tesco Dublin Henry St').first()).toBeVisible()
+  })
+})

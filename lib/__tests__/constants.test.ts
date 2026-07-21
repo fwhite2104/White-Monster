@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getPackCount, formatPackSize, MONSTER_VARIANTS, MONSTER_FAVOURITES } from '@/lib/constants'
+import { getPackCount, formatPackSize, MONSTER_VARIANTS, MONSTER_FAVOURITES, DEFAULT_CENTER, DEFAULT_RADIUS_KM, MAX_RADIUS_KM, MIN_RADIUS_KM } from '@/lib/constants'
 
 describe('getPackCount', () => {
   it('returns 1 for single', () => {
@@ -83,5 +83,23 @@ describe('MONSTER_FAVOURITES', () => {
 
   it('contains exactly 6 variants', () => {
     expect(MONSTER_FAVOURITES.length).toBe(6)
+  })
+})
+
+describe('DEFAULT_CENTER and radius constants', () => {
+  it('DEFAULT_CENTER equals Cork coords', () => {
+    expect(DEFAULT_CENTER).toEqual({ lat: 51.8985, lng: -8.4756 })
+  })
+
+  it('DEFAULT_RADIUS_KM is 10', () => {
+    expect(DEFAULT_RADIUS_KM).toBe(10)
+  })
+
+  it('MAX_RADIUS_KM is 50', () => {
+    expect(MAX_RADIUS_KM).toBe(50)
+  })
+
+  it('MIN_RADIUS_KM is 1', () => {
+    expect(MIN_RADIUS_KM).toBe(1)
   })
 })

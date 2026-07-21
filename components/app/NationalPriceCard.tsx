@@ -13,7 +13,8 @@ export function NationalPriceCard({ summary, isBest, onClick }: NationalPriceCar
   const numericPrice = Number(summary.price)
   const perCan = summary.perCanPrice ?? numericPrice
   const retailerLabel = summary.retailer.charAt(0).toUpperCase() + summary.retailer.slice(1)
-  const distanceKm = (summary.nearestDistance / 1000).toFixed(1)
+  const isNationwide = !Number.isFinite(summary.nearestDistance)
+  const distanceKm = isNationwide ? null : (summary.nearestDistance / 1000).toFixed(1)
 
   return (
     <button
@@ -27,7 +28,11 @@ export function NationalPriceCard({ summary, isBest, onClick }: NationalPriceCar
           <RetailerBadge retailer={summary.retailer} />
           <h3 className="mt-1 font-medium truncate">{retailerLabel}</h3>
           <p className="text-xs text-muted-foreground">
-            {distanceKm} km away · {summary.storeCount} {summary.storeCount === 1 ? 'store' : 'stores'}
+            {isNationwide ? (
+              <span className="text-primary font-medium">Nationwide</span>
+            ) : (
+              <>{distanceKm} km away</>
+            )} · {summary.storeCount} {summary.storeCount === 1 ? 'store' : 'stores'}
           </p>
         </div>
         <div className="text-right shrink-0">

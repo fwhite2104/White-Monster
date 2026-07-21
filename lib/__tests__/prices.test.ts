@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { summarizeNationalPrices, createNationalPriceFromSummary, computeBestPrice } from '@/lib/prices'
+import { summarizeNationalPrices, createNationalPriceFromSummary, computeBestPrice, expandNationalPrices } from '@/lib/prices'
 import type { PriceEntry, NationalSummary } from '@/lib/prices'
-import type { StoreData, ProductData } from '@/lib/types'
+import type { StoreData, ProductData, PriceWithJoins } from '@/lib/types'
 
 function makeStore(overrides: Partial<StoreData> = {}): StoreData {
   return {
@@ -41,6 +41,162 @@ function makePriceEntry(overrides: Partial<PriceEntry> = {}): PriceEntry {
     ...overrides,
   }
 }
+
+describe('expandNationalPrices', () => {
+  const CORK = { lat: 51.8985, lng: -8.4756 }
+  const RADIUS_M = 10_000
+
+  function makeNationalPrice(overrides: Partial<PriceWithJoins> = {}): PriceWithJoins {
+    return {
+      id: 'nat-price-1',
+      store_id: 'nat-store-1',
+      product_id: 'prod-1',
+      price: 2.5,
+      source: 'scraper',
+      scraped_at: '2026-07-17T00:00:00Z',
+      stores: {
+        id: 'nat-store-1',
+        name: 'Dunnes Stores Ireland (National)',
+        retailer: 'dunnes',
+        address: '',
+        suburb: 'Ireland (national)',
+        lat: 0,
+        lng: 0,
+      },
+      products: makeProduct(),
+      ...overrides,
+    }
+  }
+
+  it('expands national price to physical stores in radius (radius filter works)', () => {
+    const natPrice = makeNationalPrice()
+    const physical = makeStore({
+      id: 'phys-1',
+      name: 'Dunnes Douglas',
+      retailer: 'dunnes',
+      lat: 51.8758,
+      lng: -8.4452,
+    })
+    const allStores = [physical]
+
+    const result = expandNationalPrices([natPrice], allStores, CORK.lat, CORK.lng, RADIUS_M, [])
+
+    expect(result).toHaveLength(1)
+    expect(result[0].store_id).toBe('phys-1')
+    expect(result[0].stores.name).toBe('Dunnes Douglas')
+    expect(result[0].distance).toBeGreaterThan(0)
+    expect(Number.isFinite(result[0].distance)).toBe(true)
+  })
+
+  it('surfaces null-coord national store entry with Infinity distance when no physical stores in radius', () => {
+    const natPrice = makeNationalPrice()
+    const nationalStore: StoreData = {
+      id: 'nat-store-1',
+      name: 'Dunnes Stores Ireland (National)',
+      retailer: 'dunnes',
+      address: '',
+      suburb: 'Ireland (national)',
+      lat: null,
+      lng: null,
+    }
+    const farPhysical = makeStore({
+      id: 'far-phys',
+      name: 'Dunnes Far Away',
+      retailer: 'dunnes',
+      lat: 53.0,
+      lng: -6.0,
+    })
+    const allStores = [farPhysical, nationalStore]
+
+    const result = expandNationalPrices([natPrice], allStores, CORK.lat, CORK.lng, RADIUS_M, [])
+
+    expect(result).toHaveLength(1)
+    expect(result[0].distance).toBe(Infinity)
+    expect(Number.isNaN(result[0].distance)).toBe(false)
+  })
+
+  it('preserves valid-coord national fallback distance (regression guard)', () => {
+    const natPrice = makeNationalPrice()
+    const nationalStore: StoreData = {
+      id: 'nat-store-1',
+      name: 'Dunnes Stores Ireland (National)',
+      retailer: 'dunnes',
+      address: '',
+      suburb: 'Ireland (national)',
+      lat: 51.9,
+      lng: -8.5,
+    }
+    const allStores = [nationalStore]
+
+    const result = expandNationalPrices([natPrice], allStores, CORK.lat, CORK.lng, RADIUS_M, [])
+
+    expect(result).toHaveLength(1)
+    expect(result[0].distance).toBeGreaterThan(0)
+    expect(Number.isFinite(result[0].distance)).toBe(true)
+  })
+
+  it('drops invalid-coord physical stores but retains null-coord national store entries', () => {
+    const natPrice = makeNationalPrice()
+    const badCoordsPhysical: StoreData = {
+      id: 'bad-phys',
+      name: 'Dunnes Invalid Coords',
+      retailer: 'dunnes',
+      address: '',
+      suburb: 'Cork',
+      lat: 91,
+      lng: -8.47,
+    }
+    const nanPhysical: StoreData = {
+      id: 'nan-phys',
+      name: 'Dunnes NaN Coords',
+      retailer: 'dunnes',
+      address: '',
+      suburb: 'Cork',
+      lat: NaN,
+      lng: NaN,
+    }
+    const nationalNull: StoreData = {
+      id: 'nat-store-1',
+      name: 'Dunnes Stores Ireland (National)',
+      retailer: 'dunnes',
+      address: '',
+      suburb: 'Ireland (national)',
+      lat: null,
+      lng: null,
+    }
+    const allStores = [badCoordsPhysical, nanPhysical, nationalNull]
+
+    const result = expandNationalPrices([natPrice], allStores, CORK.lat, CORK.lng, RADIUS_M, [])
+
+    expect(result).toHaveLength(1)
+    expect(result[0].stores.id).toBe('nat-store-1')
+    expect(result[0].distance).toBe(Infinity)
+  })
+
+  it('dedup still prevents duplicate (store_id, product_id) entries via seenStoreProduct', () => {
+    const natPrice = makeNationalPrice()
+    const physical = makeStore({
+      id: 'phys-1',
+      name: 'Dunnes Douglas',
+      retailer: 'dunnes',
+      lat: 51.8758,
+      lng: -8.4452,
+    })
+    const matchingExisting = makePriceEntry({
+      id: 'existing-1',
+      store_id: 'phys-1',
+      product_id: 'prod-1',
+      price: 2.0,
+      stores: physical,
+      distance: 500,
+    })
+    const allStores = [physical]
+
+    const result = expandNationalPrices([natPrice], allStores, CORK.lat, CORK.lng, RADIUS_M, [matchingExisting])
+
+    expect(result).toHaveLength(0)
+  })
+})
 
 describe('summarizeNationalPrices', () => {
   it('groups entries by retailer and returns nearest distance', () => {

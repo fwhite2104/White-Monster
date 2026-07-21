@@ -24,7 +24,7 @@ OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 OVERPASS_TIMEOUT = 180  # seconds — some all-Ireland queries take a while
 
 # Ireland bounding box (lat_min, lon_min, lat_max, lon_max)
-IE_BBOX = (51.3, -10.5, 55.5, -5.5)
+IE_BBOX = (51.3, -10.6, 55.3, -6.0)
 
 # Retailers to seed, with their OSM brand tag and acceptable shop tags.
 # Londis and Costcutter are intentionally excluded (out of scope).
@@ -99,7 +99,7 @@ def query_overpass(brand: str, shop_tags: List[str]) -> List[Dict]:
                 data={"data": query},
                 headers={
                     "Accept": "application/json",
-                    "User-Agent": "MonsterCork/1.0 (Price Comparison Bot; +https://monster-cork.vercel.app)",
+                    "User-Agent": "MonsterIreland/1.0 (Price Comparison Bot; +https://monster-cork.vercel.app)",
                 },
                 timeout=OVERPASS_TIMEOUT,
             )
@@ -134,7 +134,7 @@ out;
                     data={"data": fallback_query},
                     headers={
                         "Accept": "application/json",
-                        "User-Agent": "MonsterCork/1.0",
+                        "User-Agent": "MonsterIreland/1.0",
                     },
                     timeout=OVERPASS_TIMEOUT,
                 )

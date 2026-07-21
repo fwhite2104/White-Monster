@@ -1,8 +1,8 @@
-# Monster Cork 🥤📍
+# Monster Ireland 🥤📍
 
-**Find the cheapest Monster Energy drinks near you in Cork, Ireland.**
+**Find the cheapest Monster Energy drinks near you in Ireland.**
 
-Monster Cork is a location-aware price comparison app that tracks Monster Energy drink prices across 11 Irish retailers. It uses device geolocation (or manual area search) to find nearby stores with the best deals, visualize them on a Leaflet map, and let users contribute prices back to the community.
+Monster Ireland is a location-aware price comparison app that tracks Monster Energy drink prices across 11 Irish retailers. It uses device geolocation (or manual area search) to find nearby stores with the best deals, visualize them on a Leaflet map, and let users contribute prices back to the community.
 
 **[View Live Demo](https://white-monster-tracker.vercel.app)**
 
@@ -448,4 +448,4 @@ Users can submit prices they see in stores through the "Report a price" flow. Th
 
 ## Disclaimer
 
-Monster Cork is an independent, educational project. It is not affiliated with Monster Energy Corporation or any of the retailers listed. Product names, logos, and brands are the property of their respective owners. Prices are provided for informational purposes and may not reflect current in-store pricing. If you are a retailer and wish to have your data excluded, please open an issue.
+Monster Ireland is an independent, educational project. It is not affiliated with Monster Energy Corporation or any of the retailers listed. Product names, logos, and brands are the property of their respective owners. Prices are provided for informational purposes and may not reflect current in-store pricing. If you are a retailer and wish to have your data excluded, please open an issue.

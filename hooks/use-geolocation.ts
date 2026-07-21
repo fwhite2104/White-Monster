@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { CORK_CENTER, LOCATION_MAX_AGE_MS } from '@/lib/constants'
-import { isValidCoordinate, calculateDistance } from '@/lib/geo'
+import { DEFAULT_CENTER, LOCATION_MAX_AGE_MS } from '@/lib/constants'
+import { isValidCoordinate, isInRepublicBbox } from '@/lib/geo'
 
 export type LocationSource = 'gps' | 'manual' | 'cached' | 'default'
 export type LocationStatus = 'idle' | 'requesting' | 'success' | 'denied' | 'timeout' | 'unavailable' | 'error'
@@ -34,20 +34,20 @@ function isClient(): boolean {
 
 function getDefaultLocation(): LocationInfo {
   return {
-    lat: CORK_CENTER.lat,
-    lng: CORK_CENTER.lng,
+    lat: DEFAULT_CENTER.lat,
+    lng: DEFAULT_CENTER.lng,
     source: 'default',
   }
 }
 
 function getLocationLabel(location: LocationInfo | null, status: LocationStatus): string {
-  if (!location) return 'Showing Cork area'
+  if (!location) return 'Showing default area'
 
-  if (location.source === 'default') return 'Showing Cork area'
+  if (location.source === 'default') return 'Showing default area'
   if (location.source === 'manual') return location.label || 'Custom location'
   if (location.source === 'cached') return 'Using saved location'
 
-  if (status !== 'success') return 'Showing Cork area'
+  if (status !== 'success') return 'Showing default area'
 
   const accuracy = location.accuracy
   if (accuracy === undefined) return 'Using current location'
@@ -67,8 +67,7 @@ function loadCachedLocation(): { location: LocationInfo; timestamp: number; deni
       localStorage.removeItem(STORAGE_KEY)
       return null
     }
-    // Discard locations far from Cork — likely IP-based geolocation error.
-    if (calculateDistance(parsed.lat, parsed.lng, CORK_CENTER.lat, CORK_CENTER.lng) > 100_000) {
+    if (!isInRepublicBbox(parsed.lat, parsed.lng)) {
       localStorage.removeItem(STORAGE_KEY)
       return null
     }
@@ -106,7 +105,7 @@ function saveLocationToStorage(location: LocationInfo, status?: LocationStatus):
 }
 
 interface InternalState {
-  location: LocationInfo
+  location: LocationInfo | null
   status: LocationStatus
   error: string | null
 }
@@ -246,6 +245,15 @@ export function useGeolocation(): GeolocationResult {
         location: getDefaultLocation(),
         status: 'unavailable',
         error: 'Invalid location coordinates provided.',
+      })
+      return
+    }
+
+    if (!isInRepublicBbox(lat, lng)) {
+      setState({
+        location: null,
+        status: 'error',
+        error: 'That location is outside the Republic of Ireland. Try Cork, Dublin, Limerick…',
       })
       return
     }

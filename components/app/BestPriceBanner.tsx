@@ -9,6 +9,7 @@ export function BestPriceBanner({ price }: BestPriceBannerProps) {
 
   const store = price.stores
   const numericPrice = Number(price.price)
+  const isNationwide = !Number.isFinite(price.distance ?? 0)
 
   return (
     <div className="mb-4 p-4 rounded-xl bg-primary/10 border border-primary/20">
@@ -17,7 +18,7 @@ export function BestPriceBanner({ price }: BestPriceBannerProps) {
           <p className="text-xs font-medium text-primary uppercase tracking-wide">Best Price</p>
           <h2 className="mt-0.5 font-semibold">{store?.name ?? 'Unknown store'}</h2>
           <p className="text-xs text-muted-foreground">
-            {store?.suburb ?? store?.address ?? 'Cork'}
+            {isNationwide ? 'Nationwide' : (store?.suburb ?? store?.address ?? 'Ireland')}
           </p>
         </div>
         <div className="text-right">

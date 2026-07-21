@@ -11,6 +11,7 @@ import { PriceDetailSheet } from "@/components/app/PriceDetailSheet"
 import { ReportPriceModal, ReportPriceFab } from "@/components/app/ReportPriceModal"
 import { useGeolocation } from "@/hooks/use-geolocation"
 import { usePriceQuery } from "@/hooks/use-price-query"
+import { DEFAULT_CENTER } from "@/lib/constants"
 import type { Price } from "@/lib/types"
 
 const StoreMap = dynamic(
@@ -36,8 +37,8 @@ export default function HomePage() {
     packSize,
     setPackSize,
   } = usePriceQuery({
-    lat: location?.lat ?? 51.8985,
-    lng: location?.lng ?? -8.4756,
+    lat: location?.lat ?? DEFAULT_CENTER.lat,
+    lng: location?.lng ?? DEFAULT_CENTER.lng,
   })
   const [selectedPrice, setSelectedPrice] = useState<Price | null>(null)
   const [reportOpen, setReportOpen] = useState(false)
@@ -76,8 +77,8 @@ export default function HomePage() {
             <h2 className="text-sm font-medium text-muted-foreground mb-3">Store locations</h2>
             <StoreMap
               prices={prices}
-              userLat={location?.lat ?? 51.8985}
-              userLng={location?.lng ?? -8.4756}
+              userLat={location?.lat ?? DEFAULT_CENTER.lat}
+              userLng={location?.lng ?? DEFAULT_CENTER.lng}
               radiusKm={radius}
               userAccuracy={location?.accuracy}
             />
@@ -96,8 +97,8 @@ export default function HomePage() {
         open={reportOpen}
         onOpenChange={setReportOpen}
         prefillStoreName={selectedPrice?.stores?.name}
-        lat={location?.lat ?? 51.8985}
-        lng={location?.lng ?? -8.4756}
+        lat={location?.lat ?? DEFAULT_CENTER.lat}
+        lng={location?.lng ?? DEFAULT_CENTER.lng}
       />
 
       <ReportPriceFab onClick={() => setReportOpen(true)} />

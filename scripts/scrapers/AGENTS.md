@@ -7,7 +7,7 @@
 |------|----------|-------|
 | Add a new retailer scraper | `base.py` → new file → `run_scrapers.py` | Extend `BaseScraper`, register in `main()` |
 | Change request politeness | `base.py` | `delay` default is 2.0s |
-| Change User-Agent | `base.py` | `MonsterCork/1.0` bot string |
+| Change User-Agent | `base.py` | `MonsterIreland/1.0` bot string |
 | Modify Tesco IE scraping | `tesco_ie.py` | `curl_cffi` + BeautifulSoup, Akamai bypass |
 | Modify SuperValu IE scraping | `supervalu_ie.py` | Direct Mercatus API, no anti-bot needed |
 | Modify Dunnes Stores scraping | `dunnes_ie.py` | `curl_cffi` + BeautifulSoup, Cloudflare resilience |
@@ -24,7 +24,7 @@
 ## CONVENTIONS
 - All scrapers extend `BaseScraper` (ABC in `base.py`)
 - 2-second delay between requests (`self._wait()`)
-- User-Agent: `MonsterCork/1.0 (Price Comparison Bot; +https://monster-cork.vercel.app)`
+- User-Agent: `MonsterIreland/1.0 (Price Comparison Bot; +https://monster-cork.vercel.app)`
 - Accept-Language: `en-IE,en;q=0.9`
 - Logging prefix: `[{retailer}] {message}` via `self._log()`
 - Scrapers return `List[Dict]` with keys: `product_name`, `price`

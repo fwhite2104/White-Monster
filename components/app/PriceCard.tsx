@@ -14,6 +14,7 @@ export function PriceCard({ price, isBest, onClick }: PriceCardProps) {
   const numericPrice = Number(price.price)
   const perCan = price.per_can_price ?? numericPrice
   const packSize = product?.pack_size ?? 'single'
+  const isNationwide = !Number.isFinite(price.distance ?? 0)
 
   return (
     <button
@@ -27,7 +28,11 @@ export function PriceCard({ price, isBest, onClick }: PriceCardProps) {
           <RetailerBadge retailer={store?.retailer ?? 'other'} />
           <h3 className="mt-1 font-medium truncate">{store?.name ?? 'Unknown store'}</h3>
           <p className="text-xs text-muted-foreground truncate">
-            {store?.suburb ?? store?.address ?? 'Cork'} · {((price.distance ?? 0) / 1000).toFixed(1)} km
+            {isNationwide ? (
+              <span className="text-primary font-medium">Nationwide</span>
+            ) : (
+              <>{store?.suburb ?? store?.address ?? 'Ireland'} · {((price.distance ?? 0) / 1000).toFixed(1)} km</>
+            )}
           </p>
         </div>
         <div className="text-right shrink-0">
@@ -47,6 +52,11 @@ export function PriceCard({ price, isBest, onClick }: PriceCardProps) {
       {isBest && (
         <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
           Best Price
+        </div>
+      )}
+      {isNationwide && (
+        <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+          Available nationwide
         </div>
       )}
     </button>
