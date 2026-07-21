@@ -23,36 +23,35 @@ interface StoreMapBlockProps {
   activeMarker?: ActiveMarker | null
 }
 
-async function createLetterBadge(letter: string, color: string): Promise<ImageBitmap> {
-  const size = 40
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext('2d')!
-  ctx.beginPath()
-  ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2)
-  ctx.fillStyle = color
-  ctx.fill()
-  ctx.fillStyle = '#fff'
-  ctx.font = `bold ${size * 0.45}px sans-serif`
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillText(letter.toUpperCase(), size / 2, size / 2)
-  return createImageBitmap(canvas)
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function retailerColor(retailer: string): string {
+  return RETAILERS.find((r) => r.value === retailer)?.color ?? '#6b7280'
 }
 
-async function loadBrandLogo(map: maplibregl.Map, id: string, url: string): Promise<boolean> {
-  try {
-    const resp = await fetch(url)
-    if (!resp.ok) return false
-    const blob = await resp.blob()
-    const bitmap = await createImageBitmap(blob)
-    if (map.getImage(id)) return true
-    map.addImage(id, bitmap)
-    return true
-  } catch {
-    return false
-  }
+function createMarkerEl(color: string): HTMLDivElement {
+  const el = document.createElement('div')
+  el.className = 'store-marker'
+  el.style.width = '14px'
+  el.style.height = '14px'
+  el.style.borderRadius = '50%'
+  el.style.background = color
+  el.style.border = '2px solid #fff'
+  el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)'
+  el.style.cursor = 'pointer'
+  el.style.transition = 'opacity 0.2s'
+  return el
+}
+
+function createUserMarkerEl(): HTMLDivElement {
+  const el = document.createElement('div')
+  el.style.width = '16px'
+  el.style.height = '16px'
+  el.style.borderRadius = '50%'
+  el.style.background = '#22c55e'
+  el.style.border = '3px solid #fff'
+  el.style.boxShadow = '0 0 0 2px rgba(34,197,94,0.4), 0 2px 6px rgba(0,0,0,0.3)'
+  return el
 }
 
 function accuracyCirclePolygon(lat: number, lng: number, radiusMeters: number): GeoJSON.Polygon {
@@ -73,6 +72,8 @@ function accuracyCirclePolygon(lat: number, lng: number, radiusMeters: number): 
 function formatKm(meters: number): string {
   return `${(meters / 1000).toFixed(1)} km`
 }
+
+// ─── Popup ──────────────────────────────────────────────────────────────────
 
 /** @visibleForTesting */
 export function buildPopupContent(m: StoreMarker): string {
@@ -109,10 +110,20 @@ export function buildPopupContent(m: StoreMarker): string {
   `
 }
 
+// ─── Component ──────────────────────────────────────────────────────────────
+
+interface MarkerEntry {
+  id: string
+  marker: maplibregl.Marker
+  el: HTMLDivElement
+}
+
 export function StoreMapBlock({ markers, userLat, userLng, userAccuracy, onLocationSelect, activeMarker }: StoreMapBlockProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
-  const readyRef = useRef(false)
+  const markersRef = useRef<MarkerEntry[]>([])
+
+  // ── 1. Map creation — runs once ──────────────────────────────────────────
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -126,109 +137,18 @@ export function StoreMapBlock({ markers, userLat, userLng, userAccuracy, onLocat
 
     map.addControl(new maplibregl.NavigationControl(), 'top-right')
 
-    // Expose map instance for E2E tests — set early so tests can access it even if tiles fail to load
+    // Expose for E2E tests
     if (typeof window !== 'undefined') {
       ;(window as unknown as Record<string, unknown>).__monsterMap = map
     }
 
-    // Add user location marker immediately (DOM-based, doesn't need tiles)
-    new maplibregl.Marker({ color: '#22c55e' })
+    // User location marker — shows immediately, no tile dependency
+    new maplibregl.Marker({ element: createUserMarkerEl() })
       .setLngLat([userLng, userLat])
       .addTo(map)
 
-    // If no store markers, skip store layers but keep tiles + user marker
-    if (markers.length === 0) return
-
-    map.on('load', async () => {
-      readyRef.current = true
-      const colorMap = Object.fromEntries(
-        RETAILERS.map((r) => [r.value, r.color ?? '#666'])
-      )
-
-      // Load brand logos for each unique retailer
-      const seenLogo = new Set<string>()
-      const loadPromises: Promise<void>[] = []
-
-      for (const m of markers) {
-        const logoId = `logo_${m.retailer}`
-        if (seenLogo.has(logoId)) continue
-        seenLogo.add(logoId)
-
-        const ext = m.retailer === 'dealz' ? '.png' : '.svg'
-        const url = `/images/brands/${m.retailer}${ext}`
-        loadPromises.push(
-          loadBrandLogo(map, logoId, url).then(async (loaded) => {
-            if (!loaded) {
-              const letter = m.retailer.charAt(0).toUpperCase()
-              const color = colorMap[m.retailer] ?? '#6B7280'
-              const badge = await createLetterBadge(letter, color)
-              map.addImage(logoId, badge)
-            }
-          })
-        )
-      }
-
-      await Promise.all(loadPromises)
-
-      const features: GeoJSON.Feature[] = markers.map((m) => ({
-        type: 'Feature',
-        id: m.id,
-        properties: {
-          id: m.id,
-          logo_id: `logo_${m.retailer}`,
-          _marker_data: JSON.stringify(m),
-        },
-        geometry: { type: 'Point', coordinates: [m.lng, m.lat] },
-      }))
-
-      map.addSource('retailers', {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features },
-        cluster: true,
-        clusterMaxZoom: 14,
-        clusterRadius: 50,
-      })
-
-      map.addLayer({
-        id: 'clusters',
-        type: 'circle',
-        source: 'retailers',
-        filter: ['has', 'point_count'],
-        paint: {
-          'circle-color': '#22c55e',
-          'circle-radius': ['step', ['get', 'point_count'], 20, 10, 30, 50, 40],
-          'circle-opacity': 0.7,
-        },
-      })
-
-      map.addLayer({
-        id: 'cluster-count',
-        type: 'symbol',
-        source: 'retailers',
-        filter: ['has', 'point_count'],
-        layout: {
-          'text-field': ['get', 'point_count_abbreviated'],
-          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-          'text-size': 12,
-        },
-        paint: { 'text-color': '#fff' },
-      })
-
-      map.addLayer({
-        id: 'markers',
-        type: 'symbol',
-        source: 'retailers',
-        filter: ['!', ['has', 'point_count']],
-        layout: {
-          'icon-image': ['get', 'logo_id'],
-          'icon-size': 0.4,
-          'icon-allow-overlap': true,
-        },
-        paint: {
-          'icon-opacity': ['case', ['feature-state', 'dimmed'], 0.25, 1],
-        },
-      })
-
+    // Accuracy circle
+    map.on('load', () => {
       if (userAccuracy !== undefined && userAccuracy > 0) {
         const polygon = accuracyCirclePolygon(userLat, userLng, userAccuracy)
         map.addSource('accuracy', {
@@ -248,118 +168,101 @@ export function StoreMapBlock({ markers, userLat, userLng, userAccuracy, onLocat
           paint: { 'line-color': '#22c55e', 'line-opacity': 0.3, 'line-width': 1.5 },
         })
       }
-
-      // Cluster click → zoom in
-      map.on('click', 'clusters', (e) => {
-        const feature = e.features?.[0]
-        if (!feature) return
-        const clusterId = feature.properties?.cluster_id
-        if (clusterId === undefined) return
-        const source = map.getSource('retailers') as maplibregl.GeoJSONSource | undefined
-        source?.getClusterExpansionZoom(clusterId).then((zoom: number) => {
-          const geometry = feature.geometry as GeoJSON.Point
-          map.flyTo({ center: geometry.coordinates as [number, number], zoom })
-        }).catch(() => {})
-      })
-
-      // Change cursor on hover over markers
-      map.on('mouseenter', 'markers', () => {
-        map.getCanvas().style.cursor = 'pointer'
-      })
-      map.on('mouseleave', 'markers', () => {
-        map.getCanvas().style.cursor = ''
-      })
-
-      // Marker click → popup
-      let currentPopup: maplibregl.Popup | null = null
-      map.on('click', 'markers', (e) => {
-        const feature = e.features?.[0]
-        if (!feature) return
-
-        const raw = feature.properties?._marker_data
-        if (typeof raw !== 'string') return
-
-        try {
-          const markerData: StoreMarker = JSON.parse(raw)
-
-          // Remove existing popup
-          currentPopup?.remove()
-
-          // Determine marker coordinates
-          const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number]
-
-          currentPopup = new maplibregl.Popup({
-            closeButton: true,
-            closeOnClick: false,
-            maxWidth: '280px',
-            className: 'store-marker-popup',
-          })
-            .setLngLat(coords)
-            .setHTML(buildPopupContent(markerData))
-            .addTo(map)
-        } catch {
-          // ignore parse errors
-        }
-      })
-
-      // Map background click: close popup + set manual location
-      // Only fires when not clicking a marker, cluster, or popup.
-      map.on('click', (e) => {
-        // Check if the click hit a marker or cluster feature
-        const features = map.queryRenderedFeatures(e.point, { layers: ['markers', 'clusters'] })
-        if (features.length > 0) return
-
-        // Check if the click is inside an open popup
-        const popupEl = document.querySelector('.maplibregl-popup')
-        if (popupEl) {
-          const rect = popupEl.getBoundingClientRect()
-          if (
-            e.originalEvent instanceof MouseEvent &&
-            e.originalEvent.clientX >= rect.left &&
-            e.originalEvent.clientX <= rect.right &&
-            e.originalEvent.clientY >= rect.top &&
-            e.originalEvent.clientY <= rect.bottom
-          ) return
-        }
-
-        currentPopup?.remove()
-        currentPopup = null
-        onLocationSelect?.(e.lngLat.lat, e.lngLat.lng)
-      })
     })
 
-    return () => {
-      readyRef.current = false
-      mapRef.current = null
-      map.remove()
-    }
-  }, [userLat, userLng, markers, userAccuracy, onLocationSelect])
+    // Background click → close popup + set manual location
+    map.on('click', (e) => {
+      const target = e.originalEvent?.target
+      if (target instanceof Element && target.closest('.store-marker, .maplibregl-popup, .maplibregl-popup-close-button')) return
+      closePopup()
+      onLocationSelect?.(e.lngLat.lat, e.lngLat.lng)
+    })
 
-  // Dim/highlight active marker and fly to it
+    mapRef.current = map
+
+    return () => {
+      map.remove()
+      mapRef.current = null
+      markersRef.current = []
+    }
+    // Only create the map once — ignore prop changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // ── 2. Store markers + active marker dimming ────────────────────────────
+
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !readyRef.current) return
+    if (!map) return
 
-    // Clear all dimmed states first
-    map.removeFeatureState({ source: 'retailers' })
+    // Remove old markers
+    for (const entry of markersRef.current) {
+      entry.marker.remove()
+    }
+    const entries: MarkerEntry[] = []
 
+    for (const m of markers) {
+      const color = retailerColor(m.retailer)
+      const el = createMarkerEl(color)
+
+      // Store data on element
+      el.dataset.markerData = JSON.stringify(m)
+
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([m.lng, m.lat])
+        .addTo(map)
+
+      // Click → popup
+      el.addEventListener('click', () => {
+        showPopup(map, m)
+      })
+
+      entries.push({ id: m.id, marker, el })
+    }
+
+    // Apply active marker dim/highlight
     if (activeMarker) {
-      // Dim all features except the active one
-      const allFeatures = map.querySourceFeatures('retailers')
-      for (const f of allFeatures) {
-        // Skip cluster features and non-store features
-        if (f.properties?.point_count) continue
-        if (!f.id) continue
-        if (f.id === activeMarker.id) continue
-        map.setFeatureState({ source: 'retailers', id: f.id }, { dimmed: true })
+      for (const entry of entries) {
+        if (entry.id === activeMarker.id) {
+          entry.el.style.boxShadow = '0 0 0 2px #fff, 0 0 0 4px #22c55e, 0 2px 6px rgba(0,0,0,0.4)'
+          entry.el.style.opacity = '1'
+        } else {
+          entry.el.style.opacity = '0.3'
+        }
       }
+    }
 
-      // Fly to the active marker
+    markersRef.current = entries
+
+    // Fly to active marker
+    if (activeMarker) {
       map.flyTo({ center: [activeMarker.lng, activeMarker.lat], zoom: 14 })
     }
-  }, [activeMarker])
+  }, [markers, activeMarker])
 
   return (
     <div ref={containerRef} className="h-[300px] md:h-[400px] rounded-xl z-0" />
   )
+}
+
+// ─── Popup helpers ──────────────────────────────────────────────────────────
+
+let _popup: maplibregl.Popup | null = null
+
+function closePopup() {
+  _popup?.remove()
+  _popup = null
+}
+
+function showPopup(map: maplibregl.Map, m: StoreMarker) {
+  closePopup()
+  _popup = new maplibregl.Popup({
+    closeButton: true,
+    closeOnClick: false,
+    maxWidth: '280px',
+    className: 'store-marker-popup',
+  })
+    .setLngLat([m.lng, m.lat])
+    .setHTML(buildPopupContent(m))
+    .addTo(map)
 }
