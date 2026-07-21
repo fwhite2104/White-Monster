@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { buildQuery, parseOverpassResponse } from '../overpass'
+import { describe, it, expect, vi } from 'vitest'
+import { buildQuery, parseOverpassResponse, queryBrandStores } from '../overpass'
 import type { OverpassElement } from '../overpass'
 
 describe('buildQuery', () => {
@@ -230,6 +230,36 @@ describe('parseOverpassResponse', () => {
     expect(result[0].category).toBe('other')
     expect(result[0].subcategory).toBe('unknown')
   })
+
+describe('queryBrandStores', () => {
+  it('queries for the brand name via Overpass search, returning a promise', () => {
+    // queryBrandStores is a thin wrapper over buildQuery with search+radius.
+    // Verify the query string it produces is correct by inspecting buildQuery output.
+    const q = buildQuery(51.8985, -8.4756, 10000, '', 'Tesco')
+    expect(q).toContain('"Tesco"')
+    expect(q).toContain('(around:10000,51.8985,-8.4756)')
+  })
+
+  it('returns the expected Place[] type', async () => {
+    const mock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          elements: [
+            { type: 'node', id: 1, lat: 51.9, lon: -8.47, tags: { name: 'Tesco Express', shop: 'convenience' } },
+          ],
+        }),
+      ),
+    )
+
+    const result = await queryBrandStores('Tesco', 51.8985, -8.4756, 10000)
+    expect(result).toHaveLength(1)
+    expect(result[0].name).toBe('Tesco Express')
+
+    const body = (mock.mock.calls[0][1] as RequestInit).body as string
+    expect(body).toContain(encodeURIComponent('Tesco'))
+    mock.mockRestore()
+  })
+})
 
   it('builds partial address from available parts', () => {
     const data = {

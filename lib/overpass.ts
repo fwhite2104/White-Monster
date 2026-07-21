@@ -112,14 +112,8 @@ export function parseOverpassResponse(data: any): Place[] {
 // Fetch wrapper with automatic endpoint fallback
 // ---------------------------------------------------------------------------
 
-export async function queryOverpass(
-  lat: number,
-  lng: number,
-  tagFilter: string,
-  search?: string,
-): Promise<Place[]> {
-  const q = buildQuery(lat, lng, 1500, tagFilter, search)
-  const body = `data=${encodeURIComponent(q)}`
+async function postOverpass(query: string): Promise<Place[]> {
+  const body = `data=${encodeURIComponent(query)}`
 
   for (const url of OVERPASS_URLS) {
     try {
@@ -139,4 +133,30 @@ export async function queryOverpass(
   }
 
   throw new Error('All Overpass endpoints failed')
+}
+
+export async function queryOverpass(
+  lat: number,
+  lng: number,
+  tagFilter: string,
+  search?: string,
+): Promise<Place[]> {
+  return postOverpass(buildQuery(lat, lng, 1500, tagFilter, search))
+}
+
+/**
+ * Query Overpass for OSM nodes/ways matching a brand name as `name` or `brand` tag.
+ * Useful for finding physical store locations of a retailer (Tesco, Lidl, etc.)
+ * within `radius` meters of a coordinate.
+ *
+ * The caller should run multiple brand queries in parallel via `Promise.all`,
+ * then merge/flatten results and deduplicate by `Place.id`.
+ */
+export async function queryBrandStores(
+  brandName: string,
+  lat: number,
+  lng: number,
+  radius: number,
+): Promise<Place[]> {
+  return postOverpass(buildQuery(lat, lng, radius, '', brandName))
 }
