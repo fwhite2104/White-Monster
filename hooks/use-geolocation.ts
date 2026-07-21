@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { DEFAULT_CENTER, LOCATION_MAX_AGE_MS } from '@/lib/constants'
 import { isValidCoordinate, isInRepublicBbox } from '@/lib/geo'
 
@@ -135,6 +135,16 @@ export function useGeolocation(): GeolocationResult {
   })
 
   const requestIdRef = useRef(0)
+  const watcherIdRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (watcherIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watcherIdRef.current)
+        watcherIdRef.current = null
+      }
+    }
+  }, [])
 
   const requestLocation = useCallback((onSuccess?: () => void) => {
     if (!isClient()) {
@@ -163,7 +173,11 @@ export function useGeolocation(): GeolocationResult {
       error: null,
     }))
 
-    navigator.geolocation.getCurrentPosition(
+    if (watcherIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watcherIdRef.current)
+    }
+
+    watcherIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
         if (requestIdRef.current !== currentRequestId) return
 
@@ -240,6 +254,12 @@ export function useGeolocation(): GeolocationResult {
   }, [])
 
   const setManualLocation = useCallback((lat: number, lng: number, label?: string) => {
+    // Stop GPS watching when user sets location manually
+    if (watcherIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watcherIdRef.current)
+      watcherIdRef.current = null
+    }
+
     if (!isValidCoordinate(lat, lng)) {
       setState({
         location: getDefaultLocation(),
@@ -273,6 +293,10 @@ export function useGeolocation(): GeolocationResult {
   }, [])
 
   const resetLocation = useCallback(() => {
+    if (watcherIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watcherIdRef.current)
+      watcherIdRef.current = null
+    }
     requestIdRef.current++
 
     setState({
