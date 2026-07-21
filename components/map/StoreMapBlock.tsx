@@ -121,6 +121,11 @@ export function StoreMapBlock({ markers, userLat, userLng, userAccuracy, onLocat
       ;(window as any).__monsterMap = map
     }
 
+    // Add user location marker immediately (DOM-based, doesn't need tiles)
+    new maplibregl.Marker({ color: '#22c55e' })
+      .setLngLat([userLng, userLat])
+      .addTo(map)
+
     map.on('load', async () => {
       const colorMap = Object.fromEntries(
         RETAILERS.map((r) => [r.value, r.color ?? '#666'])
@@ -224,10 +229,6 @@ export function StoreMapBlock({ markers, userLat, userLng, userAccuracy, onLocat
           paint: { 'line-color': '#22c55e', 'line-opacity': 0.3, 'line-width': 1.5 },
         })
       }
-
-      new maplibregl.Marker({ color: '#22c55e' })
-        .setLngLat([userLng, userLat])
-        .addTo(map)
 
       // Cluster click → zoom in
       map.on('click', 'clusters', (e) => {
