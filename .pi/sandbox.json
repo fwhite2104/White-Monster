@@ -1,0 +1,23 @@
+{
+  "enabled": true,
+  "network": {
+    "allowedDomains": [
+      "*.supabase.co",
+      "github.com",
+      "*.github.com",
+      "raw.githubusercontent.com",
+      "npmjs.org",
+      "*.npmjs.org",
+      "registry.npmjs.org",
+      "pypi.org",
+      "*.pypi.org",
+      "files.pythonhosted.org"
+    ],
+    "deniedDomains": []
+  },
+  "filesystem": {
+    "denyRead": ["~/.ssh", "~/.aws", "~/.config/git", "~/.gnupg"],
+    "allowWrite": [".", "/tmp"],
+    "denyWrite": [".env", ".env.*", "*.pem", "*.key", "node_modules"]
+  }
+}
