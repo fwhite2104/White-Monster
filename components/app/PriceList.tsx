@@ -23,7 +23,8 @@ interface PriceListProps {
 export function PriceList({ prices, nationalSummaries = [], loading, error, bestPrice, onHighlight, onViewDetails, onRetry, onShare }: PriceListProps) {
   if (loading) {
     return (
-      <div className="space-y-3 pb-4">
+      <div className="space-y-3 pb-4" role="status" aria-live="polite">
+        <span className="sr-only">Loading prices…</span>
         {Array.from({ length: 5 }).map((_, i) => (
           <div
             key={i}
@@ -37,7 +38,7 @@ export function PriceList({ prices, nationalSummaries = [], loading, error, best
 
   if (error) {
     return (
-      <div className="p-8 text-center">
+      <div className="p-8 text-center" role="alert">
         <p className="text-destructive mb-4">{error}</p>
         <button
           onClick={onRetry}

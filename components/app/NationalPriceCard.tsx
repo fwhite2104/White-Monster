@@ -64,7 +64,7 @@ export function NationalPriceCard({ summary, isBest, onClick, onViewDetails }: N
           Best Price
         </div>
       )}
-      <div className="mt-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="mt-2 flex gap-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onViewDetails?.() }}

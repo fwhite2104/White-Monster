@@ -108,6 +108,7 @@ export function VariantPicker({ value, onChange }: VariantPickerProps) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search all variants…"
+              aria-label="Search variants"
               className="w-full pl-8 pr-8 py-2 text-sm rounded-lg bg-muted border border-border focus:outline-none focus:ring-2 focus:ring-ring"
             />
             {search && (
